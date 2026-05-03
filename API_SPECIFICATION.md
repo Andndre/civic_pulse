@@ -348,77 +348,7 @@ POST /classes/join
 
 ---
 
-### 3.5 Teacher: Get Join Requests
 
-```
-GET /classes/{id}/join-requests
-```
-
-**Headers:** `Authorization: Bearer {token}` (role: teacher, owns class)
-
-**Success Response (200):**
-
-```json
-{
-  "success": true,
-  "data": {
-    "pending_requests": [
-      {
-        "id": 10,
-        "student": {
-          "id": 5,
-          "name": "Dewi Lestari",
-          "email": "dewi@email.com"
-        },
-        "requested_at": "2026-01-21T09:00:00Z"
-      }
-    ]
-  }
-}
-```
-
----
-
-### 3.6 Teacher: Approve/Reject Join Request
-
-```
-PUT /classes/{class_id}/join-requests/{request_id}
-```
-
-**Headers:** `Authorization: Bearer {token}` (role: teacher)
-
-**Request Body:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `status` | enum | Yes | `approved` atau `rejected` |
-
-**Success Response (200):**
-
-```json
-{
-  "success": true,
-  "message": "Request approved"
-}
-```
-
----
-
-### 3.7 Delete Class
-
-```
-DELETE /classes/{id}
-```
-
-**Headers:** `Authorization: Bearer {token}` (role: teacher, owns class)
-
-**Success Response (200):**
-
-```json
-{
-  "success": true,
-  "message": "Class deleted successfully"
-}
 ```
 
 ---
@@ -450,14 +380,6 @@ GET /students/{id}
       "name": "VII-A",
       "teacher_name": "Dr. Anwar"
     },
-    "badges": [
-      {
-        "id": 1,
-        "name": "Aktivis Kelas",
-        "icon_url": "https://cdn.civicpulse.id/badges/aktivis.png",
-        "unlocked_at": "2026-02-01T00:00:00Z"
-      }
-    ],
     "stats": {
       "materials_completed": 5,
       "total_materials": 12,
@@ -585,6 +507,7 @@ GET /students/{id}/activities
 | Param | Type | Default | Description |
 |-------|------|---------|-------------|
 | `category` | enum | all | `participation`, `understanding`, `learning`, `social_engagement` |
+| `location` | enum | all | `rumah`, `sekolah`, `kelas`, `masyarakat` |
 | `per_page` | integer | 15 | Items per page |
 | `page` | integer | 1 | Current page |
 
@@ -599,6 +522,7 @@ GET /students/{id}/activities
         "id": 1,
         "title": "Piket Kelas",
         "category": "participation",
+        "location": "kelas",
         "date": "2026-02-10",
         "photo_url": "https://cdn.civicpulse.id/activities/1.jpg",
         "created_at": "2026-02-10T16:00:00Z"
@@ -779,12 +703,10 @@ GET /materials/{id}/questions
           "B": "Ragaman suku, bahasa, dan adat istiadat",
           "C": "Perbedaan agama saja",
           "D": "Satu budaya dominan"
-        },
-        "time_limit_seconds": 60
+        }
       }
     ],
-    "total_questions": 10,
-    "time_limit_total_seconds": 600
+    "total_questions": 10
   }
 }
 ```
@@ -805,18 +727,6 @@ POST /materials/{id}/test-response
 |-------|------|----------|-------------|
 | `type` | enum | Yes | `pre` atau `post` |
 | `answers` | array | Yes | Array of answer objects |
-| `time_spent_seconds` | integer | Yes | Waktu pengerjaan dalam detik |
-
-**answers format:**
-
-```json
-{
-  "answers": [
-    { "question_id": 10, "selected_option": "B" },
-    { "question_id": 11, "selected_option": "A" }
-  ]
-}
-```
 
 **Success Response (200):**
 
@@ -829,7 +739,6 @@ POST /materials/{id}/test-response
     "total_questions": 10,
     "correct_answers": 8,
     "score": 80,
-    "time_spent_seconds": 420,
     "comparison": {
       "pre_score": 70,
       "post_score": 80,
@@ -974,6 +883,7 @@ GET /activities
 | Param | Type | Default | Description |
 |-------|------|---------|-------------|
 | `category` | enum | all | `participation`, `understanding`, `learning`, `social_engagement` |
+| `location` | enum | all | `rumah`, `sekolah`, `kelas`, `masyarakat` |
 | `per_page` | integer | 15 | Items per page |
 | `page` | integer | 1 | Current page |
 
@@ -988,6 +898,7 @@ GET /activities
         "id": 1,
         "title": "Piket Kelas",
         "category": "participation",
+        "location": "kelas",
         "date": "2026-02-10",
         "photo_url": "https://cdn.civicpulse.id/activities/1.jpg",
         "created_at": "2026-02-10T16:00:00Z"
@@ -1015,6 +926,7 @@ POST /activities
 | `title` | string | Yes | Judul kegiatan (3-100 chars) |
 | `date` | string | Yes | Tanggal (format: YYYY-MM-DD) |
 | `category` | enum | Yes | `participation`, `understanding`, `learning`, `social_engagement` |
+| `location` | enum | Yes | `rumah`, `sekolah`, `kelas`, `masyarakat` |
 | `photo` | file | No | Gambar bukti (max 5MB, jpeg/png) |
 
 **Success Response (201):**
@@ -1220,8 +1132,6 @@ GET /alerts
 > - `score_drop`: Jika skor PULSE turun >1.0 dalam 1 minggu
 > - `inactive_student`: Jika siswa tidak login >7 hari
 > - `test_failed`: Jika post-test score < 50
-> - `badge_unlocked`: Jika siswa mendapatkan lencana baru
-> - `class_join_request`: Jika ada permintaan join kelas baru
 
 ---
 
@@ -1737,8 +1647,7 @@ POST /dashboard/admin/materials/{id}/questions
         "C": "Melindungi hak rakyat dan keberagaman",
         "D": "Menghapuskan perbedaan pendapat"
       },
-      "correct_answer": "C",
-      "time_limit_seconds": 60
+      "correct_answer": "C"
     }
   ]
 }
@@ -1827,89 +1736,9 @@ PUT /dashboard/admin/materials/{id}/publish
 
 ---
 
-## 12. Badges
+## 12. File Upload
 
-### 12.1 Get All Badges
-
-```
-GET /badges
-```
-
-**Headers:** `Authorization: Bearer {token}`
-
-**Success Response (200):**
-
-```json
-{
-  "success": true,
-  "data": {
-    "badges": [
-      {
-        "id": 1,
-        "name": "Aktivis Kelas",
-        "description": "Mengunggah minimal 10 log aktivitas",
-        "icon_url": "https://cdn.civicpulse.id/badges/aktivis.png",
-        "criteria": {
-          "type": "activities_count",
-          "threshold": 10
-        }
-      },
-      {
-        "id": 2,
-        "name": "Pembelajar Ulung",
-        "description": "Menyelesaikan semua materi dengan skor >80",
-        "icon_url": "https://cdn.civicpulse.id/badges/pembelajar.png",
-        "criteria": {
-          "type": "all_materials_completed",
-          "min_score": 80
-        }
-      }
-    ]
-  }
-}
-```
-
----
-
-### 12.2 Get Student Unlocked Badges
-
-```
-GET /students/{id}/badges
-```
-
-**Headers:** `Authorization: Bearer {token}`
-
-**Success Response (200):**
-
-```json
-{
-  "success": true,
-  "data": {
-    "unlocked": [
-      {
-        "id": 1,
-        "name": "Aktivis Kelas",
-        "icon_url": "https://cdn.civicpulse.id/badges/aktivis.png",
-        "unlocked_at": "2026-02-01T00:00:00Z"
-      }
-    ],
-    "locked": [
-      {
-        "id": 2,
-        "name": "Pembelajar Ulung",
-        "icon_url": "https://cdn.civicpulse.id/badges/pembelajar.png",
-        "progress": 8
-      }
-    ]
-  }
-}
-```
-
----
-
-## 13. File Upload
-
-### 13.1 Upload Image
+### 12.1 Upload Image
 
 ```
 POST /upload/image
@@ -1940,7 +1769,7 @@ POST /upload/image
 
 ---
 
-## 14. Error Codes Reference
+## 13. Error Codes Reference
 
 | HTTP Code | Error Code | Description |
 |-----------|------------|-------------|

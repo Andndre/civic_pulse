@@ -1,0 +1,380 @@
+// ============================================================
+// CivicPulse Database Schema
+// Generated from PROJECT_DESCRIPTION.md & API_SPECIFICATION.md
+// ============================================================
+
+// ----------------------------------------------------------
+// 1. USERS
+// Stores credentials, profiles, and role-based authorization
+// ----------------------------------------------------------
+Table users {
+  id bigint [pk, increment]
+  name varchar(100) [not null]
+  email varchar(255) [not null, unique]
+  email_verified_at timestamp [null]
+  password varchar(255) [not null]
+  role enum('admin', 'teacher', 'student') [not null, default: 'student']
+  avatar_url varchar(500) [null]
+  is_active boolean [not null, default: true]
+  remember_token varchar(100) [null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    email [unique]
+    role
+    is_active
+  }
+}
+
+Table password_reset_tokens {
+  email varchar(255) [pk]
+  token varchar(255) [not null]
+  created_at timestamp [null]
+}
+
+Table sessions {
+  id varchar(255) [pk]
+  user_id bigint [not null, ref: > users.id]
+  ip_address varchar(45) [null]
+  user_agent text [null]
+  payload text [not null]
+  last_activity int [not null]
+}
+
+// ----------------------------------------------------------
+// 2. CLASSES
+// ----------------------------------------------------------
+Table classes {
+  id bigint [pk, increment]
+  name varchar(50) [not null]
+  grade_category enum('SMP', 'SMA') [not null]
+  grade_level tinyint [not null]
+  class_code varchar(20) [not null, unique]
+  teacher_id bigint [not null, ref: > users.id]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    class_code [unique]
+    teacher_id
+    (grade_category, grade_level)
+  }
+}
+
+// ----------------------------------------------------------
+// 3. CLASS STUDENT (Pivot)
+// ----------------------------------------------------------
+Table class_student {
+  id bigint [pk, increment]
+  class_id bigint [not null, ref: > classes.id]
+  student_id bigint [not null, ref: > users.id]
+  status enum('pending', 'approved', 'rejected') [not null, default: 'pending']
+  joined_at timestamp [null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    (class_id, student_id) [unique]
+    student_id
+    status
+  }
+}
+
+// ----------------------------------------------------------
+// 4. LEARNING MATERIALS
+// ----------------------------------------------------------
+Table learning_materials {
+  id bigint [pk, increment]
+  title varchar(255) [not null]
+  description text [null]
+  thumbnail_url varchar(500) [null]
+  grade_category enum('SMP', 'SMA') [not null]
+  grade_level tinyint [not null]
+  estimated_duration_minutes int [null]
+  order_index int [not null, default: 0]
+  status enum('draft', 'published') [not null, default: 'draft']
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    (grade_category, grade_level)
+    status
+    order_index
+  }
+}
+
+Table material_order {
+  id bigint [pk, increment]
+  material_id bigint [not null, ref: > learning_materials.id]
+  grade_category enum('SMP', 'SMA') [not null]
+  grade_level tinyint [not null]
+  order_index int [not null, default: 0]
+  created_at timestamp [not null]
+
+  indexes {
+    (grade_category, grade_level, order_index)
+  }
+}
+
+// ----------------------------------------------------------
+// 5. QUESTIONS (Pre-Test / Post-Test Bank)
+// ----------------------------------------------------------
+Table questions {
+  id bigint [pk, increment]
+  material_id bigint [not null, ref: > learning_materials.id]
+  type enum('pre', 'post') [not null]
+  question_number int [not null]
+  content text [not null]
+  options json [not null]
+  correct_answer char(1) [not null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    (material_id, type)
+    (material_id, type, question_number) [unique]
+  }
+}
+
+// ----------------------------------------------------------
+// 6. PULSE INSTRUMENTS (Likert Scale Assessment)
+// ----------------------------------------------------------
+Table pulse_statements {
+  id bigint [pk, increment]
+  material_id bigint [not null, ref: > learning_materials.id]
+  dimension enum('participation', 'understanding', 'learning', 'social_engagement') [not null]
+  statement text [not null]
+  order_index int [not null, default: 0]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    (material_id, dimension)
+  }
+}
+
+// ----------------------------------------------------------
+// 7. STUDENT PROGRESS (Learning Path Tracking)
+// ----------------------------------------------------------
+Table student_material_progress {
+  id bigint [pk, increment]
+  student_id bigint [not null, ref: > users.id]
+  material_id bigint [not null, ref: > learning_materials.id]
+  pre_test_status enum('not_started', 'in_progress', 'completed') [not null, default: 'not_started']
+  pre_test_score int [null]
+  ebook_status enum('not_started', 'in_progress', 'completed') [not null, default: 'not_started']
+  post_test_status enum('not_started', 'in_progress', 'completed') [not null, default: 'not_started']
+  post_test_score int [null]
+  pulse_status enum('not_started', 'in_progress', 'completed') [not null, default: 'not_started']
+  started_at timestamp [null]
+  completed_at timestamp [null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    (student_id, material_id) [unique]
+    student_id
+    material_id
+  }
+}
+
+// ----------------------------------------------------------
+// 8. TEST RESPONSES
+// ----------------------------------------------------------
+Table test_responses {
+  id bigint [pk, increment]
+  student_id bigint [not null, ref: > users.id]
+  material_id bigint [not null, ref: > learning_materials.id]
+  type enum('pre', 'post') [not null]
+  total_questions int [not null]
+  correct_answers int [not null]
+  score int [not null]
+  answers json [not null]
+  submitted_at timestamp [not null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    (student_id, material_id, type)
+    submitted_at
+  }
+}
+
+// ----------------------------------------------------------
+// 9. PULSE RESPONSES
+// ----------------------------------------------------------
+Table pulse_responses {
+  id bigint [pk, increment]
+  student_id bigint [not null, ref: > users.id]
+  material_id bigint [not null, ref: > learning_materials.id]
+  statement_id bigint [not null, ref: > pulse_statements.id]
+  score tinyint [not null]
+  created_at timestamp [not null]
+
+  indexes {
+    (student_id, material_id)
+    statement_id
+  }
+}
+
+// Aggregated PULSE scores per student per material
+Table student_pulse_scores {
+  id bigint [pk, increment]
+  student_id bigint [not null, ref: > users.id]
+  material_id bigint [not null, ref: > learning_materials.id]
+  participation decimal(3,2) [null]
+  understanding decimal(3,2) [null]
+  learning decimal(3,2) [null]
+  social_engagement decimal(3,2) [null]
+  overall_score decimal(3,2) [null]
+  assessed_at timestamp [not null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    (student_id, material_id) [unique]
+  }
+}
+
+// ----------------------------------------------------------
+// 10. ACTIVITY LOGS (Student Digital Diary)
+// ----------------------------------------------------------
+Table activity_logs {
+  id bigint [pk, increment]
+  student_id bigint [not null, ref: > users.id]
+  title varchar(100) [not null]
+  category enum('participation', 'understanding', 'learning', 'social_engagement') [not null]
+  location enum('rumah', 'sekolah', 'kelas', 'masyarakat') [not null]
+  activity_date date [not null]
+  photo_url varchar(500) [null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    student_id
+    category
+    activity_date
+    (student_id, category)
+  }
+}
+
+// ----------------------------------------------------------
+// 11. ANECDOTAL NOTES (Teacher Observation)
+// ----------------------------------------------------------
+Table anecdotal_notes {
+  id bigint [pk, increment]
+  student_id bigint [not null, ref: > users.id]
+  teacher_id bigint [not null, ref: > users.id]
+  content text [not null]
+  category enum('participation', 'understanding', 'learning', 'social_engagement') [null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    student_id
+    teacher_id
+    created_at
+  }
+}
+
+// ----------------------------------------------------------
+// 12. AGGREGATED SCORES (Denormalized for Dashboard)
+// ----------------------------------------------------------
+Table aggregated_scores {
+  id bigint [pk, increment]
+  student_id bigint [not null, ref: > users.id]
+  class_id bigint [not null, ref: > classes.id]
+  period enum('daily', 'weekly', 'monthly', 'semester') [not null]
+  period_start date [not null]
+  period_end date [not null]
+  avg_pre_test_score decimal(5,2) [null]
+  avg_post_test_score decimal(5,2) [null]
+  cognitive_improvement decimal(5,2) [null]
+  materials_completed int [not null, default: 0]
+  tests_taken int [not null, default: 0]
+  participation decimal(3,2) [null]
+  understanding decimal(3,2) [null]
+  learning decimal(3,2) [null]
+  social_engagement decimal(3,2) [null]
+  overall_score decimal(5,2) [null]
+  trend enum('up', 'stable', 'down') [null]
+  activities_count int [not null, default: 0]
+  anecdotal_notes_count int [not null, default: 0]
+  calculated_at timestamp [not null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    (student_id, class_id, period, period_start, period_end) [unique]
+    student_id
+    class_id
+    period
+  }
+}
+
+// ----------------------------------------------------------
+// 13. ALERTS (Rules Engine Notifications)
+// ----------------------------------------------------------
+Table alerts {
+  id bigint [pk, increment]
+  teacher_id bigint [not null, ref: > users.id]
+  student_id bigint [not null, ref: > users.id]
+  class_id bigint [null, ref: > classes.id]
+  type enum('score_drop', 'inactive_student', 'test_failed') [not null]
+  priority enum('critical', 'warning', 'normal') [not null, default: 'normal']
+  title varchar(255) [not null]
+  description text [null]
+  is_read boolean [not null, default: false]
+  created_at timestamp [not null]
+
+  indexes {
+    teacher_id
+    student_id
+    type
+    priority
+    is_read
+    created_at
+  }
+}
+
+// ----------------------------------------------------------
+// 14. AUDIT LOGS
+// ----------------------------------------------------------
+Table audit_logs {
+  id bigint [pk, increment]
+  user_id bigint [null, ref: > users.id]
+  action_type varchar(50) [not null]
+  entity_type varchar(50) [null]
+  entity_id bigint [null]
+  description text [null]
+  ip_address varchar(45) [null]
+  user_agent text [null]
+  metadata json [null]
+  created_at timestamp [not null]
+
+  indexes {
+    user_id
+    action_type
+    entity_type
+    created_at
+  }
+}
+
+// ----------------------------------------------------------
+// 15. PUSH NOTIFICATION TOKENS
+// ----------------------------------------------------------
+Table notification_tokens {
+  id bigint [pk, increment]
+  user_id bigint [not null, ref: > users.id]
+  token text [not null]
+  device_type enum('android', 'ios', 'web') [not null]
+  is_active boolean [not null, default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    user_id
+    token [unique]
+  }
+}

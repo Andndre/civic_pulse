@@ -34,7 +34,7 @@ civic_pulse/
 │   │   │   ├── learning/          # E-Learning, Pre/Post-Test, PULSE assessment
 │   │   │   ├── activities/        # Activity logs & photo upload
 │   │   │   ├── scores/            # Radar chart & feedback
-│   │   │   └── profile/           # Profile & badges
+│   
 │   │   │
 │   │   ├── teacher/               # Teacher mobile app feature
 │   │   │   ├── home/              # Class list & quick actions
@@ -220,13 +220,12 @@ Semantic Colors (Analytics):
 | 3 | Add Activity Screen | Form: judul, tanggal (date picker), kategori PULSE dropdown, image picker (camera + gallery), preview image, submit |
 | 4 | Scores Screen | Radar chart (fl_chart) untuk 4 dimensi PULSE, bar chart untuk kognitif, animated data, color-coded metrics |
 | 5 | Smart Recommendation | Auto-generated text recommendation based on scores (rule-based or simple heuristic), display in card widget |
-| 6 | Profile Screen & Badges | Avatar, biodata, settings button, logout, badge showcase grid (locked/unlocked state with icons), badge unlock logic |
+| 6 | Profile Screen | Avatar, biodata, settings button, logout |
 
 **Fitur Sprint 3**:
 - Digital diary / activity log dengan foto bukti
 - Radar chart + bar chart visualisasi PULSE score
 - Auto-generated recommendation text
-- Badge system (Aktivis Kelas, dll.)
 - Image upload untuk bukti aktivitas
 
 ---

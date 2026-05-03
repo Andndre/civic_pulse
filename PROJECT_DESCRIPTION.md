@@ -80,7 +80,7 @@ Di bawah grafik, terdapat kotak "Rekomendasi Pintar" berisi kalimat motivasi yan
 
 Tab Profil:
 
-Menampilkan pasfoto siswa, biodata dasar, tombol pengaturan/keluar (logout), dan fitur "Etalase Lencana" (Badges). Lencana virtual ini didapatkan jika siswa mencapai target tertentu (misal: lencana "Aktivis Kelas" karena rutin mengunggah log aktivitas).
+Menampilkan pasfoto siswa, biodata dasar, tombol pengaturan/keluar (logout).
 
 C. Fitur Antarmuka Guru (Mobile App)
 
@@ -175,7 +175,7 @@ Warna disusun untuk merepresentasikan kepercayaan, keprofesionalan pendidikan, d
 
 Primary Color: #2196F3 (Material Blue). Digunakan untuk identitas utama aplikasi, Header/App Bar, Call-to-Action (CTA) Buttons, ikon aktif, dan navigasi utama. Warna biru ini dipilih karena eye-catching, memberi kesan akademis yang modern, dan tidak memicu ketegangan mata bagi siswa maupun guru.
 
-Secondary/Accent Color: #FFC107 (Amber) atau #00BCD4 (Cyan). Digunakan sesekali untuk menyorot notifikasi penting, lencana (badges), atau elemen interaktif sekunder.
+Secondary/Accent Color: #FFC107 (Amber) atau #00BCD4 (Cyan). Digunakan sesekali untuk menyorot notifikasi penting atau elemen interaktif sekunder.
 
 Background Color: #F8F9FA (Soft Light Gray) untuk latar belakang utama aplikasi/web agar tidak terlalu silau, dan #FFFFFF (Putih Murni) untuk kanvas Card atau kontainer data agar memberikan efek timbul (depth).
 
