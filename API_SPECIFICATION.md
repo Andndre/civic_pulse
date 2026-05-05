@@ -1079,103 +1079,9 @@ DELETE /anecdotal-notes/{id}
 
 ---
 
-## 8. Teacher Alerts / Notifications
+## 8. Web Dashboard - Admin
 
-### 8.1 Get Alerts
-
-```
-GET /alerts
-```
-
-**Headers:** `Authorization: Bearer {token}` (role: teacher)
-
-**Query Parameters:**
-
-| Param | Type | Default | Description |
-|-------|------|---------|-------------|
-| `priority` | enum | all | `critical`, `warning`, `normal` |
-| `per_page` | integer | 20 | Items per page |
-
-**Success Response (200):**
-
-```json
-{
-  "success": true,
-  "data": {
-    "alerts": [
-      {
-        "id": 1,
-        "type": "score_drop",
-        "priority": "critical",
-        "title": "Skor Interaksi Sosial Menurun Drastis",
-        "description": "Rudi Santoso - skor social_engagement turun dari 4.0 ke 2.1 minggu ini",
-        "student": {
-          "id": 8,
-          "name": "Rudi Santoso",
-          "avatar_url": null
-        },
-        "class": {
-          "id": 5,
-          "name": "VII-A"
-        },
-        "created_at": "2026-02-13T08:00:00Z",
-        "action_url": "/teacher/class/5/students/8"
-      }
-    ],
-    "unread_count": 3,
-    "pagination": { ... }
-  }
-}
-```
-
-> **Alert Types & Rules (Rules Engine):**
-> - `score_drop`: Jika skor PULSE turun >1.0 dalam 1 minggu
-> - `inactive_student`: Jika siswa tidak login >7 hari
-> - `test_failed`: Jika post-test score < 50
-
----
-
-### 8.2 Mark Alert as Read
-
-```
-PUT /alerts/{id}/read
-```
-
-**Headers:** `Authorization: Bearer {token}` (role: teacher)
-
-**Success Response (200):**
-
-```json
-{
-  "success": true,
-  "message": "Alert marked as read"
-}
-```
-
----
-
-### 8.3 Mark All Alerts as Read
-
-```
-PUT /alerts/read-all
-```
-
-**Headers:** `Authorization: Bearer {token}` (role: teacher)
-
-**Success Response (200):**
-
-```json
-{
-  "success": true,
-  "message": "All alerts marked as read"
-}
-```
-
----
-
-## 9. Web Dashboard - Admin
-
-### 9.1 Admin: System Overview Stats
+### 8.1 Admin: System Overview Stats
 
 ```
 GET /dashboard/admin/stats
@@ -1212,7 +1118,7 @@ GET /dashboard/admin/stats
 
 ---
 
-### 9.2 Admin: User Management List
+### 8.2 Admin: User Management List
 
 ```
 GET /dashboard/admin/users
@@ -1257,7 +1163,7 @@ GET /dashboard/admin/users
 
 ---
 
-### 9.3 Admin: Create User
+### 8.3 Admin: Create User
 
 ```
 POST /dashboard/admin/users
@@ -1291,7 +1197,7 @@ POST /dashboard/admin/users
 
 ---
 
-### 9.4 Admin: Update User
+### 8.4 Admin: Update User
 
 ```
 PUT /dashboard/admin/users/{id}
@@ -1319,7 +1225,7 @@ PUT /dashboard/admin/users/{id}
 
 ---
 
-### 9.5 Admin: Verify User Email
+### 8.5 Admin: Verify User Email
 
 ```
 PUT /dashboard/admin/users/{id}/verify-email
@@ -1338,7 +1244,7 @@ PUT /dashboard/admin/users/{id}/verify-email
 
 ---
 
-### 9.6 Admin: Disable User
+### 8.6 Admin: Disable User
 
 ```
 PUT /dashboard/admin/users/{id}/disable
@@ -1357,9 +1263,9 @@ PUT /dashboard/admin/users/{id}/disable
 
 ---
 
-## 10. Web Dashboard - Teacher Analytics
+## 9. Web Dashboard - Teacher Analytics
 
-### 10.1 Teacher: Class Analytics Summary
+### 9.1 Teacher: Class Analytics Summary
 
 ```
 GET /dashboard/teacher/classes/{class_id}/analytics
@@ -1415,7 +1321,7 @@ GET /dashboard/teacher/classes/{class_id}/analytics
 
 ---
 
-### 10.2 Teacher: Class Recapitulation (Heatmap)
+### 9.2 Teacher: Class Recapitulation (Heatmap)
 
 ```
 GET /dashboard/teacher/classes/{class_id}/recapitulation
@@ -1481,7 +1387,7 @@ GET /dashboard/teacher/classes/{class_id}/recapitulation
 
 ---
 
-### 10.3 Teacher: Activity Timeline (Student)
+### 9.3 Teacher: Activity Timeline (Student)
 
 ```
 GET /dashboard/teacher/students/{student_id}/activities-timeline
@@ -1525,7 +1431,7 @@ GET /dashboard/teacher/students/{student_id}/activities-timeline
 
 ---
 
-### 10.4 Teacher: Export Report
+### 9.4 Teacher: Export Report
 
 ```
 GET /dashboard/teacher/classes/{class_id}/export
@@ -1550,9 +1456,9 @@ GET /dashboard/teacher/classes/{class_id}/export
 
 ---
 
-## 11. Admin: CMS E-Learning
+## 10. Admin: CMS E-Learning
 
-### 11.1 Get Content Hierarchy
+### 10.1 Get Content Hierarchy
 
 ```
 GET /dashboard/admin/content
@@ -1585,7 +1491,7 @@ GET /dashboard/admin/content
 
 ---
 
-### 11.2 Create Material
+### 10.2 Create Material
 
 ```
 POST /dashboard/admin/materials
@@ -1624,7 +1530,7 @@ POST /dashboard/admin/materials
 
 ---
 
-### 11.3 Add Pre/Post Test Questions
+### 10.3 Add Pre/Post Test Questions
 
 ```
 POST /dashboard/admin/materials/{id}/questions
@@ -1669,7 +1575,7 @@ POST /dashboard/admin/materials/{id}/questions
 
 ---
 
-### 11.4 Update PULSE Instrument
+### 10.4 Update PULSE Instrument
 
 ```
 PUT /dashboard/admin/materials/{id}/pulse-instrument
@@ -1717,7 +1623,7 @@ PUT /dashboard/admin/materials/{id}/pulse-instrument
 
 ---
 
-### 11.5 Publish Material
+### 10.5 Publish Material
 
 ```
 PUT /dashboard/admin/materials/{id}/publish
@@ -1736,40 +1642,7 @@ PUT /dashboard/admin/materials/{id}/publish
 
 ---
 
-## 12. File Upload
-
-### 12.1 Upload Image
-
-```
-POST /upload/image
-```
-
-**Headers:**
-- `Authorization: Bearer {token}`
-- `Content-Type: multipart/form-data`
-
-**Request Body:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `file` | file | Yes | Image file (max 5MB, jpeg/png/webp) |
-| `type` | enum | Yes | `activity_photo`, `avatar`, `thumbnail` |
-
-**Success Response (201):**
-
-```json
-{
-  "success": true,
-  "data": {
-    "url": "https://cdn.civicpulse.id/uploads/activities/abc123.jpg",
-    "filename": "abc123.jpg"
-  }
-}
-```
-
----
-
-## 13. Error Codes Reference
+## 11. Error Codes Reference
 
 | HTTP Code | Error Code | Description |
 |-----------|------------|-------------|
