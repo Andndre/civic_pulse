@@ -38,7 +38,6 @@ civic_pulse/
 │   │   │
 │   │   ├── teacher/               # Teacher mobile app feature
 │   │   │   ├── home/              # Class list & quick actions
-│   │   │   ├── alerts/            # Global notifications
 │   │   │   ├── class_detail/      # Class dashboard with top tabs
 │   │   │   ├── student_profile/   # Individual student view + anecdotal notes
 │   │   │   └── profile/
@@ -149,9 +148,7 @@ Semantic Colors (Analytics):
 /student/profile          → StudentProfileScreen
 
 --- TEACHER ROUTES ---
-/teacher/home              → TeacherHomeScreen (class list)
-/teacher/alerts           → AlertsScreen
-/teacher/profile          → TeacherProfileScreen
+/teacher/home              → TeacherHomeScreen (class list)/teacher/profile          → TeacherProfileScreen
 /teacher/class/:id        → ClassDetailScreen
 /teacher/class/:id/students/:studentId → StudentProfileScreen (teacher view)
 
@@ -174,7 +171,7 @@ Semantic Colors (Analytics):
 | Hari | Deliverable | Detail |
 |------|-------------|--------|
 | 1-2 | Setup Proyek | Inisialisasi Flutter project, configure pubspec.yaml, setup folder structure, configure theme (colors, typography), buat base widgets (AppButton, AppCard, AppTextField) |
-| 3 | Auth Data Layer | API client (Dio setup), auth repository, login/register models, token storage (flutter_secure_storage) |
+| Auth Data Layer | API client (Dio setup), auth repository, login/register models, token storage (flutter_secure_storage) |
 | 4 | Auth Domain Layer | Use cases (Login, Register, Logout), auth state management (Riverpod), guarded routes |
 | 5 | Auth UI Layer | LoginScreen, RegisterScreen, ClassSetupScreen (guru buat kelas / siswa input kode kelas), splash screen |
 | 6 | Testing & Polish | Unit test auth, integrasi auth flow end-to-end, error handling |
@@ -195,9 +192,9 @@ Semantic Colors (Analytics):
 | Hari | Deliverable | Detail |
 |------|-------------|--------|
 | 1-2 | Navigation Setup | Bottom Navigation Bar (4 tab: Home, Belajar, Aktivitas, Skor, Profil), AppShell, scaffold configuration |
-| 3 | Student Home Screen | Greeting + class card widget, empty state (belum gabung kelas), progress widget (jumlah materi), notification bell icon |
+| 3 | Student Home Screen | Greeting + class card widget, empty state (belum gabung kelas), progress widget (jumlah materi) |
 | 4 | Learning Gallery | Material cards grid, pull-to-refresh, shimmer loading, empty state, API integration untuk fetch materi berdasarkan jenjang |
-| 5 | Learning Path - PreTest | Quiz UI (radio buttons, timer, progress indicator), soal pilihan ganda, scoring logic, auto-submit |
+| 5 | Learning Path - PreTest | Quiz UI (radio buttons, progress indicator), soal pilihan ganda, scoring logic, auto-submit |
 | 6 | Learning Path - E-Book & PostTest | In-app PDF viewer (syncfusion_flutter_pdfviewer atau flutter_pdfview), Post-Test quiz dengan comparison popup Pre vs Post score |
 | 7 | PULSE Assessment & Polish | Skala Likert slider (1-5) dengan touch target 48dp, submit → return to gallery, mark materi as completed |
 
@@ -276,19 +273,17 @@ Semantic Colors (Analytics):
 
 ### Sprint 6: Integrasi Backend & Polish (6 hari)
 
-**Tujuan**: Koneksi penuh ke Laravel API, push notifications, final polish, dan build release.
+**Tujuan**: Koneksi penuh ke Laravel API dan final polish untuk build release.
 
 | Hari | Deliverable | Detail |
 |------|-------------|--------|
 | 1-2 | API Integration | Koneksi semua screens ke Laravel REST API, error handling (offline, timeout, 401/403), retry logic, loading states |
-| 3 | Push Notifications | Firebase Cloud Messaging (FCM) setup, notification handling, notification bell di Home screen, deep linking |
-| 4 | Animations & Polish | Skeleton loading (shimmer) di semua list, page transition animations, chart animations, FAB ripple effects, empty state illustrations |
+| 3-4 | Animations & Polish | Skeleton loading (shimmer) di semua list, page transition animations, chart animations, FAB ripple effects, empty state illustrations |
 | 5 | Performance & UX | Lazy loading images, pagination, bundle size optimization, dark mode preparation (optional), accessibility audit (contrast, touch targets) |
 | 6 | Build & Release | Android APK build, iOS build (jika Mac), web build (`flutter build web`), testing on physical device, release checklist |
 
 **Fitur Sprint 6**:
 - Full API integration (Laravel backend)
-- Push notifications via FCM
 - Skeleton loading animations
 - Performance optimization
 - Android APK release ready
