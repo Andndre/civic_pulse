@@ -279,67 +279,7 @@ Table anecdotal_notes {
 }
 
 // ----------------------------------------------------------
-// 12. AGGREGATED SCORES (Denormalized for Dashboard)
-// ----------------------------------------------------------
-Table aggregated_scores {
-  id bigint [pk, increment]
-  student_id bigint [not null, ref: > users.id]
-  class_id bigint [not null, ref: > classes.id]
-  period enum('daily', 'weekly', 'monthly', 'semester') [not null]
-  period_start date [not null]
-  period_end date [not null]
-  avg_pre_test_score decimal(5,2) [null]
-  avg_post_test_score decimal(5,2) [null]
-  cognitive_improvement decimal(5,2) [null]
-  materials_completed int [not null, default: 0]
-  tests_taken int [not null, default: 0]
-  participation decimal(3,2) [null]
-  understanding decimal(3,2) [null]
-  learning decimal(3,2) [null]
-  social_engagement decimal(3,2) [null]
-  overall_score decimal(5,2) [null]
-  trend enum('up', 'stable', 'down') [null]
-  activities_count int [not null, default: 0]
-  anecdotal_notes_count int [not null, default: 0]
-  calculated_at timestamp [not null]
-  created_at timestamp [not null]
-  updated_at timestamp [not null]
-
-  indexes {
-    (student_id, class_id, period, period_start, period_end) [unique]
-    student_id
-    class_id
-    period
-  }
-}
-
-// ----------------------------------------------------------
-// 13. ALERTS (Rules Engine Notifications)
-// ----------------------------------------------------------
-Table alerts {
-  id bigint [pk, increment]
-  teacher_id bigint [not null, ref: > users.id]
-  student_id bigint [not null, ref: > users.id]
-  class_id bigint [null, ref: > classes.id]
-  type enum('score_drop', 'inactive_student', 'test_failed') [not null]
-  priority enum('critical', 'warning', 'normal') [not null, default: 'normal']
-  title varchar(255) [not null]
-  description text [null]
-  is_read boolean [not null, default: false]
-  created_at timestamp [not null]
-
-  indexes {
-    teacher_id
-    student_id
-    type
-    priority
-    is_read
-    created_at
-  }
-}
-
-// ----------------------------------------------------------
-// 14. AUDIT LOGS
+// 12. AUDIT LOGS
 // ----------------------------------------------------------
 Table audit_logs {
   id bigint [pk, increment]
@@ -358,23 +298,5 @@ Table audit_logs {
     action_type
     entity_type
     created_at
-  }
-}
-
-// ----------------------------------------------------------
-// 15. PUSH NOTIFICATION TOKENS
-// ----------------------------------------------------------
-Table notification_tokens {
-  id bigint [pk, increment]
-  user_id bigint [not null, ref: > users.id]
-  token text [not null]
-  device_type enum('android', 'ios', 'web') [not null]
-  is_active boolean [not null, default: true]
-  created_at timestamp [not null]
-  updated_at timestamp [not null]
-
-  indexes {
-    user_id
-    token [unique]
   }
 }
