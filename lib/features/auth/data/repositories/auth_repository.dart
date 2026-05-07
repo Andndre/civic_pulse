@@ -8,6 +8,11 @@ abstract class AuthRepositoryInterface {
   Future<void> logout();
   Future<User?> getCurrentUser();
   Future<String?> joinClass(String classCode);
+  Future<String?> createClass({
+    required String name,
+    required String gradeCategory,
+    required int gradeLevel,
+  });
 }
 
 class AuthRepository implements AuthRepositoryInterface {

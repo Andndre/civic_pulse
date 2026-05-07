@@ -1,9 +1,16 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/data.dart';
 import '../../../../core/network/network.dart';
 
+// Toggle this to switch between mock and real API
+const bool _useMockData = true;
+
 // Auth Repository Provider
-final authRepositoryProvider = Provider<AuthRepository>((ref) {
+final authRepositoryProvider = Provider<AuthRepositoryInterface>((ref) {
+  if (_useMockData) {
+    return MockAuthRepository();
+  }
   return AuthRepository();
 });
 
@@ -38,13 +45,15 @@ class AuthState {
   }
 }
 
-// Auth Notifier
-class AuthNotifier extends StateNotifier<AuthState> {
-  final AuthRepository _repository;
-
-  AuthNotifier(this._repository) : super(const AuthState()) {
+// Auth Notifier - Riverpod 3.x Notifier pattern
+class AuthNotifier extends Notifier<AuthState> {
+  @override
+  AuthState build() {
     _checkAuthStatus();
+    return const AuthState();
   }
+
+  AuthRepositoryInterface get _repository => ref.read(authRepositoryProvider);
 
   Future<void> _checkAuthStatus() async {
     try {
@@ -70,9 +79,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
         LoginRequest(email: email, password: password),
       );
 
-      await ApiClient.instance.setToken(response.token);
+      if (!_useMockData) {
+        await ApiClient.instance.setToken(response.token);
+      }
 
-      // Check if user needs to setup class (teacher) or join class (student)
       final needsSetup = response.user.isTeacher && response.classCode == null;
 
       state = state.copyWith(
@@ -80,10 +90,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
         user: response.user,
         needsClassSetup: needsSetup,
       );
-    } on ApiException catch (e) {
+    } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: e.message,
+        errorMessage: e.toString(),
       );
     }
   }
@@ -106,9 +116,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
         ),
       );
 
-      await ApiClient.instance.setToken(response.token);
+      if (!_useMockData) {
+        await ApiClient.instance.setToken(response.token);
+      }
 
-      // Teachers need to create a class after registration
       final needsSetup = response.user.isTeacher;
 
       state = state.copyWith(
@@ -116,10 +127,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
         user: response.user,
         needsClassSetup: needsSetup,
       );
-    } on ApiException catch (e) {
+    } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: e.message,
+        errorMessage: e.toString(),
       );
     }
   }
@@ -128,7 +139,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       await _repository.logout();
     } finally {
-      await ApiClient.instance.clearToken();
+      if (!_useMockData) {
+        await ApiClient.instance.clearToken();
+      }
       state = const AuthState(status: AuthStatus.unauthenticated);
     }
   }
@@ -137,8 +150,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       await _repository.joinClass(classCode);
       state = state.copyWith(needsClassSetup: false);
-    } on ApiException catch (e) {
-      state = state.copyWith(errorMessage: e.message);
+    } catch (e) {
+      state = state.copyWith(errorMessage: e.toString());
     }
   }
 
@@ -155,8 +168,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       state = state.copyWith(needsClassSetup: false);
       return classCode;
-    } on ApiException catch (e) {
-      state = state.copyWith(errorMessage: e.message);
+    } catch (e) {
+      state = state.copyWith(errorMessage: e.toString());
       return null;
     }
   }
@@ -172,10 +185,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
 // Auth Notifier Provider
 final authNotifierProvider =
-    StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  final repository = ref.watch(authRepositoryProvider);
-  return AuthNotifier(repository);
-});
+    NotifierProvider<AuthNotifier, AuthState>(AuthNotifier.new);
 
 // Convenience providers
 final currentUserProvider = Provider<User?>((ref) {
@@ -189,3 +199,94 @@ final isAuthenticatedProvider = Provider<bool>((ref) {
 final isLoadingProvider = Provider<bool>((ref) {
   return ref.watch(authNotifierProvider).status == AuthStatus.loading;
 });
+
+// =============================================================================
+// MOCK AUTH REPOSITORY
+// =============================================================================
+
+class MockAuthRepository implements AuthRepositoryInterface {
+  @override
+  Future<AuthResponse> login(LoginRequest request) async {
+    debugPrint('[MOCK] Login attempt: ${request.email}');
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    if (request.email == 'andi@email.com' && request.password == 'password123') {
+      return AuthResponse(
+        token: 'mock_student_token_123',
+        user: User(
+          id: 1,
+          name: 'Andi Pratama',
+          email: request.email,
+          role: UserRole.student,
+          isActive: true,
+          createdAt: DateTime.now(),
+        ),
+      );
+    }
+
+    if (request.email == 'siti@email.com' && request.password == 'password123') {
+      return AuthResponse(
+        token: 'mock_teacher_token_456',
+        user: User(
+          id: 2,
+          name: 'Bu Siti Rahayu',
+          email: request.email,
+          role: UserRole.teacher,
+          isActive: true,
+          createdAt: DateTime.now(),
+        ),
+        classCode: 'VIIA2024',
+      );
+    }
+
+    throw Exception('Email atau password salah');
+  }
+
+  @override
+  Future<AuthResponse> register(RegisterRequest request) async {
+    debugPrint('[MOCK] Register: ${request.name} as ${request.role}');
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    final userRole = request.role == 'teacher' ? UserRole.teacher : UserRole.student;
+
+    return AuthResponse(
+      token: 'mock_register_token_${DateTime.now().millisecondsSinceEpoch}',
+      user: User(
+        id: 100,
+        name: request.name,
+        email: request.email,
+        role: userRole,
+        isActive: true,
+        createdAt: DateTime.now(),
+      ),
+    );
+  }
+
+  @override
+  Future<void> logout() async {
+    await Future.delayed(const Duration(milliseconds: 200));
+  }
+
+  @override
+  Future<User?> getCurrentUser() async {
+    return null; // Mock doesn't persist session
+  }
+
+  @override
+  Future<String?> joinClass(String classCode) async {
+    debugPrint('[MOCK] Join class: $classCode');
+    await Future.delayed(const Duration(milliseconds: 400));
+    return classCode;
+  }
+
+  @override
+  Future<String?> createClass({
+    required String name,
+    required String gradeCategory,
+    required int gradeLevel,
+  }) async {
+    debugPrint('[MOCK] Create class: $name ($gradeCategory $gradeLevel)');
+    await Future.delayed(const Duration(milliseconds: 400));
+    return 'MOCK${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}';
+  }
+}
