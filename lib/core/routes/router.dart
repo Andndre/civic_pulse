@@ -8,6 +8,7 @@ import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/class_setup_screen.dart';
 import '../../features/student/home/screens/student_home_screen.dart';
 import '../../features/student/learning/screens/learning_gallery_screen.dart';
+import '../../features/student/learning/screens/learning_path_screen.dart';
 import '../../features/student/activities/screens/activity_log_screen.dart';
 import '../../features/student/scores/screens/scores_feedback_screen.dart';
 import '../../features/student/profile/screens/student_profile_screen.dart';
@@ -95,6 +96,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/student/learning',
             builder: (context, state) => const LearningGalleryScreen(),
+          ),
+          GoRoute(
+            path: '/student/learning/:id',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['id'] ?? '0') ?? 0;
+              return LearningPathScreen(materialId: id);
+            },
           ),
           GoRoute(
             path: '/student/activities',
