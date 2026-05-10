@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../constants/constants.dart';
-import 'app_button.dart';
 
 class EmptyState extends StatelessWidget {
   final IconData icon;

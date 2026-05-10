@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/constants/constants.dart';
-import '../../../../core/widgets/widgets.dart';
 import '../providers/auth_provider.dart';
 
 class ClassSetupScreen extends ConsumerStatefulWidget {

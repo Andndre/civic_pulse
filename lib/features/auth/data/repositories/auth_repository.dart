@@ -84,6 +84,7 @@ class AuthRepository implements AuthRepositoryInterface {
     }
   }
 
+  @override
   Future<String?> createClass({
     required String name,
     required String gradeCategory,
