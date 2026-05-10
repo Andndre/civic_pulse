@@ -22,7 +22,6 @@ class _ClassSetupScreenState extends ConsumerState<ClassSetupScreen> {
   int _gradeLevel = 7;
   bool _isLoading = false;
   String? _generatedClassCode;
-  bool _isCreating = true;
 
   @override
   void dispose() {
@@ -44,10 +43,7 @@ class _ClassSetupScreenState extends ConsumerState<ClassSetupScreen> {
           );
 
       if (classCode != null) {
-        setState(() {
-          _generatedClassCode = classCode;
-          _isCreating = false;
-        });
+        setState(() => _generatedClassCode = classCode);
       }
     } finally {
       setState(() => _isLoading = false);
@@ -75,9 +71,11 @@ class _ClassSetupScreenState extends ConsumerState<ClassSetupScreen> {
   Future<void> _shareClassCode() async {
     if (_generatedClassCode == null) return;
 
-    await Share.share(
-      'Bergabunglah dengan kelas CivicPulse saya!\n\nKode Kelas: $_generatedClassCode\n\nDownload app: https://civicpulse.app',
-      subject: 'Undangan Kelas CivicPulse',
+    await SharePlus.instance.share(
+      ShareParams(
+        text: 'Bergabunglah dengan kelas CivicPulse saya!\n\nKode Kelas: $_generatedClassCode\n\nDownload app: https://civicpulse.app',
+        subject: 'Undangan Kelas CivicPulse',
+      ),
     );
   }
 
