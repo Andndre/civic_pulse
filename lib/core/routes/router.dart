@@ -10,6 +10,7 @@ import '../../features/student/home/screens/student_home_screen.dart';
 import '../../features/student/learning/screens/learning_gallery_screen.dart';
 import '../../features/student/learning/screens/learning_path_screen.dart';
 import '../../features/student/activities/screens/activity_log_screen.dart';
+import '../../features/student/activities/screens/add_activity_screen.dart';
 import '../../features/student/scores/screens/scores_feedback_screen.dart';
 import '../../features/student/profile/screens/student_profile_screen.dart';
 import '../../features/teacher/home/screens/teacher_home_screen.dart';
@@ -107,6 +108,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/student/activities',
             builder: (context, state) => const ActivityLogScreen(),
+          ),
+          GoRoute(
+            path: '/student/activities/add',
+            builder: (context, state) => const AddActivityScreen(),
           ),
           GoRoute(
             path: '/student/scores',

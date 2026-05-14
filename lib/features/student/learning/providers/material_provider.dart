@@ -1,50 +1,47 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/services/mock_models.dart';
 import '../../../../shared/services/mock_services.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
-// Material filter state
-class MaterialFilter {
-  final String? gradeCategory;
-  final int? gradeLevel;
-
-  const MaterialFilter({this.gradeCategory, this.gradeLevel});
-
-  MaterialFilter copyWith({String? gradeCategory, int? gradeLevel}) {
-    return MaterialFilter(
-      gradeCategory: gradeCategory ?? this.gradeCategory,
-      gradeLevel: gradeLevel ?? this.gradeLevel,
-    );
-  }
-}
-
-// Material filter notifier (Riverpod 3.x pattern)
-class MaterialFilterNotifier extends Notifier<MaterialFilter> {
-  @override
-  MaterialFilter build() {
-    return const MaterialFilter();
-  }
-
-  void setGradeCategory(String? category) {
-    state = MaterialFilter(gradeCategory: category);
-  }
-
-  void clear() {
-    state = const MaterialFilter();
-  }
-}
-
-final materialFilterProvider =
-    NotifierProvider<MaterialFilterNotifier, MaterialFilter>(
-        MaterialFilterNotifier.new);
-
-// Materials list provider
+// Materials list provider - filter by student's enrolled class
 final materialsProvider = FutureProvider<List<LearningMaterial>>((ref) async {
-  final filter = ref.watch(materialFilterProvider);
   final service = MockMaterialService();
+  final classService = MockClassService();
+
+  // Get current user from auth state
+  final authState = ref.read(authNotifierProvider);
+  final user = authState.user;
+
+  if (user == null) {
+    return [];
+  }
+
+  // Get student's enrolled class
+  List<StudentClass> studentClasses = [];
+  try {
+    studentClasses = await classService.getStudentClasses(user.id);
+  } catch (_) {
+    studentClasses = [];
+  }
+
+  // Use first enrolled class's grade info
+  final enrolledClass = studentClasses.isNotEmpty ? studentClasses.first : null;
+
+  // If no enrolled class, return empty list
+  if (enrolledClass == null) {
+    return [];
+  }
+
   return service.getMaterials(
-    gradeCategory: filter.gradeCategory,
-    gradeLevel: filter.gradeLevel,
+    gradeCategory: enrolledClass.gradeCategory,
+    gradeLevel: enrolledClass.gradeLevel,
   );
+});
+
+// Fallback provider untuk development - return semua materi
+final allMaterialsProvider = FutureProvider<List<LearningMaterial>>((ref) async {
+  final service = MockMaterialService();
+  return service.getMaterials();
 });
 
 // Single material provider

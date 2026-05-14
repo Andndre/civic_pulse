@@ -187,6 +187,151 @@ class MockAnalyticsService {
   }
 }
 
+/// Mock Teacher Service
+class MockTeacherService {
+  Future<List<TeacherClass>> getTeacherClasses(int teacherId) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    // Return mock teacher classes
+    return [
+      TeacherClass(
+        id: 1,
+        name: 'Kelas VII-A',
+        gradeCategory: 'SMP',
+        gradeLevel: 7,
+        classCode: 'VIIA2024',
+        studentCount: 32,
+        completedMaterials: 2,
+        totalMaterials: 3,
+        averagePulse: 3.6,
+      ),
+      TeacherClass(
+        id: 2,
+        name: 'Kelas VIII-B',
+        gradeCategory: 'SMP',
+        gradeLevel: 8,
+        classCode: 'VIIIB2024',
+        studentCount: 28,
+        completedMaterials: 1,
+        totalMaterials: 3,
+        averagePulse: 3.4,
+      ),
+    ];
+  }
+
+  Future<List<ClassStudent>> getClassStudents(int classId) async {
+    await Future.delayed(const Duration(milliseconds: 400));
+    // Return mock students for the class
+    return [
+      ClassStudent(
+        id: 1,
+        name: 'Andi Pratama',
+        email: 'andi@email.com',
+        participation: 3.5,
+        understanding: 4.0,
+        learning: 3.8,
+        socialEngagement: 3.2,
+        status: 'active',
+      ),
+      ClassStudent(
+        id: 2,
+        name: 'Siti Nurhaliza',
+        email: 'siti@email.com',
+        participation: 4.0,
+        understanding: 3.5,
+        learning: 4.2,
+        socialEngagement: 3.8,
+        status: 'active',
+      ),
+      ClassStudent(
+        id: 3,
+        name: 'Budi Santoso',
+        email: 'budi@email.com',
+        participation: 2.8,
+        understanding: 3.2,
+        learning: 3.0,
+        socialEngagement: 2.5,
+        status: 'active',
+      ),
+      ClassStudent(
+        id: 4,
+        name: 'Dewi Lestari',
+        email: 'dewi@email.com',
+        participation: 3.8,
+        understanding: 4.1,
+        learning: 3.9,
+        socialEngagement: 4.0,
+        status: 'active',
+      ),
+      ClassStudent(
+        id: 5,
+        name: 'Rizki Ramadhan',
+        email: 'rizki@email.com',
+        participation: 3.2,
+        understanding: 3.5,
+        learning: 3.4,
+        socialEngagement: 3.0,
+        status: 'active',
+      ),
+    ];
+  }
+
+  Future<List<AnecdotalNote>> getAnecdotalNotes(int studentId) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    return [
+      AnecdotalNote(
+        id: 1,
+        teacherId: 2,
+        studentId: studentId,
+        content: 'Siswa aktif bertanya dalam diskusi kelompok tentang toleransi antar umat beragama.',
+        dimension: 'participation',
+        createdAt: DateTime.now().subtract(const Duration(days: 2)),
+      ),
+      AnecdotalNote(
+        id: 2,
+        teacherId: 2,
+        studentId: studentId,
+        content: 'Memahami konsep keberagaman budaya dengan baik. Bisa memberikan contoh dari lingkungan sekitar.',
+        dimension: 'understanding',
+        createdAt: DateTime.now().subtract(const Duration(days: 5)),
+      ),
+    ];
+  }
+
+  Future<AnecdotalNote> createAnecdotalNote({
+    required int studentId,
+    required String content,
+    required String dimension,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    return AnecdotalNote(
+      id: DateTime.now().millisecondsSinceEpoch,
+      teacherId: 2,
+      studentId: studentId,
+      content: content,
+      dimension: dimension,
+      createdAt: DateTime.now(),
+    );
+  }
+
+  Future<void> deleteAnecdotalNote(int noteId) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+  }
+
+  Future<String> createClass({
+    required String name,
+    required String gradeCategory,
+    required int gradeLevel,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 600));
+    final code = '${gradeCategory.substring(0, 2)}${gradeLevel}${name.replaceAll(' ', '').substring(0, 2).toUpperCase()}${DateTime.now().year}';
+    return code;
+  }
+
+  Future<void> deleteClass(int classId) async {
+    await Future.delayed(const Duration(milliseconds: 400));
+  }
+}
+
 // Service Providers
 final mockAuthServiceProvider = Provider<MockAuthService>((ref) {
   return MockAuthService();

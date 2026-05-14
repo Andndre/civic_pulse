@@ -168,3 +168,73 @@ class StudentProgress {
     required this.pulseStatus,
   });
 }
+
+// Teacher models
+class TeacherClass {
+  final int id;
+  final String name;
+  final String gradeCategory;
+  final int gradeLevel;
+  final String classCode;
+  final int studentCount;
+  final int completedMaterials;
+  final int totalMaterials;
+  final double averagePulse;
+
+  const TeacherClass({
+    required this.id,
+    required this.name,
+    required this.gradeCategory,
+    required this.gradeLevel,
+    required this.classCode,
+    required this.studentCount,
+    required this.completedMaterials,
+    required this.totalMaterials,
+    required this.averagePulse,
+  });
+}
+
+class ClassStudent {
+  final int id;
+  final String name;
+  final String email;
+  final String? avatarUrl;
+  final double participation;
+  final double understanding;
+  final double learning;
+  final double socialEngagement;
+  final String status; // active, inactive
+
+  const ClassStudent({
+    required this.id,
+    required this.name,
+    required this.email,
+    this.avatarUrl,
+    required this.participation,
+    required this.understanding,
+    required this.learning,
+    required this.socialEngagement,
+    required this.status,
+  });
+
+  double get overallPulse =>
+      (participation + understanding + learning + socialEngagement) / 4;
+}
+
+class AnecdotalNote {
+  final int id;
+  final int teacherId;
+  final int studentId;
+  final String content;
+  final String dimension; // participation, understanding, learning, social_engagement
+  final DateTime createdAt;
+
+  const AnecdotalNote({
+    required this.id,
+    required this.teacherId,
+    required this.studentId,
+    required this.content,
+    required this.dimension,
+    required this.createdAt,
+  });
+}
