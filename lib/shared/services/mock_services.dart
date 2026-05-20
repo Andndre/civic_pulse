@@ -323,7 +323,7 @@ class MockTeacherService {
     required int gradeLevel,
   }) async {
     await Future.delayed(const Duration(milliseconds: 600));
-    final code = '${gradeCategory.substring(0, 2)}${gradeLevel}${name.replaceAll(' ', '').substring(0, 2).toUpperCase()}${DateTime.now().year}';
+    final code = '${gradeCategory.substring(0, 2)}$gradeLevel${name.replaceAll(' ', '').substring(0, 2).toUpperCase()}${DateTime.now().year}';
     return code;
   }
 

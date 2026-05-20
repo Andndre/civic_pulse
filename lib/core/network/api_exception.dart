@@ -54,8 +54,14 @@ class ApiException implements Exception {
     if (data == null) return null;
     if (data is String) return data;
     if (data is Map) {
+      // Laravel success/error response format
       if (data.containsKey('message')) return data['message'];
       if (data.containsKey('error')) return data['error'];
+      // Laravel error_code (e.g., INVALID_CREDENTIALS, TOKEN_EXPIRED)
+      if (data.containsKey('error_code')) {
+        final errorCode = data['error_code'] as String;
+        return _translateErrorCode(errorCode);
+      }
       // Laravel validation errors
       if (data.containsKey('errors')) {
         final errors = data['errors'];
@@ -69,6 +75,29 @@ class ApiException implements Exception {
       }
     }
     return null;
+  }
+
+  static String _translateErrorCode(String code) {
+    switch (code) {
+      case 'INVALID_CREDENTIALS':
+        return 'Email atau password salah';
+      case 'TOKEN_EXPIRED':
+        return 'Sesi telah habis. Silakan login kembali.';
+      case 'TOKEN_INVALID':
+        return 'Token tidak valid. Silakan login kembali.';
+      case 'UNAUTHENTICATED':
+        return 'Belum terautentikasi. Silakan login.';
+      case 'FORBIDDEN':
+        return 'Anda tidak memiliki izin untuk mengakses.';
+      case 'RESOURCE_NOT_FOUND':
+        return 'Data tidak ditemukan';
+      case 'ACCOUNT_LOCKED':
+        return 'Akun terkunci. Silakan coba beberapa menit lagi.';
+      case 'RATE_LIMIT_EXCEEDED':
+        return 'Terlalu banyak permintaan. Silakan tunggu sebentar.';
+      default:
+        return code;
+    }
   }
 
   @override

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../shared/services/mock_models.dart';
+import '../../../../shared/services/mock_services.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../providers/student_providers.dart';
 import '../../learning/providers/material_provider.dart';
@@ -19,6 +20,13 @@ class StudentHomeScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showJoinClassBottomSheet(context, ref),
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.textOnPrimary,
+        icon: const Icon(Icons.add),
+        label: const Text('Bergabung Kelas'),
+      ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -125,6 +133,114 @@ class StudentHomeScreen extends ConsumerWidget {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showJoinClassBottomSheet(BuildContext context, WidgetRef ref) {
+    final codeController = TextEditingController();
+    String? errorMessage;
+    bool isLoading = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => Padding(
+          padding: EdgeInsets.only(
+            left: AppSpacing.lg,
+            right: AppSpacing.lg,
+            top: AppSpacing.lg,
+            bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Bergabung dengan Kelas',
+                    style: AppTypography.titleLarge.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              AppSpacing.vGapMd,
+              Text(
+                'Masukkan kode kelas yang diberikan oleh guru untuk bergabung dengan kelas.',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              AppSpacing.vGapMd,
+              AppTextField(
+                controller: codeController,
+                hint: 'Contoh: VIIA2024',
+                label: 'Kode Kelas',
+                errorText: errorMessage,
+                textCapitalization: TextCapitalization.characters,
+                onChanged: (_) {
+                  if (errorMessage != null) {
+                    setState(() => errorMessage = null);
+                  }
+                },
+              ),
+              AppSpacing.vGapMd,
+              AppButton(
+                label: 'Bergabung',
+                loading: isLoading,
+                onPressed: () async {
+                  final code = codeController.text.trim();
+                  if (code.isEmpty) {
+                    setState(() => errorMessage = 'Kode Kelas tidak boleh kosong');
+                    return;
+                  }
+                  if (code.length < 6) {
+                    setState(() => errorMessage = 'Kode Kelas minimal 6 karakter');
+                    return;
+                  }
+
+                  setState(() => isLoading = true);
+
+                  try {
+                    final classService = MockClassService();
+                    await classService.joinClass(code);
+                    ref.invalidate(studentClassesProvider);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Berhasil bergabung dengan kelas!'),
+                          backgroundColor: AppColors.success,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      setState(() {
+                        errorMessage = e.toString().replaceAll('Exception: ', '');
+                        isLoading = false;
+                      });
+                    }
+                  }
+                },
+              ),
+              AppSpacing.vGapSm,
+            ],
           ),
         ),
       ),

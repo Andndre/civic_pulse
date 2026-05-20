@@ -64,7 +64,7 @@ class StudentProfileScreen extends ConsumerWidget {
                     child: Image.network(
                       user!.avatarUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildInitialsAvatar(user.name),
+                      errorBuilder: (_, _, _) => _buildInitialsAvatar(user.name),
                     ),
                   )
                 : _buildInitialsAvatar(user?.name ?? 'S'),

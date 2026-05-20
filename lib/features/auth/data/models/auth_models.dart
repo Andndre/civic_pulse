@@ -27,9 +27,11 @@ class User extends Equatable {
       name: json['name'] as String,
       email: json['email'] as String,
       role: _parseRole(json['role']),
-      avatarUrl: json['avatar_url'] as String?,
-      isActive: json['is_active'] as bool? ?? true,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      avatarUrl: json['avatar'] as String? ?? json['avatar_url'] as String?,
+      isActive: json['is_active'] as bool? ?? json['status'] == 'active' ?? true,
+      createdAt: DateTime.parse(
+        json['created_at'] as String? ?? DateTime.now().toIso8601String(),
+      ),
     );
   }
 
@@ -77,10 +79,12 @@ class AuthResponse {
   });
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
+    // Laravel wraps response in 'data' object
+    final data = json['data'] as Map<String, dynamic>? ?? json;
     return AuthResponse(
-      token: json['token'] as String,
-      user: User.fromJson(json['user'] as Map<String, dynamic>),
-      classCode: json['class_code'] as String?,
+      token: data['token'] as String,
+      user: User.fromJson(data['user'] as Map<String, dynamic>),
+      classCode: data['class_code'] as String?,
     );
   }
 }
@@ -120,6 +124,7 @@ class RegisterRequest {
       'name': name,
       'email': email,
       'password': password,
+      'password_confirmation': password,
       'role': role,
     };
   }

@@ -309,7 +309,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                           width: double.infinity,
                           height: 200,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _buildImagePlaceholder(),
+                          errorBuilder: (_, _, _) => _buildImagePlaceholder(),
                         ),
                       ),
                       Positioned(

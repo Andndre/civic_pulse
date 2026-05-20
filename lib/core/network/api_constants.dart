@@ -2,7 +2,7 @@ class ApiConstants {
   ApiConstants._();
 
   // Base URL - change this to your Laravel API URL
-  static const String baseUrl = 'http://localhost:8000/api';
+  static const String baseUrl = 'http://10.0.2.2:8000/api/v1';
 
   // Timeouts
   static const Duration connectTimeout = Duration(seconds: 30);

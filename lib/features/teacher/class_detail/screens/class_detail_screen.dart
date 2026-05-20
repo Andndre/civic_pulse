@@ -45,7 +45,7 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen>
         title: classAsync.when(
           data: (cls) => Text(cls?.name ?? 'Kelas'),
           loading: () => const Text('Memuat...'),
-          error: (_, __) => const Text('Kelas'),
+          error: (_, _) => const Text('Kelas'),
         ),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,

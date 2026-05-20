@@ -4,7 +4,7 @@ import '../../data/data.dart';
 import '../../../../core/network/network.dart';
 
 // Toggle this to switch between mock and real API
-const bool _useMockData = true;
+const bool _useMockData = false;
 
 // Auth Repository Provider
 final authRepositoryProvider = Provider<AuthRepositoryInterface>((ref) {
