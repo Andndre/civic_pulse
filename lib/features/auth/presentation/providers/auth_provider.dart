@@ -83,12 +83,12 @@ class AuthNotifier extends Notifier<AuthState> {
         await ApiClient.instance.setToken(response.token);
       }
 
-      final needsSetup = response.user.isTeacher && response.classCode == null;
-
+      // After login, go to home page directly - class setup will be handled separately
+      // when teacher chooses to create a class from home page
       state = state.copyWith(
         status: AuthStatus.authenticated,
         user: response.user,
-        needsClassSetup: needsSetup,
+        needsClassSetup: false,
       );
     } catch (e) {
       state = state.copyWith(
@@ -120,13 +120,10 @@ class AuthNotifier extends Notifier<AuthState> {
         await ApiClient.instance.setToken(response.token);
       }
 
-      final needsSetup = response.user.isTeacher;
-
-      state = state.copyWith(
-        status: AuthStatus.authenticated,
-        user: response.user,
-        needsClassSetup: needsSetup,
-      );
+      // After successful registration, reset to unauthenticated 
+      // so user goes to login page instead of directly to home/dashboard
+      // User must login with their new credentials
+      state = const AuthState(status: AuthStatus.unauthenticated);
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
