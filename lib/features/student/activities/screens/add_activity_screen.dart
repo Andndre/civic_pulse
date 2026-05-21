@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/constants.dart';
-import '../../../../core/widgets/widgets.dart';
-import '../../../../shared/services/mock_services.dart';
+import '../../../../shared/services/services.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/activity_provider.dart';
 
 class AddActivityScreen extends ConsumerStatefulWidget {
@@ -137,14 +137,16 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      final service = MockActivityService();
+      final user = ref.read(currentUserProvider);
+      final studentId = user?.id ?? 1;
+      final service = ref.read(activityServiceProvider);
       await service.createActivity(
-        studentId: 1,
+        studentId: studentId,
         title: _titleController.text,
         category: _selectedCategory,
         location: _locationController.text,
         activityDate: _activityDate,
-        photoUrl: _selectedImage?.path, // In real app, upload to server
+        photoPath: _selectedImage?.path,
       );
 
       if (mounted) {

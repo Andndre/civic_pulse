@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
-import '../../../../shared/services/mock_models.dart';
-import '../../../../shared/services/mock_services.dart';
+import '../../../../shared/services/services.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../providers/student_providers.dart';
 import '../../learning/providers/material_provider.dart';
@@ -216,7 +215,7 @@ class StudentHomeScreen extends ConsumerWidget {
                   setState(() => isLoading = true);
 
                   try {
-                    final classService = MockClassService();
+                    final classService = ref.read(classServiceProvider);
                     await classService.joinClass(code);
                     ref.invalidate(studentClassesProvider);
                     if (context.mounted) {

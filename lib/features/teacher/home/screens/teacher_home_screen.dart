@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
 import '../providers/teacher_provider.dart';
-import '../../../../shared/services/mock_models.dart';
-import '../../../../shared/services/mock_services.dart';
+import '../../../../shared/services/services.dart';
 
 class TeacherHomeScreen extends ConsumerWidget {
   const TeacherHomeScreen({super.key});
@@ -236,21 +235,32 @@ class TeacherHomeScreen extends ConsumerWidget {
                   variant: AppButtonVariant.primary,
                   onPressed: () async {
                     if (nameController.text.isNotEmpty) {
-                      final service = MockTeacherService();
-                      final code = await service.createClass(
-                        name: nameController.text,
-                        gradeCategory: selectedCategory,
-                        gradeLevel: selectedGradeLevel,
-                      );
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Kelas berhasil dibuat! Kode: $code'),
-                            backgroundColor: AppColors.success,
-                          ),
+                      try {
+                        final service = ref.read(teacherServiceProvider);
+                        final code = await service.createClass(
+                          name: nameController.text,
+                          gradeCategory: selectedCategory,
+                          gradeLevel: selectedGradeLevel,
                         );
-                        ref.invalidate(teacherClassesProvider);
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Kelas berhasil dibuat! Kode: $code'),
+                              backgroundColor: AppColors.success,
+                            ),
+                          );
+                          ref.invalidate(teacherClassesProvider);
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(e.toString().replaceAll('Exception: ', '')),
+                              backgroundColor: AppColors.danger,
+                            ),
+                          );
+                        }
                       }
                     }
                   },

@@ -61,10 +61,15 @@ class _ClassSetupScreenState extends ConsumerState<ClassSetupScreen> {
           .joinClass(_classCodeController.text.trim().toUpperCase());
 
       if (mounted) {
-        _navigateToHome();
+        final currentAuthState = ref.read(authNotifierProvider);
+        if (currentAuthState.errorMessage == null && !currentAuthState.needsClassSetup) {
+          _navigateToHome();
+        }
       }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -103,6 +108,18 @@ class _ClassSetupScreenState extends ConsumerState<ClassSetupScreen> {
     final authState = ref.watch(authNotifierProvider);
     final user = authState.user;
     final isTeacher = user?.isTeacher ?? false;
+
+    ref.listen<AuthState>(authNotifierProvider, (previous, next) {
+      if (next.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.errorMessage!),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+        ref.read(authNotifierProvider.notifier).clearError();
+      }
+    });
 
     return Scaffold(
       backgroundColor: AppColors.background,

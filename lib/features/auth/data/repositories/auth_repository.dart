@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../core/network/network.dart';
 import '../models/auth_models.dart';
 
@@ -74,12 +75,86 @@ class AuthRepository implements AuthRepositoryInterface {
   @override
   Future<String?> joinClass(String classCode) async {
     try {
+      debugPrint('[AUTH JOIN CLASS] Sending POST ${ApiConstants.joinClass} with class_code: $classCode');
       final response = await _client.post(
         ApiConstants.joinClass,
         data: ClassJoinRequest(classCode: classCode).toJson(),
       );
-      return response.data['class_code'] as String?;
+      debugPrint('[AUTH JOIN CLASS] Response: ${response.data}');
+      final data = response.data;
+      final resData = (data is Map && data.containsKey('data')) ? data['data'] : data;
+      return resData['class_code'] as String? ?? classCode;
     } on DioException catch (e) {
+      debugPrint('[AUTH JOIN CLASS] Error: ${e.type} - ${e.response?.statusCode}');
+      debugPrint('[AUTH JOIN CLASS] Error data: ${e.response?.data}');
+
+      // If the /classes/join endpoint is not implemented (404/405),
+      // fall back to finding the class by code and updating student record
+      final statusCode = e.response?.statusCode;
+      if (statusCode == 404 || statusCode == 405) {
+        debugPrint('[AUTH JOIN CLASS] Endpoint not available, trying fallback...');
+        return _joinClassFallback(classCode);
+      }
+
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// Fallback: find the class by its code, then assign the student to it
+  Future<String?> _joinClassFallback(String classCode) async {
+    try {
+      // Step 1: Search for the class by code
+      final classesResponse = await _client.get(
+        ApiConstants.classes,
+        queryParameters: {'search': classCode},
+      );
+      final classesData = classesResponse.data;
+      final List<dynamic> classList;
+      if (classesData is Map && classesData.containsKey('data')) {
+        classList = classesData['data'] as List<dynamic>;
+      } else if (classesData is List) {
+        classList = classesData;
+      } else {
+        classList = [];
+      }
+
+      // Find the matching class
+      Map<String, dynamic>? targetClass;
+      for (final c in classList) {
+        if (c is Map<String, dynamic> && c['class_code'] == classCode) {
+          targetClass = c;
+          break;
+        }
+      }
+
+      if (targetClass == null) {
+        throw ApiException(
+          message: 'Kode kelas tidak ditemukan',
+          statusCode: 404,
+        );
+      }
+
+      final classId = targetClass['id'] as int;
+      debugPrint('[AUTH JOIN CLASS FALLBACK] Found class ID: $classId');
+
+      // Step 2: Get current user info
+      final userResponse = await _client.get(ApiConstants.user);
+      final userData = userResponse.data;
+      final userInfo = (userData is Map && userData.containsKey('data'))
+          ? userData['data']
+          : userData;
+      final studentId = userInfo['id'] as int;
+
+      // Step 3: Update student's class_id
+      await _client.patch(
+        '${ApiConstants.students}/$studentId',
+        data: {'class_id': classId},
+      );
+      debugPrint('[AUTH JOIN CLASS FALLBACK] Success! Student $studentId -> Class $classId');
+
+      return classCode;
+    } on DioException catch (e) {
+      debugPrint('[AUTH JOIN CLASS FALLBACK] Error: ${e.response?.data}');
       throw ApiException.fromDioException(e);
     }
   }
@@ -95,6 +170,7 @@ class AuthRepository implements AuthRepositoryInterface {
         ApiConstants.classes,
         data: {
           'name': name,
+          'grade': gradeLevel,
           'grade_category': gradeCategory,
           'grade_level': gradeLevel,
         },

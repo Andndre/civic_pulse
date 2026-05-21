@@ -3,10 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../../core/constants/constants.dart';
-import '../../../../core/widgets/widgets.dart';
 import '../../home/providers/teacher_provider.dart';
-import '../../../../shared/services/mock_models.dart';
-import '../../../../shared/services/mock_services.dart';
+import '../../../../shared/services/services.dart';
 
 class ClassDetailScreen extends ConsumerStatefulWidget {
   final String classId;
@@ -374,7 +372,7 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen>
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
-              await MockTeacherService().deleteClass(classId);
+              await ref.read(teacherServiceProvider).deleteClass(classId);
               ref.invalidate(teacherClassesProvider);
               if (context.mounted) context.go('/teacher/home');
             },

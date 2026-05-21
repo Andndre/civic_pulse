@@ -1,18 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../shared/services/mock_models.dart';
-import '../../../../shared/services/mock_services.dart';
+import '../../../../shared/services/services.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 // Teacher classes provider
 final teacherClassesProvider = FutureProvider<List<TeacherClass>>((ref) async {
-  final authState = ref.read(authNotifierProvider);
-  final user = authState.user;
+  final user = ref.watch(currentUserProvider);
 
   if (user == null || !user.isTeacher) {
     return [];
   }
 
-  final service = MockTeacherService();
+  final service = ref.watch(teacherServiceProvider);
   return service.getTeacherClasses(user.id);
 });
 
@@ -28,13 +26,13 @@ final classDetailProvider = FutureProvider.family<TeacherClass?, int>((ref, clas
 
 // Class students provider
 final classStudentsProvider = FutureProvider.family<List<ClassStudent>, int>((ref, classId) async {
-  final service = MockTeacherService();
+  final service = ref.watch(teacherServiceProvider);
   return service.getClassStudents(classId);
 });
 
 // Student anecdotal notes provider
 final anecdotalNotesProvider = FutureProvider.family<List<AnecdotalNote>, int>((ref, studentId) async {
-  final service = MockTeacherService();
+  final service = ref.watch(teacherServiceProvider);
   return service.getAnecdotalNotes(studentId);
 });
 
@@ -53,7 +51,7 @@ class CreateAnecdotalNoteParams {
 
 // Create anecdotal note provider
 final createAnecdotalNoteProvider = FutureProvider.family<AnecdotalNote, CreateAnecdotalNoteParams>((ref, params) async {
-  final service = MockTeacherService();
+  final service = ref.watch(teacherServiceProvider);
   return service.createAnecdotalNote(
     studentId: params.studentId,
     content: params.content,

@@ -93,7 +93,7 @@ class AuthNotifier extends Notifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: _formatError(e),
       );
     }
   }
@@ -127,7 +127,7 @@ class AuthNotifier extends Notifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: _formatError(e),
       );
     }
   }
@@ -148,7 +148,7 @@ class AuthNotifier extends Notifier<AuthState> {
       await _repository.joinClass(classCode);
       state = state.copyWith(needsClassSetup: false);
     } catch (e) {
-      state = state.copyWith(errorMessage: e.toString());
+      state = state.copyWith(errorMessage: _formatError(e));
     }
   }
 
@@ -166,9 +166,17 @@ class AuthNotifier extends Notifier<AuthState> {
       state = state.copyWith(needsClassSetup: false);
       return classCode;
     } catch (e) {
-      state = state.copyWith(errorMessage: e.toString());
+      state = state.copyWith(errorMessage: _formatError(e));
       return null;
     }
+  }
+
+  String _formatError(Object e) {
+    final str = e.toString();
+    if (str.startsWith('Exception: ')) {
+      return str.substring(11);
+    }
+    return str;
   }
 
   void clearError() {

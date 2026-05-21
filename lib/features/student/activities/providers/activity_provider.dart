@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../shared/services/mock_models.dart';
-import '../../../../shared/services/mock_services.dart';
+import '../../../../shared/services/services.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 // Activity filter state
 class ActivityFilter {
@@ -35,8 +35,10 @@ final activityFilterProvider =
 
 // Activity list provider
 final activityListProvider = FutureProvider<List<ActivityLog>>((ref) async {
-  final service = MockActivityService();
-  return service.getActivities(1); // studentId = 1 for mock
+  final service = ref.watch(activityServiceProvider);
+  final user = ref.watch(currentUserProvider);
+  final studentId = user?.id ?? 1; // Fallback to 1 for mock compatibility
+  return service.getActivities(studentId);
 });
 
 // Single activity provider
@@ -68,13 +70,15 @@ class CreateActivityParams {
 
 // Create activity provider
 final createActivityProvider = FutureProvider.family<ActivityLog, CreateActivityParams>((ref, params) async {
-  final service = MockActivityService();
+  final service = ref.watch(activityServiceProvider);
+  final user = ref.watch(currentUserProvider);
+  final studentId = user?.id ?? 1; // Fallback to 1 for mock compatibility
   return service.createActivity(
-    studentId: 1,
+    studentId: studentId,
     title: params.title,
     category: params.category,
     location: params.location,
     activityDate: params.activityDate,
-    photoUrl: params.photoUrl,
+    photoPath: params.photoUrl,
   );
 });

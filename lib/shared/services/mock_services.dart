@@ -3,6 +3,72 @@ import 'mock_models.dart';
 import 'mock_data.dart';
 import '../../features/auth/data/models/auth_models.dart' as auth_models;
 
+
+// =============================================================================
+// SERVICE INTERFACES
+// =============================================================================
+
+abstract class MaterialServiceInterface {
+  Future<List<LearningMaterial>> getMaterials({String? gradeCategory, int? gradeLevel});
+  Future<LearningMaterial?> getMaterial(int id);
+  Future<List<Question>> getQuestions(int materialId, String type);
+  Future<List<PulseStatement>> getPulseStatements(int materialId);
+  Future<Map<String, dynamic>> submitTestResponse({
+    required int materialId,
+    required String type,
+    required List<Map<String, dynamic>> answers,
+  });
+  Future<Map<String, dynamic>> submitPulseResponse({
+    required int materialId,
+    required List<Map<String, dynamic>> responses,
+  });
+}
+
+abstract class ClassServiceInterface {
+  Future<List<StudentClass>> getStudentClasses(int studentId);
+  Future<String?> joinClass(String classCode);
+}
+
+abstract class ActivityServiceInterface {
+  Future<List<ActivityLog>> getActivities(int studentId);
+  Future<ActivityLog> createActivity({
+    required int studentId,
+    required String title,
+    required String category,
+    required String location,
+    required DateTime activityDate,
+    String? photoPath,
+  });
+}
+
+abstract class AnalyticsServiceInterface {
+  Future<PulseScores> getPulseScores(int studentId);
+  Future<List<StudentProgress>> getProgress(int studentId);
+}
+
+abstract class TeacherServiceInterface {
+  Future<List<TeacherClass>> getTeacherClasses(int teacherId);
+  Future<TeacherClass?> getClassDetail(int classId);
+  Future<List<ClassStudent>> getClassStudents(int classId);
+  Future<List<AnecdotalNote>> getAnecdotalNotes(int studentId);
+  Future<AnecdotalNote> createAnecdotalNote({
+    required int studentId,
+    required String content,
+    required String dimension,
+  });
+  Future<void> deleteAnecdotalNote(int noteId);
+  Future<String> createClass({
+    required String name,
+    required String gradeCategory,
+    required int gradeLevel,
+  });
+  Future<void> deleteClass(int classId);
+}
+
+// =============================================================================
+// MOCK IMPLEMENTATIONS
+// =============================================================================
+
 /// Mock Auth Service - swap with real API in production
 class MockAuthService {
   Future<auth_models.AuthResponse> login(String email, String password) async {
@@ -71,7 +137,8 @@ class MockAuthService {
 }
 
 /// Mock Material Service
-class MockMaterialService {
+class MockMaterialService implements MaterialServiceInterface {
+  @override
   Future<List<LearningMaterial>> getMaterials({
     String? gradeCategory,
     int? gradeLevel,
@@ -92,6 +159,7 @@ class MockMaterialService {
     return materials;
   }
 
+  @override
   Future<LearningMaterial?> getMaterial(int id) async {
     await Future.delayed(const Duration(milliseconds: 300));
     try {
@@ -101,6 +169,7 @@ class MockMaterialService {
     }
   }
 
+  @override
   Future<List<Question>> getQuestions(int materialId, String type) async {
     await Future.delayed(const Duration(milliseconds: 400));
     return MockData.sampleQuestions
@@ -108,21 +177,57 @@ class MockMaterialService {
         .toList();
   }
 
+  @override
   Future<List<PulseStatement>> getPulseStatements(int materialId) async {
     await Future.delayed(const Duration(milliseconds: 400));
     return MockData.pulseStatements
         .where((s) => s.materialId == materialId)
         .toList();
   }
+
+  @override
+  Future<Map<String, dynamic>> submitTestResponse({
+    required int materialId,
+    required String type,
+    required List<Map<String, dynamic>> answers,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    return {
+      'score': 80,
+      'type': type,
+      'total_questions': answers.length,
+      'correct_answers': (answers.length * 0.8).round(),
+    };
+  }
+
+  @override
+  Future<Map<String, dynamic>> submitPulseResponse({
+    required int materialId,
+    required List<Map<String, dynamic>> responses,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    return {
+      'material_id': materialId,
+      'material_status': 'completed',
+      'scores': {
+        'participation': 4.0,
+        'understanding': 4.0,
+        'learning': 4.0,
+        'social_engagement': 4.0,
+      }
+    };
+  }
 }
 
 /// Mock Class Service
-class MockClassService {
+class MockClassService implements ClassServiceInterface {
+  @override
   Future<List<StudentClass>> getStudentClasses(int studentId) async {
     await Future.delayed(const Duration(milliseconds: 400));
     return MockData.studentClasses;
   }
 
+  @override
   Future<String?> joinClass(String classCode) async {
     await Future.delayed(const Duration(milliseconds: 600));
     // Accept any 6+ character code
@@ -134,7 +239,8 @@ class MockClassService {
 }
 
 /// Mock Activity Service
-class MockActivityService {
+class MockActivityService implements ActivityServiceInterface {
+  @override
   Future<List<ActivityLog>> getActivities(int studentId) async {
     await Future.delayed(const Duration(milliseconds: 400));
     return MockData.activityLogs
@@ -142,13 +248,14 @@ class MockActivityService {
         .toList();
   }
 
+  @override
   Future<ActivityLog> createActivity({
     required int studentId,
     required String title,
     required String category,
     required String location,
     required DateTime activityDate,
-    String? photoUrl,
+    String? photoPath,
   }) async {
     await Future.delayed(const Duration(milliseconds: 600));
     return ActivityLog(
@@ -158,18 +265,20 @@ class MockActivityService {
       category: category,
       location: location,
       activityDate: activityDate,
-      photoUrl: photoUrl,
+      photoUrl: photoPath,
     );
   }
 }
 
 /// Mock Analytics Service
-class MockAnalyticsService {
+class MockAnalyticsService implements AnalyticsServiceInterface {
+  @override
   Future<PulseScores> getPulseScores(int studentId) async {
     await Future.delayed(const Duration(milliseconds: 500));
     return MockData.samplePulseScores;
   }
 
+  @override
   Future<List<StudentProgress>> getProgress(int studentId) async {
     await Future.delayed(const Duration(milliseconds: 400));
     return MockData.materials.map((m) {
@@ -188,7 +297,8 @@ class MockAnalyticsService {
 }
 
 /// Mock Teacher Service
-class MockTeacherService {
+class MockTeacherService implements TeacherServiceInterface {
+  @override
   Future<List<TeacherClass>> getTeacherClasses(int teacherId) async {
     await Future.delayed(const Duration(milliseconds: 500));
     // Return mock teacher classes
@@ -218,6 +328,18 @@ class MockTeacherService {
     ];
   }
 
+  @override
+  Future<TeacherClass?> getClassDetail(int classId) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    final classes = await getTeacherClasses(0);
+    try {
+      return classes.firstWhere((c) => c.id == classId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
   Future<List<ClassStudent>> getClassStudents(int classId) async {
     await Future.delayed(const Duration(milliseconds: 400));
     // Return mock students for the class
@@ -275,6 +397,7 @@ class MockTeacherService {
     ];
   }
 
+  @override
   Future<List<AnecdotalNote>> getAnecdotalNotes(int studentId) async {
     await Future.delayed(const Duration(milliseconds: 300));
     return [
@@ -297,6 +420,7 @@ class MockTeacherService {
     ];
   }
 
+  @override
   Future<AnecdotalNote> createAnecdotalNote({
     required int studentId,
     required String content,
@@ -313,10 +437,12 @@ class MockTeacherService {
     );
   }
 
+  @override
   Future<void> deleteAnecdotalNote(int noteId) async {
     await Future.delayed(const Duration(milliseconds: 300));
   }
 
+  @override
   Future<String> createClass({
     required String name,
     required String gradeCategory,
@@ -327,6 +453,7 @@ class MockTeacherService {
     return code;
   }
 
+  @override
   Future<void> deleteClass(int classId) async {
     await Future.delayed(const Duration(milliseconds: 400));
   }

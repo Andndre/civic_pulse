@@ -4,8 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../../core/constants/constants.dart';
 import '../../home/providers/teacher_provider.dart';
-import '../../../../shared/services/mock_models.dart';
-import '../../../../shared/services/mock_services.dart';
+import '../../../../shared/services/services.dart';
 import '../../../student/activities/providers/activity_provider.dart';
 
 class TeacherStudentProfileScreen extends ConsumerStatefulWidget {
@@ -566,7 +565,7 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
                   variant: AppButtonVariant.primary,
                   onPressed: () async {
                     if (contentController.text.isNotEmpty) {
-                      final service = MockTeacherService();
+                      final service = ref.read(teacherServiceProvider);
                       await service.createAnecdotalNote(
                         studentId: studentId,
                         content: contentController.text,
@@ -586,7 +585,7 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
   }
 
   Future<void> _deleteNote(int noteId, int studentId) async {
-    await MockTeacherService().deleteAnecdotalNote(noteId);
+    await ref.read(teacherServiceProvider).deleteAnecdotalNote(noteId);
     ref.invalidate(anecdotalNotesProvider(studentId));
   }
 

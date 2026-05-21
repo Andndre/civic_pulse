@@ -25,9 +25,6 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authNotifierProvider);
 
-  // Track previous auth status to detect new login/register
-  bool wasPreviouslyLoggedIn = false;
-
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/splash',
@@ -48,20 +45,11 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Not logged in - redirect to login
       if (!isLoggedIn && !isAuthRoute) {
-        wasPreviouslyLoggedIn = false;
         return '/login';
       }
 
       // Logged in but on auth route - redirect to appropriate home
-      // BUT: If user just registered (was not logged in before), stay on login
       if (isLoggedIn && isAuthRoute) {
-        // If this is a fresh login/register (was not logged in before), go to login
-        // This prevents redirect loop after registration
-        if (!wasPreviouslyLoggedIn) {
-          wasPreviouslyLoggedIn = true;
-          return '/login';
-        }
-
         final user = authState.user;
         if (user != null) {
           // Check if needs class setup
@@ -74,11 +62,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           if (user.isAdmin) return '/dashboard';
         }
         return '/login';
-      }
-
-      // Reset flag when navigating away from auth routes
-      if (!isAuthRoute) {
-        wasPreviouslyLoggedIn = false;
       }
 
       return null;

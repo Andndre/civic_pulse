@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
 import '../providers/material_provider.dart';
 import '../widgets/material_card.dart';
-import '../../../../shared/services/mock_services.dart';
+import '../../../../shared/services/services.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 class LearningGalleryScreen extends ConsumerWidget {
@@ -13,7 +13,7 @@ class LearningGalleryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final materialsAsync = ref.watch(materialsProvider);
-    final classService = MockClassService();
+    final classService = ref.watch(classServiceProvider);
     final user = ref.watch(currentUserProvider);
 
     return Scaffold(

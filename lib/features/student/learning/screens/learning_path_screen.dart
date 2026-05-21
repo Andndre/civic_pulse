@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
-import '../../../../shared/services/mock_models.dart';
+import '../../../../shared/services/services.dart';
 import '../providers/material_provider.dart';
 
 class LearningPathScreen extends ConsumerStatefulWidget {
@@ -418,7 +418,7 @@ class _StepPlaceholder extends StatelessWidget {
 }
 
 // Quiz View Widget
-class _QuizView extends StatefulWidget {
+class _QuizView extends ConsumerStatefulWidget {
   final List<Question> questions;
   final String title;
   final String subtitle;
@@ -434,17 +434,25 @@ class _QuizView extends StatefulWidget {
   });
 
   @override
-  State<_QuizView> createState() => _QuizViewState();
+  ConsumerState<_QuizView> createState() => _QuizViewState();
 }
 
-class _QuizViewState extends State<_QuizView> {
+class _QuizViewState extends ConsumerState<_QuizView> {
   int _currentQuestion = 0;
   final Map<int, String> _answers = {};
   bool _isSubmitted = false;
   int _score = 0;
+  bool _isLoading = false;
+  Map<String, dynamic>? _comparison;
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
     if (_isSubmitted) {
       return _buildResultView();
     }
@@ -575,17 +583,53 @@ class _QuizViewState extends State<_QuizView> {
     );
   }
 
-  void _submitQuiz() {
-    int correct = 0;
-    for (final q in widget.questions) {
-      if (_answers[q.id] == q.correctAnswer) {
-        correct++;
+  void _submitQuiz() async {
+    if (widget.questions.isEmpty) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final firstQuestion = widget.questions.first;
+    final materialId = firstQuestion.materialId;
+    final type = firstQuestion.type;
+
+    final answersList = widget.questions.map((q) {
+      return {
+        'question_id': q.id,
+        'answer': _answers[q.id] ?? '',
+      };
+    }).toList();
+
+    try {
+      final result = await ref.read(materialServiceProvider).submitTestResponse(
+        materialId: materialId,
+        type: type,
+        answers: answersList,
+      );
+
+      final returnedScore = result['score'] is num ? (result['score'] as num).toInt() : 0;
+      final comparison = result['comparison'] as Map<String, dynamic>?;
+
+      setState(() {
+        _score = returnedScore;
+        _comparison = comparison;
+        _isSubmitted = true;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mengirimkan jawaban: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
       }
     }
-    setState(() {
-      _score = ((correct / widget.questions.length) * 100).round();
-      _isSubmitted = true;
-    });
   }
 
   Widget _buildResultView() {
@@ -636,9 +680,17 @@ class _QuizViewState extends State<_QuizView> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _ScoreChip(label: 'Pre', score: '75%', color: AppColors.info),
+                  _ScoreChip(
+                    label: 'Pre',
+                    score: '${_comparison?['pre_score'] ?? 75}%',
+                    color: AppColors.info,
+                  ),
                   AppSpacing.hGapMd,
-                  _ScoreChip(label: 'Post', score: '$_score%', color: AppColors.success),
+                  _ScoreChip(
+                    label: 'Post',
+                    score: '${_comparison?['post_score'] ?? _score}%',
+                    color: AppColors.success,
+                  ),
                 ],
               ),
             ),
@@ -679,22 +731,29 @@ class _ScoreChip extends StatelessWidget {
 }
 
 // Likert Assessment View
-class _LikertAssessmentView extends StatefulWidget {
+class _LikertAssessmentView extends ConsumerStatefulWidget {
   final List<PulseStatement> statements;
   final VoidCallback onComplete;
 
   const _LikertAssessmentView({required this.statements, required this.onComplete});
 
   @override
-  State<_LikertAssessmentView> createState() => _LikertAssessmentViewState();
+  ConsumerState<_LikertAssessmentView> createState() => _LikertAssessmentViewState();
 }
 
-class _LikertAssessmentViewState extends State<_LikertAssessmentView> {
+class _LikertAssessmentViewState extends ConsumerState<_LikertAssessmentView> {
   final Map<int, int> _responses = {};
   int _currentIndex = 0;
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
     final statement = widget.statements[_currentIndex];
     final dimension = _getDimensionLabel(statement.dimension);
 
@@ -829,7 +888,7 @@ class _LikertAssessmentViewState extends State<_LikertAssessmentView> {
               else
                 ElevatedButton(
                   onPressed: _responses.length == widget.statements.length
-                      ? widget.onComplete
+                      ? _submitPulse
                       : null,
                   child: const Text('Kumpulkan'),
                 ),
@@ -838,6 +897,53 @@ class _LikertAssessmentViewState extends State<_LikertAssessmentView> {
         ],
       ),
     );
+  }
+
+  void _submitPulse() async {
+    if (widget.statements.isEmpty) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final firstStatement = widget.statements.first;
+    final materialId = firstStatement.materialId;
+
+    final responseList = widget.statements.map((s) {
+      return {
+        'statement_id': s.id,
+        'score': _responses[s.id] ?? 3,
+      };
+    }).toList();
+
+    try {
+      await ref.read(materialServiceProvider).submitPulseResponse(
+        materialId: materialId,
+        responses: responseList,
+      );
+
+      ref.invalidate(pulseScoresProvider);
+      ref.invalidate(studentProgressProvider);
+      ref.invalidate(materialsProvider);
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      widget.onComplete();
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mengirimkan refleksi: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    }
   }
 
   String _getDimensionLabel(String dimension) {

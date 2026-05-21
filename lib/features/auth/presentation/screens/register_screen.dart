@@ -46,10 +46,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final isLoading = authState.status == AuthStatus.loading;
 
     ref.listen<AuthState>(authNotifierProvider, (previous, next) {
-      // Detect registration success: previous was loading, now it's not
+      // Detect registration success: transition from loading to unauthenticated without error
       if (previous?.status == AuthStatus.loading && 
-          next.status != AuthStatus.loading) {
-        // Registration completed successfully (even if set to unauthenticated)
+          next.status == AuthStatus.unauthenticated &&
+          next.errorMessage == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Registrasi berhasil! Silakan masuk dengan akun Anda.'),
+            backgroundColor: AppColors.success,
+          ),
+        );
         context.go('/login');
         return;
       }

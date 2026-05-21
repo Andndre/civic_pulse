@@ -28,7 +28,7 @@ class User extends Equatable {
       email: json['email'] as String,
       role: _parseRole(json['role']),
       avatarUrl: json['avatar'] as String? ?? json['avatar_url'] as String?,
-      isActive: json['is_active'] as bool? ?? json['status'] == 'active' ?? true,
+      isActive: json['is_active'] as bool? ?? (json['status'] != null ? json['status'] == 'active' : true),
       createdAt: DateTime.parse(
         json['created_at'] as String? ?? DateTime.now().toIso8601String(),
       ),
