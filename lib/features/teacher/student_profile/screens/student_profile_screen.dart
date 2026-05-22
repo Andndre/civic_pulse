@@ -565,14 +565,25 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
                   variant: AppButtonVariant.primary,
                   onPressed: () async {
                     if (contentController.text.isNotEmpty) {
-                      final service = ref.read(teacherServiceProvider);
-                      await service.createAnecdotalNote(
-                        studentId: studentId,
-                        content: contentController.text,
-                        dimension: selectedDimension,
-                      );
-                      ref.invalidate(anecdotalNotesProvider(studentId));
-                      if (context.mounted) Navigator.pop(context);
+                      try {
+                        final service = ref.read(teacherServiceProvider);
+                        await service.createAnecdotalNote(
+                          studentId: studentId,
+                          content: contentController.text,
+                          dimension: selectedDimension,
+                        );
+                        ref.invalidate(anecdotalNotesProvider(studentId));
+                        if (context.mounted) Navigator.pop(context);
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Gagal menyimpan catatan: ${e.toString().replaceAll('Exception: ', '')}'),
+                              backgroundColor: AppColors.danger,
+                            ),
+                          );
+                        }
+                      }
                     }
                   },
                 ),

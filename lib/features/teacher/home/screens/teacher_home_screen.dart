@@ -277,14 +277,16 @@ class TeacherHomeScreen extends ConsumerWidget {
   }
 }
 
-class _ClassCard extends StatelessWidget {
+class _ClassCard extends ConsumerWidget {
   final TeacherClass cls;
   final VoidCallback onTap;
 
   const _ClassCard({required this.cls, required this.onTap});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final studentsAsync = ref.watch(classStudentsProvider(cls.id));
+    final studentCount = studentsAsync.maybeWhen(data: (s) => s.length, orElse: () => cls.studentCount);
     return AppCard(
       onTap: onTap,
       child: Column(
@@ -325,7 +327,7 @@ class _ClassCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildStat(Icons.people, '${cls.studentCount} siswa'),
+              _buildStat(Icons.people, '$studentCount siswa'),
               _buildPulseIndicator(cls.averagePulse),
             ],
           ),

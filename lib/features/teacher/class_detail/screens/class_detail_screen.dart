@@ -277,9 +277,14 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen>
   }
 
   Widget _buildPengaturanTab(int classId, AsyncValue<TeacherClass?> classAsync) {
+    final summaryAsync = ref.watch(classSummaryProvider(classId));
     return classAsync.when(
       data: (cls) {
         if (cls == null) return const SizedBox();
+        final studentCount = summaryAsync.maybeWhen(
+          data: (s) => s['totalStudents'] as int? ?? cls.studentCount,
+          orElse: () => cls.studentCount,
+        );
 
         return SingleChildScrollView(
           padding: AppSpacing.screenPadding,
@@ -295,7 +300,7 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen>
               AppSpacing.vGapLg,
               Text('Statistik', style: AppTypography.titleMedium.copyWith(color: AppColors.textPrimary)),
               AppSpacing.vGapMd,
-              _buildInfoRow('Jumlah Siswa', '${cls.studentCount} siswa'),
+              _buildInfoRow('Jumlah Siswa', '$studentCount siswa'),
               _buildInfoRow('Materi Selesai', '${cls.completedMaterials}/${cls.totalMaterials}'),
               _buildInfoRow('Rata-rata PULSE', cls.averagePulse.toStringAsFixed(2)),
               AppSpacing.vGapXl,
