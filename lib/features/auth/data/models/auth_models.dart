@@ -10,6 +10,12 @@ class User extends Equatable {
   final String? avatarUrl;
   final bool isActive;
   final DateTime createdAt;
+  final String? dateOfBirth;
+  final String? parentName;
+  final String? parentPhone;
+  final String? phone;
+  final String? address;
+  final String? gender;
 
   const User({
     required this.id,
@@ -19,19 +25,33 @@ class User extends Equatable {
     this.avatarUrl,
     this.isActive = true,
     required this.createdAt,
+    this.dateOfBirth,
+    this.parentName,
+    this.parentPhone,
+    this.phone,
+    this.address,
+    this.gender,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
+    // Check if user object is nested inside 'data'
+    final data = json['data'] as Map<String, dynamic>? ?? json;
     return User(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      email: json['email'] as String,
-      role: _parseRole(json['role']),
-      avatarUrl: json['avatar'] as String? ?? json['avatar_url'] as String?,
-      isActive: json['is_active'] as bool? ?? (json['status'] != null ? json['status'] == 'active' : true),
+      id: data['id'] as int,
+      name: data['name'] as String,
+      email: data['email'] as String,
+      role: _parseRole(data['role']),
+      avatarUrl: data['avatar'] as String? ?? data['avatar_url'] as String?,
+      isActive: data['is_active'] as bool? ?? (data['status'] != null ? data['status'] == 'active' : true),
       createdAt: DateTime.parse(
-        json['created_at'] as String? ?? DateTime.now().toIso8601String(),
+        data['created_at'] as String? ?? DateTime.now().toIso8601String(),
       ),
+      dateOfBirth: data['date_of_birth'] as String?,
+      parentName: data['parent_name'] as String?,
+      parentPhone: data['parent_phone'] as String?,
+      phone: data['phone'] as String?,
+      address: data['address'] as String?,
+      gender: data['gender'] as String?,
     );
   }
 
@@ -44,6 +64,12 @@ class User extends Equatable {
       'avatar_url': avatarUrl,
       'is_active': isActive,
       'created_at': createdAt.toIso8601String(),
+      'date_of_birth': dateOfBirth,
+      'parent_name': parentName,
+      'parent_phone': parentPhone,
+      'phone': phone,
+      'address': address,
+      'gender': gender,
     };
   }
 
@@ -64,7 +90,20 @@ class User extends Equatable {
   bool get isAdmin => role == UserRole.admin;
 
   @override
-  List<Object?> get props => [id, email, role];
+  List<Object?> get props => [
+        id,
+        email,
+        role,
+        avatarUrl,
+        isActive,
+        createdAt,
+        dateOfBirth,
+        parentName,
+        parentPhone,
+        phone,
+        address,
+        gender,
+      ];
 }
 
 class AuthResponse {

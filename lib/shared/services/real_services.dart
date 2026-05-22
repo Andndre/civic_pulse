@@ -292,11 +292,12 @@ class RealActivityService implements ActivityServiceInterface {
   @override
   Future<List<ActivityLog>> getActivities(int studentId) async {
     try {
-      final String path = (studentId <= 1)
-          ? ApiConstants.activities
-          : '${ApiConstants.students}/$studentId/activities';
-
-      final response = await _client.get(path);
+      final response = await _client.get(
+        ApiConstants.activities,
+        queryParameters: {
+          'filter[student_id]': studentId,
+        },
+      );
       final data = response.data;
       final List<dynamic> list;
       if (data is Map && data.containsKey('data')) {
@@ -325,9 +326,28 @@ class RealActivityService implements ActivityServiceInterface {
     String? photoPath,
   }) async {
     try {
+      String mappedType;
+      switch (category) {
+        case 'participation':
+          mappedType = 'sports';
+          break;
+        case 'understanding':
+          mappedType = 'arts';
+          break;
+        case 'learning':
+          mappedType = 'competition';
+          break;
+        case 'social_engagement':
+          mappedType = 'volunteer';
+          break;
+        default:
+          mappedType = 'other';
+      }
+
       final Map<String, dynamic> fields = {
+        'student_id': studentId,
         'title': title,
-        'category': category,
+        'type': mappedType,
         'location': location,
         'date': activityDate.toIso8601String().split('T')[0],
       };

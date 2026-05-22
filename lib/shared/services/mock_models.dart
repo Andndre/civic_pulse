@@ -23,7 +23,7 @@ class User {
       name: json['name'] as String? ?? '',
       email: json['email'] as String? ?? '',
       role: json['role'] as String? ?? 'student',
-      avatarUrl: json['avatar_url'] as String? ?? json['avatar'] as String?,
+      avatarUrl: _resolvePhotoUrl(json['avatar_url'] as String? ?? json['avatar'] as String?),
     );
   }
 
@@ -274,14 +274,37 @@ class ActivityLog {
   });
 
   factory ActivityLog.fromJson(Map<String, dynamic> json, {int? studentId}) {
+    String getCategoryFromType(String? type) {
+      if (type == null) return 'participation';
+      switch (type) {
+        case 'sports':
+          return 'participation';
+        case 'arts':
+          return 'understanding';
+        case 'competition':
+          return 'learning';
+        case 'volunteer':
+          return 'social_engagement';
+        case 'participation':
+        case 'understanding':
+        case 'learning':
+        case 'social_engagement':
+          return type;
+        default:
+          return 'participation';
+      }
+    }
+
+    final rawCategory = json['category'] as String? ?? json['type'] as String?;
+
     return ActivityLog(
       id: json['id'] as int? ?? 0,
       studentId: (json['student'] as Map?)?['id'] as int? ?? json['student_id'] as int? ?? studentId ?? 0,
       title: json['title'] as String? ?? '',
-      category: json['category'] as String? ?? 'participation',
+      category: getCategoryFromType(rawCategory),
       location: json['location'] as String? ?? 'sekolah',
       activityDate: DateTime.parse(json['date'] as String? ?? json['activity_date'] as String? ?? DateTime.now().toIso8601String()),
-      photoUrl: json['photo_url'] as String? ?? json['photo'] as String?,
+      photoUrl: _resolvePhotoUrl(json['evidence_url'] as String? ?? json['photo_url'] as String? ?? json['photo'] as String?),
     );
   }
 
@@ -581,4 +604,14 @@ int _parseGradeLevel(dynamic level) {
     if (parsed != null) return parsed;
   }
   return 7; // Default fallback
+}
+
+String? _resolvePhotoUrl(String? url) {
+  if (url == null || url.isEmpty) return null;
+  if (url.startsWith('/')) {
+    return 'http://10.0.2.2:8000$url';
+  }
+  return url
+      .replaceAll('localhost:8000', '10.0.2.2:8000')
+      .replaceAll('127.0.0.1:8000', '10.0.2.2:8000');
 }

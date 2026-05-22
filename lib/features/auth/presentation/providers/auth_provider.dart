@@ -186,6 +186,46 @@ class AuthNotifier extends Notifier<AuthState> {
   void completeClassSetup() {
     state = state.copyWith(needsClassSetup: false);
   }
+
+  Future<bool> updateProfile({
+    required String name,
+    String? dateOfBirth,
+    String? parentName,
+    String? parentPhone,
+    String? phone,
+    String? address,
+    String? gender,
+  }) async {
+    final currentStudent = state.user;
+    if (currentStudent == null) {
+      state = state.copyWith(errorMessage: 'Pengguna tidak ditemukan');
+      return false;
+    }
+    
+    try {
+      final updatedUser = await _repository.updateStudentProfile(
+        currentStudent.id,
+        {
+          'name': name,
+          'date_of_birth': dateOfBirth,
+          'parent_name': parentName,
+          'parent_phone': parentPhone,
+          'phone': phone,
+          'address': address,
+          'gender': gender,
+        },
+      );
+      state = state.copyWith(
+        user: updatedUser,
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        errorMessage: _formatError(e),
+      );
+      return false;
+    }
+  }
 }
 
 // Auth Notifier Provider
@@ -293,5 +333,25 @@ class MockAuthRepository implements AuthRepositoryInterface {
     debugPrint('[MOCK] Create class: $name ($gradeCategory $gradeLevel)');
     await Future.delayed(const Duration(milliseconds: 400));
     return 'MOCK${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}';
+  }
+
+  @override
+  Future<User> updateStudentProfile(int studentId, Map<String, dynamic> data) async {
+    debugPrint('[MOCK] Update Student Profile for ID $studentId: $data');
+    await Future.delayed(const Duration(milliseconds: 500));
+    return User(
+      id: studentId,
+      name: data['name'] ?? 'Andi Pratama',
+      email: data['email'] ?? 'andi@email.com',
+      role: UserRole.student,
+      isActive: true,
+      createdAt: DateTime.now(),
+      dateOfBirth: data['date_of_birth'] as String?,
+      parentName: data['parent_name'] as String?,
+      parentPhone: data['parent_phone'] as String?,
+      phone: data['phone'] as String?,
+      address: data['address'] as String?,
+      gender: data['gender'] as String?,
+    );
   }
 }

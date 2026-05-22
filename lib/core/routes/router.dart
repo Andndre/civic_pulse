@@ -11,8 +11,10 @@ import '../../features/student/learning/screens/learning_gallery_screen.dart';
 import '../../features/student/learning/screens/learning_path_screen.dart';
 import '../../features/student/activities/screens/activity_log_screen.dart';
 import '../../features/student/activities/screens/add_activity_screen.dart';
+import '../../features/student/activities/screens/activity_detail_screen.dart';
 import '../../features/student/scores/screens/scores_feedback_screen.dart';
 import '../../features/student/profile/screens/student_profile_screen.dart';
+import '../../features/student/profile/screens/edit_profile_screen.dart';
 import '../../features/teacher/home/screens/teacher_home_screen.dart';
 import '../../features/teacher/class_detail/screens/class_detail_screen.dart';
 import '../../features/teacher/student_profile/screens/student_profile_screen.dart';
@@ -22,14 +24,32 @@ import 'app_shell.dart';
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
+class RouterTransitionNotifier extends ChangeNotifier {
+  final Ref _ref;
+
+  RouterTransitionNotifier(this._ref) {
+    _ref.listen(
+      authNotifierProvider,
+      (previous, next) {
+        if (previous?.status != next.status || previous?.needsClassSetup != next.needsClassSetup) {
+          notifyListeners();
+        }
+      },
+    );
+  }
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authNotifierProvider);
+  final listenable = RouterTransitionNotifier(ref);
+  ref.onDispose(() => listenable.dispose());
 
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/splash',
     debugLogDiagnostics: true,
+    refreshListenable: listenable,
     redirect: (context, state) {
+      final authState = ref.read(authNotifierProvider);
       final isLoggedIn = authState.status == AuthStatus.authenticated;
       final isLoading = authState.status == AuthStatus.loading ||
           authState.status == AuthStatus.initial;
@@ -114,12 +134,23 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const AddActivityScreen(),
           ),
           GoRoute(
+            path: '/student/activities/:id',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['id'] ?? '0') ?? 0;
+              return ActivityDetailScreen(activityId: id);
+            },
+          ),
+          GoRoute(
             path: '/student/scores',
             builder: (context, state) => const ScoresFeedbackScreen(),
           ),
           GoRoute(
             path: '/student/profile',
             builder: (context, state) => const StudentProfileScreen(),
+          ),
+          GoRoute(
+            path: '/student/profile/edit',
+            builder: (context, state) => const EditProfileScreen(),
           ),
         ],
       ),

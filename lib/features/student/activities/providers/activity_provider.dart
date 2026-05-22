@@ -33,12 +33,17 @@ final activityFilterProvider =
     NotifierProvider<ActivityFilterNotifier, ActivityFilter>(
         ActivityFilterNotifier.new);
 
+// Student activities provider by student ID
+final studentActivitiesProvider = FutureProvider.family<List<ActivityLog>, int>((ref, studentId) async {
+  final service = ref.watch(activityServiceProvider);
+  return service.getActivities(studentId);
+});
+
 // Activity list provider
 final activityListProvider = FutureProvider<List<ActivityLog>>((ref) async {
-  final service = ref.watch(activityServiceProvider);
   final user = ref.watch(currentUserProvider);
   final studentId = user?.id ?? 1; // Fallback to 1 for mock compatibility
-  return service.getActivities(studentId);
+  return ref.watch(studentActivitiesProvider(studentId).future);
 });
 
 // Single activity provider

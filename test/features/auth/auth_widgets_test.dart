@@ -89,6 +89,24 @@ class TestMockAuthRepository implements AuthRepositoryInterface {
   }) async {
     return 'MOCK${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}';
   }
+
+  @override
+  Future<User> updateStudentProfile(int studentId, Map<String, dynamic> data) async {
+    return User(
+      id: studentId,
+      name: data['name'] ?? 'Andi Pratama',
+      email: data['email'] ?? 'andi@email.com',
+      role: UserRole.student,
+      isActive: true,
+      createdAt: DateTime.now(),
+      dateOfBirth: data['date_of_birth'] as String?,
+      parentName: data['parent_name'] as String?,
+      parentPhone: data['parent_phone'] as String?,
+      phone: data['phone'] as String?,
+      address: data['address'] as String?,
+      gender: data['gender'] as String?,
+    );
+  }
 }
 
 // Test helper to create the test app with router

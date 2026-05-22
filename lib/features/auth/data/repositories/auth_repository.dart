@@ -14,12 +14,39 @@ abstract class AuthRepositoryInterface {
     required String gradeCategory,
     required int gradeLevel,
   });
+  Future<User> updateStudentProfile(int studentId, Map<String, dynamic> data);
 }
 
 class AuthRepository implements AuthRepositoryInterface {
   final ApiClient _client;
 
   AuthRepository({ApiClient? client}) : _client = client ?? ApiClient.instance;
+
+  @override
+  Future<User> updateStudentProfile(int studentId, Map<String, dynamic> data) async {
+    try {
+      final response = await _client.patch(
+        '${ApiConstants.students}/$studentId',
+        data: data,
+      );
+      
+      final responseData = response.data;
+      final Map<String, dynamic> userMap = 
+          (responseData is Map && responseData.containsKey('data'))
+              ? responseData['data'] as Map<String, dynamic>
+              : responseData as Map<String, dynamic>;
+      
+      try {
+        return User.fromJson(userMap);
+      } catch (e) {
+        final freshUser = await getCurrentUser();
+        if (freshUser != null) return freshUser;
+        rethrow;
+      }
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
 
   @override
   Future<AuthResponse> login(LoginRequest request) async {

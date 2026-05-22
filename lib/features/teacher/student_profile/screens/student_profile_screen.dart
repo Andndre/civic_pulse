@@ -28,7 +28,7 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
     final studentIdInt = int.tryParse(widget.studentId) ?? 0;
     final studentsAsync = ref.watch(classStudentsProvider(classIdInt));
     final notesAsync = ref.watch(anecdotalNotesProvider(studentIdInt));
-    final activitiesAsync = ref.watch(activityListProvider);
+    final activitiesAsync = ref.watch(studentActivitiesProvider(studentIdInt));
 
     return Scaffold(
       backgroundColor: AppColors.background,

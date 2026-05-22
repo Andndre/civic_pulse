@@ -123,9 +123,6 @@ class ApiClient {
     return _dio.post<T>(
       path,
       data: data,
-      options: Options(
-        headers: {'Content-Type': 'multipart/form-data'},
-      ),
       onSendProgress: onSendProgress,
     );
   }

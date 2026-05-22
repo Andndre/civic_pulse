@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,9 +18,9 @@ class AddActivityScreen extends ConsumerStatefulWidget {
 class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
-  final _locationController = TextEditingController();
 
   String _selectedCategory = 'participation';
+  String _selectedLocation = 'rumah';
   DateTime _activityDate = DateTime.now();
   XFile? _selectedImage;
   bool _isSubmitting = false;
@@ -31,10 +32,16 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     {'value': 'social_engagement', 'label': 'Keterlibatan Sosial', 'icon': Icons.people_outline},
   ];
 
+  final List<Map<String, dynamic>> _locations = [
+    {'value': 'rumah', 'label': 'Rumah', 'icon': Icons.home_outlined},
+    {'value': 'sekolah', 'label': 'Sekolah', 'icon': Icons.school_outlined},
+    {'value': 'kelas', 'label': 'Kelas', 'icon': Icons.class_outlined},
+    {'value': 'masyarakat', 'label': 'Masyarakat', 'icon': Icons.people_outline},
+  ];
+
   @override
   void dispose() {
     _titleController.dispose();
-    _locationController.dispose();
     super.dispose();
   }
 
@@ -144,7 +151,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         studentId: studentId,
         title: _titleController.text,
         category: _selectedCategory,
-        location: _locationController.text,
+        location: _selectedLocation,
         activityDate: _activityDate,
         photoPath: _selectedImage?.path,
       );
@@ -156,6 +163,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             backgroundColor: AppColors.success,
           ),
         );
+        ref.invalidate(studentActivitiesProvider(studentId));
         ref.invalidate(activityListProvider);
         context.pop();
       }
@@ -253,16 +261,47 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             AppSpacing.vGapMd,
 
             // Location field
-            AppTextField(
-              label: 'Lokasi',
-              hint: 'Contoh: Rumah, Sekolah, Masyarakat',
-              controller: _locationController,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Lokasi wajib diisi';
-                }
-                return null;
-              },
+            Text(
+              'Lokasi Kegiatan',
+              style: AppTypography.labelLarge.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
+            AppSpacing.vGapSm,
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: _locations.map((loc) {
+                final isSelected = _selectedLocation == loc['value'];
+                return ChoiceChip(
+                  label: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        loc['icon'] as IconData,
+                        size: 18,
+                        color: isSelected ? Colors.white : AppColors.textSecondary,
+                      ),
+                      AppSpacing.hGapXs,
+                      Text(loc['label'] as String),
+                    ],
+                  ),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() => _selectedLocation = loc['value'] as String);
+                    }
+                  },
+                  selectedColor: AppColors.primary,
+                  labelStyle: AppTypography.labelMedium.copyWith(
+                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                  ),
+                  backgroundColor: AppColors.surface,
+                  side: BorderSide(
+                    color: isSelected ? AppColors.primary : AppColors.divider,
+                  ),
+                );
+              }).toList(),
             ),
             AppSpacing.vGapMd,
 
@@ -306,8 +345,8 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(AppRadius.md),
-                        child: Image.asset(
-                          _selectedImage!.path,
+                        child: Image.file(
+                          File(_selectedImage!.path),
                           width: double.infinity,
                           height: 200,
                           fit: BoxFit.cover,

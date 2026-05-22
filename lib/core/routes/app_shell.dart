@@ -84,14 +84,23 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
-  int _currentIndex = 0;
-
   List<NavItem> get _navItems {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/student')) {
       return studentNavItems;
     }
     return teacherNavItems;
+  }
+
+  int get _currentIndex {
+    final location = GoRouterState.of(context).matchedLocation;
+    final items = _navItems;
+    for (int i = 0; i < items.length; i++) {
+      if (location.startsWith(items[i].route)) {
+        return i;
+      }
+    }
+    return 0;
   }
 
   @override
@@ -158,7 +167,6 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 
   void _onNavTap(int index, String route) {
-    setState(() => _currentIndex = index);
     context.go(route);
   }
 }
