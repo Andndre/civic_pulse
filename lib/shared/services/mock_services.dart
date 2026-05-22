@@ -61,6 +61,7 @@ abstract class TeacherServiceInterface {
     required String name,
     required String gradeCategory,
     required int gradeLevel,
+    int? homeroomTeacherId,
   });
   Future<void> deleteClass(int classId);
 }
@@ -447,6 +448,7 @@ class MockTeacherService implements TeacherServiceInterface {
     required String name,
     required String gradeCategory,
     required int gradeLevel,
+    int? homeroomTeacherId,
   }) async {
     await Future.delayed(const Duration(milliseconds: 600));
     final code = '${gradeCategory.substring(0, 2)}$gradeLevel${name.replaceAll(' ', '').substring(0, 2).toUpperCase()}${DateTime.now().year}';

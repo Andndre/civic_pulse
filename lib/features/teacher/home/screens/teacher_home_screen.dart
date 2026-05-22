@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
 import '../providers/teacher_provider.dart';
 import '../../../../shared/services/services.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 class TeacherHomeScreen extends ConsumerWidget {
   const TeacherHomeScreen({super.key});
@@ -237,10 +238,12 @@ class TeacherHomeScreen extends ConsumerWidget {
                     if (nameController.text.isNotEmpty) {
                       try {
                         final service = ref.read(teacherServiceProvider);
+                        final user = ref.read(currentUserProvider);
                         final code = await service.createClass(
                           name: nameController.text,
                           gradeCategory: selectedCategory,
                           gradeLevel: selectedGradeLevel,
+                          homeroomTeacherId: user?.id,
                         );
                         if (context.mounted) {
                           Navigator.pop(context);

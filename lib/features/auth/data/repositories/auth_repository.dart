@@ -13,6 +13,7 @@ abstract class AuthRepositoryInterface {
     required String name,
     required String gradeCategory,
     required int gradeLevel,
+    int? homeroomTeacherId,
   });
   Future<User> updateStudentProfile(int studentId, Map<String, dynamic> data);
 }
@@ -191,6 +192,7 @@ class AuthRepository implements AuthRepositoryInterface {
     required String name,
     required String gradeCategory,
     required int gradeLevel,
+    int? homeroomTeacherId,
   }) async {
     try {
       final response = await _client.post(
@@ -200,6 +202,7 @@ class AuthRepository implements AuthRepositoryInterface {
           'grade': gradeLevel,
           'grade_category': gradeCategory,
           'grade_level': gradeLevel,
+          if (homeroomTeacherId != null) 'homeroom_teacher_id': homeroomTeacherId,
         },
       );
       return response.data['class_code'] as String?;

@@ -158,10 +158,12 @@ class AuthNotifier extends Notifier<AuthState> {
     required int gradeLevel,
   }) async {
     try {
+      final user = state.user;
       final classCode = await _repository.createClass(
         name: name,
         gradeCategory: gradeCategory,
         gradeLevel: gradeLevel,
+        homeroomTeacherId: user?.id,
       );
       state = state.copyWith(needsClassSetup: false);
       return classCode;

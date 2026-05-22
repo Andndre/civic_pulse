@@ -488,19 +488,38 @@ class RealTeacherService implements TeacherServiceInterface {
             .map((s) => ClassStudent.fromJson(s as Map<String, dynamic>))
             .toList();
       } catch (_) {
-        final response = await _client.get('${ApiConstants.classes}/$classId/students');
-        final data = response.data;
-        final List<dynamic> list;
-        if (data is Map && data.containsKey('data')) {
-          list = data['data'] as List<dynamic>;
-        } else if (data is List) {
-          list = data;
-        } else {
-          list = [];
+        try {
+          final response = await _client.get('${ApiConstants.classes}/$classId/students');
+          final data = response.data;
+          final List<dynamic> list;
+          if (data is Map && data.containsKey('data')) {
+            list = data['data'] as List<dynamic>;
+          } else if (data is List) {
+            list = data;
+          } else {
+            list = [];
+          }
+          return list
+              .map((s) => ClassStudent.fromJson(s as Map<String, dynamic>))
+              .toList();
+        } catch (_) {
+          final response = await _client.get(
+            ApiConstants.students,
+            queryParameters: {'filter[class_id]': classId},
+          );
+          final data = response.data;
+          final List<dynamic> list;
+          if (data is Map && data.containsKey('data')) {
+            list = data['data'] as List<dynamic>;
+          } else if (data is List) {
+            list = data;
+          } else {
+            list = [];
+          }
+          return list
+              .map((s) => ClassStudent.fromJson(s as Map<String, dynamic>))
+              .toList();
         }
-        return list
-            .map((s) => ClassStudent.fromJson(s as Map<String, dynamic>))
-            .toList();
       }
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
@@ -579,6 +598,7 @@ class RealTeacherService implements TeacherServiceInterface {
     required String name,
     required String gradeCategory,
     required int gradeLevel,
+    int? homeroomTeacherId,
   }) async {
     try {
       final response = await _client.post(
@@ -588,6 +608,7 @@ class RealTeacherService implements TeacherServiceInterface {
           'grade': gradeLevel,
           'grade_category': gradeCategory,
           'grade_level': gradeLevel,
+          if (homeroomTeacherId != null) 'homeroom_teacher_id': homeroomTeacherId,
         },
       );
       final data = response.data;
