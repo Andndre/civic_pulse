@@ -331,6 +331,7 @@ class MockAuthRepository implements AuthRepositoryInterface {
     required String name,
     required String gradeCategory,
     required int gradeLevel,
+    int? homeroomTeacherId,
   }) async {
     debugPrint('[MOCK] Create class: $name ($gradeCategory $gradeLevel)');
     await Future.delayed(const Duration(milliseconds: 400));
