@@ -86,6 +86,7 @@ class TestMockAuthRepository implements AuthRepositoryInterface {
     required String name,
     required String gradeCategory,
     required int gradeLevel,
+    int? homeroomTeacherId,
   }) async {
     return 'MOCK${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}';
   }

@@ -48,12 +48,8 @@ final activityListProvider = FutureProvider<List<ActivityLog>>((ref) async {
 
 // Single activity provider
 final activityProvider = FutureProvider.family<ActivityLog?, int>((ref, id) async {
-  final activities = await ref.watch(activityListProvider.future);
-  try {
-    return activities.firstWhere((a) => a.id == id);
-  } catch (_) {
-    return null;
-  }
+  final service = ref.watch(activityServiceProvider);
+  return service.getActivity(id);
 });
 
 // Create activity params

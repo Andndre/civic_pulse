@@ -31,6 +31,7 @@ abstract class ClassServiceInterface {
 
 abstract class ActivityServiceInterface {
   Future<List<ActivityLog>> getActivities(int studentId);
+  Future<ActivityLog?> getActivity(int activityId);
   Future<ActivityLog> createActivity({
     required int studentId,
     required String title,
@@ -247,6 +248,16 @@ class MockActivityService implements ActivityServiceInterface {
     return MockData.activityLogs
         .where((a) => a.studentId == studentId)
         .toList();
+  }
+
+  @override
+  Future<ActivityLog?> getActivity(int activityId) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    try {
+      return MockData.activityLogs.firstWhere((a) => a.id == activityId);
+    } catch (_) {
+      return null;
+    }
   }
 
   @override

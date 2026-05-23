@@ -317,6 +317,20 @@ class RealActivityService implements ActivityServiceInterface {
   }
 
   @override
+  Future<ActivityLog?> getActivity(int activityId) async {
+    try {
+      final response = await _client.get('${ApiConstants.activities}/$activityId');
+      final data = response.data;
+      final Map<String, dynamic> item =
+          (data is Map && data.containsKey('data')) ? data['data'] as Map<String, dynamic> : data as Map<String, dynamic>;
+      return ActivityLog.fromJson(item);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
   Future<ActivityLog> createActivity({
     required int studentId,
     required String title,
@@ -356,7 +370,7 @@ class RealActivityService implements ActivityServiceInterface {
       if (photoPath != null && photoPath.isNotEmpty) {
         final formData = FormData.fromMap({
           ...fields,
-          'photo': await MultipartFile.fromFile(
+          'evidence': await MultipartFile.fromFile(
             photoPath,
             filename: photoPath.split('/').last,
           ),
