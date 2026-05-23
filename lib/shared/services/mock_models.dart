@@ -23,7 +23,9 @@ class User {
       name: json['name'] as String? ?? '',
       email: json['email'] as String? ?? '',
       role: json['role'] as String? ?? 'student',
-      avatarUrl: _resolvePhotoUrl(json['avatar_url'] as String? ?? json['avatar'] as String?),
+      avatarUrl: _resolvePhotoUrl(
+        json['avatar_url'] as String? ?? json['avatar'] as String?,
+      ),
     );
   }
 
@@ -43,11 +45,7 @@ class AuthResponse {
   final User user;
   final String? classCode;
 
-  const AuthResponse({
-    required this.token,
-    required this.user,
-    this.classCode,
-  });
+  const AuthResponse({required this.token, required this.user, this.classCode});
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
     final data = json['data'] as Map<String, dynamic>? ?? json;
@@ -59,11 +57,7 @@ class AuthResponse {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'token': token,
-      'user': user.toJson(),
-      'class_code': classCode,
-    };
+    return {'token': token, 'user': user.toJson(), 'class_code': classCode};
   }
 }
 
@@ -95,12 +89,15 @@ class LearningMaterial {
       id: json['id'] as int? ?? 0,
       title: json['title'] as String? ?? '',
       description: json['description'] as String?,
-      thumbnailUrl: json['thumbnail_url'] as String? ?? json['thumbnail'] as String?,
+      thumbnailUrl:
+          json['thumbnail_url'] as String? ?? json['thumbnail'] as String?,
       gradeCategory: json['grade_category'] as String? ?? 'SMP',
-      gradeLevel: json['grade_level'] is int 
-          ? json['grade_level'] as int 
+      gradeLevel: json['grade_level'] is int
+          ? json['grade_level'] as int
           : _parseGradeLevel(json['grade_level']),
-      estimatedDuration: json['estimated_duration_minutes'] as int? ?? json['estimated_duration'] as int?,
+      estimatedDuration:
+          json['estimated_duration_minutes'] as int? ??
+          json['estimated_duration'] as int?,
       orderIndex: json['order_index'] as int? ?? json['order'] as int? ?? 1,
       status: json['status'] as String? ?? 'locked',
     );
@@ -140,7 +137,11 @@ class Question {
     required this.correctAnswer,
   });
 
-  factory Question.fromJson(Map<String, dynamic> json, {int? materialId, String? type}) {
+  factory Question.fromJson(
+    Map<String, dynamic> json, {
+    int? materialId,
+    String? type,
+  }) {
     final Map<String, String> parsedOptions = {};
     if (json['options'] is Map) {
       (json['options'] as Map).forEach((key, value) {
@@ -151,10 +152,14 @@ class Question {
       id: json['id'] as int? ?? 0,
       materialId: json['material_id'] as int? ?? materialId ?? 0,
       type: json['type'] as String? ?? type ?? 'pre',
-      questionNumber: json['question_number'] as int? ?? json['number'] as int? ?? 1,
+      questionNumber:
+          json['question_number'] as int? ?? json['number'] as int? ?? 1,
       content: json['content'] as String? ?? '',
       options: parsedOptions,
-      correctAnswer: json['correct_answer'] as String? ?? json['correctAnswer'] as String? ?? '',
+      correctAnswer:
+          json['correct_answer'] as String? ??
+          json['correctAnswer'] as String? ??
+          '',
     );
   }
 
@@ -186,7 +191,10 @@ class PulseStatement {
     required this.orderIndex,
   });
 
-  factory PulseStatement.fromJson(Map<String, dynamic> json, {int? materialId}) {
+  factory PulseStatement.fromJson(
+    Map<String, dynamic> json, {
+    int? materialId,
+  }) {
     return PulseStatement(
       id: json['id'] as int? ?? 0,
       materialId: json['material_id'] as int? ?? materialId ?? 0,
@@ -232,12 +240,16 @@ class StudentClass {
       id: json['id'] as int? ?? json['class_id'] as int? ?? 0,
       name: json['name'] as String? ?? json['class_name'] as String? ?? '',
       gradeCategory: json['grade_category'] as String? ?? 'SMP',
-      gradeLevel: json['grade_level'] is int 
-          ? json['grade_level'] as int 
+      gradeLevel: json['grade_level'] is int
+          ? json['grade_level'] as int
           : _parseGradeLevel(json['grade_level']),
       classCode: json['class_code'] as String? ?? '',
-      teacherId: teacherJson != null ? teacherJson['id'] as int? ?? 0 : json['teacher_id'] as int? ?? 0,
-      teacherName: teacherJson != null ? teacherJson['name'] as String? ?? '' : json['teacher_name'] as String? ?? '',
+      teacherId: teacherJson != null
+          ? teacherJson['id'] as int? ?? 0
+          : json['teacher_id'] as int? ?? 0,
+      teacherName: teacherJson != null
+          ? teacherJson['name'] as String? ?? ''
+          : json['teacher_name'] as String? ?? '',
     );
   }
 
@@ -297,14 +309,33 @@ class ActivityLog {
 
     final rawCategory = json['category'] as String? ?? json['type'] as String?;
 
+    int parseId(dynamic val) {
+      if (val is int) return val;
+      if (val is String) return int.tryParse(val) ?? 0;
+      return 0;
+    }
+
     return ActivityLog(
-      id: json['id'] as int? ?? 0,
-      studentId: (json['student'] as Map?)?['id'] as int? ?? json['student_id'] as int? ?? studentId ?? 0,
+      id: parseId(json['id']),
+      studentId:
+          parseId((json['student'] as Map?)?['id']) != 0
+              ? parseId((json['student'] as Map?)?['id'])
+              : parseId(json['student_id']) != 0
+                  ? parseId(json['student_id'])
+                  : studentId ?? 0,
       title: json['title'] as String? ?? '',
       category: getCategoryFromType(rawCategory),
       location: json['location'] as String? ?? 'sekolah',
-      activityDate: DateTime.parse(json['date'] as String? ?? json['activity_date'] as String? ?? DateTime.now().toIso8601String()),
-      photoUrl: _resolvePhotoUrl(json['evidence_url'] as String? ?? json['photo_url'] as String? ?? json['photo'] as String?),
+      activityDate: DateTime.parse(
+        json['date'] as String? ??
+            json['activity_date'] as String? ??
+            DateTime.now().toIso8601String(),
+      ),
+      photoUrl: _resolvePhotoUrl(
+        json['evidence_url'] as String? ??
+            json['photo_url'] as String? ??
+            json['photo'] as String?,
+      ),
     );
   }
 
@@ -342,7 +373,10 @@ class PulseScores {
       participation: (json['participation'] as num?)?.toDouble() ?? 0.0,
       understanding: (json['understanding'] as num?)?.toDouble() ?? 0.0,
       learning: (json['learning'] as num?)?.toDouble() ?? 0.0,
-      socialEngagement: (json['social_engagement'] as num?)?.toDouble() ?? json['socialEngagement'] as double? ?? 0.0,
+      socialEngagement:
+          (json['social_engagement'] as num?)?.toDouble() ??
+          json['socialEngagement'] as double? ??
+          0.0,
     );
   }
 
@@ -378,7 +412,8 @@ class StudentProgress {
   });
 
   factory StudentProgress.fromJson(Map<String, dynamic> json, int studentId) {
-    final pathStatus = json['learning_path_status'] as Map<String, dynamic>? ?? {};
+    final pathStatus =
+        json['learning_path_status'] as Map<String, dynamic>? ?? {};
     final studentScore = json['student_score'] as Map<String, dynamic>? ?? {};
     return StudentProgress(
       studentId: studentId,
@@ -444,12 +479,13 @@ class TeacherClass {
       id: json['id'] as int? ?? 0,
       name: json['name'] as String? ?? '',
       gradeCategory: json['grade_category'] as String? ?? 'SMP',
-      gradeLevel: json['grade_level'] is int 
-          ? json['grade_level'] as int 
+      gradeLevel: json['grade_level'] is int
+          ? json['grade_level'] as int
           : _parseGradeLevel(json['grade_level']),
       classCode: json['class_code'] as String? ?? '',
       studentCount: json['student_count'] as int? ?? 0,
-      completedMaterials: (json['materials_completed_avg'] as num?)?.toInt() ?? 0,
+      completedMaterials:
+          (json['materials_completed_avg'] as num?)?.toInt() ?? 0,
       totalMaterials: 3,
       averagePulse: avgPulse,
     );
@@ -460,8 +496,8 @@ class TeacherClass {
       id: json['id'] as int? ?? 0,
       name: json['name'] as String? ?? '',
       gradeCategory: json['grade_category'] as String? ?? 'SMP',
-      gradeLevel: json['grade_level'] is int 
-          ? json['grade_level'] as int 
+      gradeLevel: json['grade_level'] is int
+          ? json['grade_level'] as int
           : _parseGradeLevel(json['grade_level']),
       classCode: json['class_code'] as String? ?? '',
       studentCount: json['student_count'] as int? ?? 0,
@@ -521,6 +557,7 @@ class ClassStudent {
       }
       return 0.0;
     }
+
     return ClassStudent(
       id: json['id'] as int? ?? 0,
       name: json['name'] as String? ?? '',
@@ -554,7 +591,8 @@ class AnecdotalNote {
   final int teacherId;
   final int studentId;
   final String content;
-  final String dimension; // participation, understanding, learning, social_engagement
+  final String
+  dimension; // participation, understanding, learning, social_engagement
   final DateTime createdAt;
 
   const AnecdotalNote({
@@ -569,11 +607,19 @@ class AnecdotalNote {
   factory AnecdotalNote.fromJson(Map<String, dynamic> json, int studentId) {
     return AnecdotalNote(
       id: json['id'] as int? ?? 0,
-      teacherId: (json['created_by'] as Map<String, dynamic>?)?['id'] as int? ?? json['teacher_id'] as int? ?? 0,
+      teacherId:
+          (json['created_by'] as Map<String, dynamic>?)?['id'] as int? ??
+          json['teacher_id'] as int? ??
+          0,
       studentId: studentId,
       content: json['content'] as String? ?? '',
-      dimension: json['category'] as String? ?? json['dimension'] as String? ?? 'participation',
-      createdAt: DateTime.parse(json['created_at'] as String? ?? DateTime.now().toIso8601String()),
+      dimension:
+          json['category'] as String? ??
+          json['dimension'] as String? ??
+          'participation',
+      createdAt: DateTime.parse(
+        json['created_at'] as String? ?? DateTime.now().toIso8601String(),
+      ),
     );
   }
 
@@ -609,9 +655,9 @@ int _parseGradeLevel(dynamic level) {
 String? _resolvePhotoUrl(String? url) {
   if (url == null || url.isEmpty) return null;
   if (url.startsWith('/')) {
-    return 'http://10.0.2.2:8000$url';
+    return 'http://192.168.2.93:8000$url';
   }
   return url
-      .replaceAll('localhost:8000', '10.0.2.2:8000')
-      .replaceAll('127.0.0.1:8000', '10.0.2.2:8000');
+      .replaceAll('localhost:8000', '192.168.2.93:8000')
+      .replaceAll('127.0.0.1:8000', '192.168.2.93:8000');
 }
