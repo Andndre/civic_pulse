@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../../core/network/network.dart';
-import 'mock_models.dart';
-import 'mock_services.dart';
+import 'data_models.dart';
+import 'service_interfaces.dart';
 
 // =============================================================================
 // REAL API IMPLEMENTATIONS
@@ -443,7 +443,10 @@ class RealTeacherService implements TeacherServiceInterface {
   @override
   Future<List<TeacherClass>> getTeacherClasses(int teacherId) async {
     try {
-      final response = await _client.get(ApiConstants.classes);
+      final response = await _client.get(
+        ApiConstants.classes,
+        queryParameters: {'filter[homeroom_teacher_id]': teacherId},
+      );
       final data = response.data;
       final List<dynamic> list;
       if (data is Map && data.containsKey('data')) {

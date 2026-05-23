@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../../core/constants/constants.dart';
-import '../../../../shared/services/mock_models.dart';
+import '../../../../shared/services/data_models.dart';
 import '../../learning/providers/material_provider.dart';
 
 class ScoresFeedbackScreen extends ConsumerWidget {

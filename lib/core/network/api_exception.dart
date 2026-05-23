@@ -5,17 +5,36 @@ class ApiException implements Exception {
   final int? statusCode;
   final dynamic data;
   final DioException? originalException;
+  final Map<String, String> fieldErrors;
 
   ApiException({
     required this.message,
     this.statusCode,
     this.data,
     this.originalException,
+    this.fieldErrors = const {},
   });
 
   factory ApiException.fromDioException(DioException e) {
     String message;
     int? statusCode = e.response?.statusCode;
+    Map<String, String> fieldErrors = {};
+
+    if (e.response?.data is Map) {
+      final resData = e.response!.data as Map;
+      if (resData.containsKey('errors')) {
+        final errors = resData['errors'];
+        if (errors is Map) {
+          errors.forEach((key, value) {
+            if (value is List && value.isNotEmpty) {
+              fieldErrors[key.toString()] = value.first.toString();
+            } else if (value is String) {
+              fieldErrors[key.toString()] = value;
+            }
+          });
+        }
+      }
+    }
 
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
@@ -47,6 +66,7 @@ class ApiException implements Exception {
       statusCode: statusCode,
       data: e.response?.data,
       originalException: e,
+      fieldErrors: fieldErrors,
     );
   }
 

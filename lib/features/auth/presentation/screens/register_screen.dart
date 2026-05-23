@@ -92,7 +92,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 AppSpacing.vGapLg,
                 _buildRoleSelector(),
                 AppSpacing.vGapMd,
-                _buildForm(isLoading),
+                _buildForm(isLoading, authState),
                 AppSpacing.vGapLg,
                 _buildRegisterButton(isLoading),
                 AppSpacing.vGapLg,
@@ -164,7 +164,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 
-  Widget _buildForm(bool isLoading) {
+  Widget _buildForm(bool isLoading, AuthState authState) {
     return Column(
       children: [
         AppTextField(
@@ -174,6 +174,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           prefixIcon: const Icon(Icons.person_outlined),
           textInputAction: TextInputAction.next,
           enabled: !isLoading,
+          errorText: authState.fieldErrors['name'],
+          onChanged: (_) {
+            if (authState.fieldErrors.containsKey('name')) {
+              ref.read(authNotifierProvider.notifier).clearError();
+            }
+          },
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Nama wajib diisi';
@@ -190,6 +196,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
           enabled: !isLoading,
+          errorText: authState.fieldErrors['email'],
+          onChanged: (_) {
+            if (authState.fieldErrors.containsKey('email')) {
+              ref.read(authNotifierProvider.notifier).clearError();
+            }
+          },
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Email wajib diisi';
@@ -209,6 +221,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           obscureText: true,
           textInputAction: TextInputAction.next,
           enabled: !isLoading,
+          errorText: authState.fieldErrors['password'],
+          onChanged: (_) {
+            if (authState.fieldErrors.containsKey('password')) {
+              ref.read(authNotifierProvider.notifier).clearError();
+            }
+          },
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Password wajib diisi';

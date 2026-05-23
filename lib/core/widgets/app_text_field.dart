@@ -66,6 +66,7 @@ class _AppTextFieldState extends State<AppTextField> {
         _errorText = widget.validator!(value);
       });
     }
+    widget.onChanged?.call(value ?? '');
   }
 
   @override

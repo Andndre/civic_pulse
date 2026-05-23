@@ -63,7 +63,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 AppSpacing.vGapXxl,
                 _buildHeader(),
                 AppSpacing.vGapXxl,
-                _buildForm(isLoading),
+                _buildForm(isLoading, authState),
                 AppSpacing.vGapLg,
                 _buildLoginButton(isLoading),
                 AppSpacing.vGapLg,
@@ -111,7 +111,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Widget _buildForm(bool isLoading) {
+  Widget _buildForm(bool isLoading, AuthState authState) {
     return Column(
       children: [
         AppTextField(
@@ -122,6 +122,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
           enabled: !isLoading,
+          errorText: authState.fieldErrors['email'],
+          onChanged: (_) {
+            if (authState.fieldErrors.containsKey('email')) {
+              ref.read(authNotifierProvider.notifier).clearError();
+            }
+          },
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Email wajib diisi';
@@ -142,6 +148,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           textInputAction: TextInputAction.done,
           enabled: !isLoading,
           onSubmitted: (_) => _handleLogin(),
+          errorText: authState.fieldErrors['password'],
+          onChanged: (_) {
+            if (authState.fieldErrors.containsKey('password')) {
+              ref.read(authNotifierProvider.notifier).clearError();
+            }
+          },
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Password wajib diisi';

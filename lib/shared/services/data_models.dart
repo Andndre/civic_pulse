@@ -92,9 +92,7 @@ class LearningMaterial {
       thumbnailUrl:
           json['thumbnail_url'] as String? ?? json['thumbnail'] as String?,
       gradeCategory: json['grade_category'] as String? ?? 'SMP',
-      gradeLevel: json['grade_level'] is int
-          ? json['grade_level'] as int
-          : _parseGradeLevel(json['grade_level']),
+      gradeLevel: _parseGradeLevel(json['grade_level'] ?? json['grade']),
       estimatedDuration:
           json['estimated_duration_minutes'] as int? ??
           json['estimated_duration'] as int?,
@@ -240,9 +238,7 @@ class StudentClass {
       id: json['id'] as int? ?? json['class_id'] as int? ?? 0,
       name: json['name'] as String? ?? json['class_name'] as String? ?? '',
       gradeCategory: json['grade_category'] as String? ?? 'SMP',
-      gradeLevel: json['grade_level'] is int
-          ? json['grade_level'] as int
-          : _parseGradeLevel(json['grade_level']),
+      gradeLevel: _parseGradeLevel(json['grade_level'] ?? json['grade']),
       classCode: json['class_code'] as String? ?? '',
       teacherId: teacherJson != null
           ? teacherJson['id'] as int? ?? 0
@@ -479,9 +475,7 @@ class TeacherClass {
       id: json['id'] as int? ?? 0,
       name: json['name'] as String? ?? '',
       gradeCategory: json['grade_category'] as String? ?? 'SMP',
-      gradeLevel: json['grade_level'] is int
-          ? json['grade_level'] as int
-          : _parseGradeLevel(json['grade_level']),
+      gradeLevel: _parseGradeLevel(json['grade_level'] ?? json['grade']),
       classCode: json['class_code'] as String? ?? '',
       studentCount: json['student_count'] as int? ?? 0,
       completedMaterials:
@@ -496,9 +490,7 @@ class TeacherClass {
       id: json['id'] as int? ?? 0,
       name: json['name'] as String? ?? '',
       gradeCategory: json['grade_category'] as String? ?? 'SMP',
-      gradeLevel: json['grade_level'] is int
-          ? json['grade_level'] as int
-          : _parseGradeLevel(json['grade_level']),
+      gradeLevel: _parseGradeLevel(json['grade_level'] ?? json['grade']),
       classCode: json['class_code'] as String? ?? '',
       studentCount: json['student_count'] as int? ?? 0,
       completedMaterials: 0,
