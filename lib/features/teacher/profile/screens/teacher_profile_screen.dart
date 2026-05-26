@@ -91,6 +91,7 @@ class TeacherProfileScreen extends ConsumerWidget {
             label: 'Edit Profil',
             variant: AppButtonVariant.outline,
             size: AppButtonSize.small,
+            fullWidth: false,
             onPressed: () {
               context.push('/teacher/profile/edit');
             },
