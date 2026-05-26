@@ -389,6 +389,7 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
                     width: 160,
                     margin: const EdgeInsets.only(right: AppSpacing.sm),
                     child: AppCard(
+                      onTap: () => context.push('/teacher/activities/${activity.id}'),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -345,13 +346,21 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(AppRadius.md),
-                        child: Image.file(
-                          File(_selectedImage!.path),
-                          width: double.infinity,
-                          height: 200,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => _buildImagePlaceholder(),
-                        ),
+                        child: kIsWeb
+                            ? Image.network(
+                                _selectedImage!.path,
+                                width: double.infinity,
+                                height: 200,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => _buildErrorImage(),
+                              )
+                            : Image.file(
+                                File(_selectedImage!.path),
+                                width: double.infinity,
+                                height: 200,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => _buildErrorImage(),
+                              ),
                       ),
                       Positioned(
                         top: 8,
@@ -412,6 +421,35 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildErrorImage() {
+    return Container(
+      width: double.infinity,
+      height: 200,
+      decoration: BoxDecoration(
+        color: AppColors.divider.withValues(alpha: 0.1),
+        border: Border.all(color: AppColors.divider),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.broken_image_outlined,
+            size: 48,
+            color: AppColors.textHint,
+          ),
+          AppSpacing.vGapSm,
+          Text(
+            'Gagal memuat preview gambar',
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
       ),
     );
   }

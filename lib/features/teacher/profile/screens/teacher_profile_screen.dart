@@ -25,11 +25,15 @@ class TeacherProfileScreen extends ConsumerWidget {
         child: Column(
           children: [
             // Profile header
-            _buildProfileHeader(user),
+            _buildProfileHeader(context, user),
             AppSpacing.vGapLg,
 
             // Stats summary
             _buildStatsSummary(),
+            AppSpacing.vGapLg,
+
+            // Profile details card
+            _buildProfileDetailsCard(user),
             AppSpacing.vGapLg,
 
             // Settings sections
@@ -45,7 +49,7 @@ class TeacherProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildProfileHeader(dynamic user) {
+  Widget _buildProfileHeader(BuildContext context, dynamic user) {
     return AppCard(
       child: Column(
         children: [
@@ -88,7 +92,7 @@ class TeacherProfileScreen extends ConsumerWidget {
             variant: AppButtonVariant.outline,
             size: AppButtonSize.small,
             onPressed: () {
-              // TODO: Implement edit profile
+              context.push('/teacher/profile/edit');
             },
           ),
         ],
@@ -343,5 +347,102 @@ class TeacherProfileScreen extends ConsumerWidget {
     return parts.length >= 2
         ? '${parts[0][0]}${parts[1][0]}'.toUpperCase()
         : name.substring(0, 1).toUpperCase();
+  }
+
+  Widget _buildProfileDetailsCard(dynamic user) {
+    if (user == null) return const SizedBox.shrink();
+
+    final hasDob = user.dateOfBirth != null && user.dateOfBirth!.isNotEmpty;
+    final hasGender = user.gender != null && user.gender!.isNotEmpty;
+    final hasPhone = user.phone != null && user.phone!.isNotEmpty;
+    final hasAddress = user.address != null && user.address!.isNotEmpty;
+
+    final noDetails = !hasDob && !hasGender && !hasPhone && !hasAddress;
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.person_outline, color: AppColors.primary),
+              AppSpacing.hGapSm,
+              Text(
+                'Detail Profil',
+                style: AppTypography.titleMedium.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          AppSpacing.vGapMd,
+          if (noDetails)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                child: Text(
+                  'Detail profil belum dilengkapi.',
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            )
+          else ...[
+            if (hasDob) _buildDetailRow(Icons.cake_outlined, 'Tanggal Lahir', _formatDateString(user.dateOfBirth!)),
+            if (hasGender) _buildDetailRow(user.gender == 'male' ? Icons.male : Icons.female, 'Jenis Kelamin', user.gender == 'male' ? 'Laki-laki' : 'Perempuan'),
+            if (hasPhone) _buildDetailRow(Icons.phone_android, 'No. Telepon', user.phone!),
+            if (hasAddress) _buildDetailRow(Icons.home_outlined, 'Alamat', user.address!),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: AppColors.textSecondary),
+          AppSpacing.hGapMd,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: AppTypography.labelSmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                Text(
+                  value,
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDateString(String dateString) {
+    try {
+      final date = DateTime.parse(dateString);
+      final months = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      ];
+      return '${date.day} ${months[date.month - 1]} ${date.year}';
+    } catch (_) {
+      return dateString;
+    }
   }
 }

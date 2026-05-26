@@ -233,6 +233,44 @@ class AuthNotifier extends Notifier<AuthState> {
       return false;
     }
   }
+
+  Future<bool> updateTeacherProfile({
+    required String name,
+    required String email,
+    String? dateOfBirth,
+    String? phone,
+    String? address,
+    String? gender,
+  }) async {
+    final currentTeacher = state.user;
+    if (currentTeacher == null) {
+      state = state.copyWith(errorMessage: 'Pengguna tidak ditemukan');
+      return false;
+    }
+    
+    try {
+      final updatedUser = await _repository.updateTeacherProfile(
+        currentTeacher.id,
+        {
+          'name': name,
+          'email': email,
+          'date_of_birth': dateOfBirth,
+          'phone': phone,
+          'address': address,
+          'gender': gender,
+        },
+      );
+      state = state.copyWith(
+        user: updatedUser,
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        errorMessage: _formatError(e),
+      );
+      return false;
+    }
+  }
 }
 
 // Auth Notifier Provider

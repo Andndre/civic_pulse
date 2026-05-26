@@ -19,6 +19,7 @@ import '../../features/teacher/home/screens/teacher_home_screen.dart';
 import '../../features/teacher/class_detail/screens/class_detail_screen.dart';
 import '../../features/teacher/student_profile/screens/student_profile_screen.dart';
 import '../../features/teacher/profile/screens/teacher_profile_screen.dart';
+import '../../features/teacher/profile/screens/edit_profile_screen.dart';
 import 'app_shell.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -183,8 +184,19 @@ final routerProvider = Provider<GoRouter>((ref) {
             },
           ),
           GoRoute(
+            path: '/teacher/activities/:id',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['id'] ?? '0') ?? 0;
+              return ActivityDetailScreen(activityId: id);
+            },
+          ),
+          GoRoute(
             path: '/teacher/profile',
             builder: (context, state) => const TeacherProfileScreen(),
+          ),
+          GoRoute(
+            path: '/teacher/profile/edit',
+            builder: (context, state) => const EditTeacherProfileScreen(),
           ),
         ],
       ),
