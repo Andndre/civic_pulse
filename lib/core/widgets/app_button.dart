@@ -33,19 +33,29 @@ class AppButton extends StatelessWidget {
 
     return SizedBox(
       width: fullWidth ? double.infinity : null,
-      height: _getHeight,
       child: _buildButton(isDisabled),
     );
   }
 
-  double get _getHeight {
+  double get _getVerticalPadding {
     switch (size) {
       case AppButtonSize.small:
-        return 36;
+        return 6.0;
       case AppButtonSize.medium:
-        return AppSpacing.minTouchTarget;
+        return 10.0;
       case AppButtonSize.large:
-        return 56;
+        return 14.0;
+    }
+  }
+
+  double get _getHorizontalPadding {
+    switch (size) {
+      case AppButtonSize.small:
+        return AppSpacing.md;
+      case AppButtonSize.medium:
+        return AppSpacing.lg;
+      case AppButtonSize.large:
+        return AppSpacing.xl;
     }
   }
 
@@ -54,6 +64,13 @@ class AppButton extends StatelessWidget {
       case AppButtonVariant.primary:
         return ElevatedButton(
           onPressed: isDisabled ? null : onPressed,
+          style: ElevatedButton.styleFrom(
+            minimumSize: Size.zero,
+            padding: EdgeInsets.symmetric(
+              horizontal: _getHorizontalPadding,
+              vertical: _getVerticalPadding,
+            ),
+          ),
           child: _buildContent(AppColors.textOnPrimary),
         );
       case AppButtonVariant.secondary:
@@ -62,17 +79,36 @@ class AppButton extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.secondary,
             foregroundColor: AppColors.textPrimary,
+            minimumSize: Size.zero,
+            padding: EdgeInsets.symmetric(
+              horizontal: _getHorizontalPadding,
+              vertical: _getVerticalPadding,
+            ),
           ),
           child: _buildContent(AppColors.textPrimary),
         );
       case AppButtonVariant.outline:
         return OutlinedButton(
           onPressed: isDisabled ? null : onPressed,
+          style: OutlinedButton.styleFrom(
+            minimumSize: Size.zero,
+            padding: EdgeInsets.symmetric(
+              horizontal: _getHorizontalPadding,
+              vertical: _getVerticalPadding,
+            ),
+          ),
           child: _buildContent(AppColors.primary),
         );
       case AppButtonVariant.text:
         return TextButton(
           onPressed: isDisabled ? null : onPressed,
+          style: TextButton.styleFrom(
+            minimumSize: Size.zero,
+            padding: EdgeInsets.symmetric(
+              horizontal: _getHorizontalPadding,
+              vertical: _getVerticalPadding,
+            ),
+          ),
           child: _buildContent(AppColors.primary),
         );
       case AppButtonVariant.danger:
@@ -81,6 +117,11 @@ class AppButton extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.danger,
             foregroundColor: AppColors.textOnPrimary,
+            minimumSize: Size.zero,
+            padding: EdgeInsets.symmetric(
+              horizontal: _getHorizontalPadding,
+              vertical: _getVerticalPadding,
+            ),
           ),
           child: _buildContent(AppColors.textOnPrimary),
         );
