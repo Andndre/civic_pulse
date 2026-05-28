@@ -408,6 +408,15 @@ class RealAnalyticsService implements AnalyticsServiceInterface {
       }
       return PulseScores.fromJson(stats);
     } on DioException catch (e) {
+      // If analytics endpoint returns 404 or error, return default zero scores
+      if (e.response?.statusCode == 404 || e.response?.statusCode == 403) {
+        return const PulseScores(
+          participation: 0.0,
+          understanding: 0.0,
+          learning: 0.0,
+          socialEngagement: 0.0,
+        );
+      }
       throw ApiException.fromDioException(e);
     }
   }

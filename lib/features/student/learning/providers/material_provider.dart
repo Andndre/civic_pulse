@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/services/services.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
-// Materials list provider - filter by student's enrolled class
+// Materials list provider - show materials for student's class, or all materials as fallback
 final materialsProvider = FutureProvider<List<LearningMaterial>>((ref) async {
   final service = ref.watch(materialServiceProvider);
   final classService = ref.watch(classServiceProvider);
@@ -25,15 +25,16 @@ final materialsProvider = FutureProvider<List<LearningMaterial>>((ref) async {
   // Use first enrolled class's grade info
   final enrolledClass = studentClasses.isNotEmpty ? studentClasses.first : null;
 
-  // If no enrolled class, return empty list
-  if (enrolledClass == null) {
-    return [];
+  // If enrolled in a class, filter by grade; otherwise show all materials
+  if (enrolledClass != null) {
+    return service.getMaterials(
+      gradeCategory: enrolledClass.gradeCategory,
+      gradeLevel: enrolledClass.gradeLevel,
+    );
   }
 
-  return service.getMaterials(
-    gradeCategory: enrolledClass.gradeCategory,
-    gradeLevel: enrolledClass.gradeLevel,
-  );
+  // Fallback: show all available materials
+  return service.getMaterials();
 });
 
 // Fallback provider untuk development - return semua materi

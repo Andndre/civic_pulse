@@ -569,11 +569,17 @@ class _QuizViewState extends ConsumerState<_QuizView> {
                   onPressed: _answers.containsKey(question.id)
                       ? () => setState(() => _currentQuestion++)
                       : null,
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(0, AppSpacing.minTouchTarget),
+                  ),
                   child: const Text('Selanjutnya'),
                 )
               else
                 ElevatedButton(
                   onPressed: _answers.length == widget.questions.length ? _submitQuiz : null,
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(0, AppSpacing.minTouchTarget),
+                  ),
                   child: const Text('Kumpulkan'),
                 ),
             ],
@@ -883,6 +889,9 @@ class _LikertAssessmentViewState extends ConsumerState<_LikertAssessmentView> {
                   onPressed: _responses.containsKey(statement.id)
                       ? () => setState(() => _currentIndex++)
                       : null,
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(0, AppSpacing.minTouchTarget),
+                  ),
                   child: const Text('Selanjutnya'),
                 )
               else
@@ -890,6 +899,9 @@ class _LikertAssessmentViewState extends ConsumerState<_LikertAssessmentView> {
                   onPressed: _responses.length == widget.statements.length
                       ? _submitPulse
                       : null,
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(0, AppSpacing.minTouchTarget),
+                  ),
                   child: const Text('Kumpulkan'),
                 ),
             ],
