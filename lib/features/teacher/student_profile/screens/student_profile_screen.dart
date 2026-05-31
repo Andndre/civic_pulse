@@ -430,15 +430,15 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
                           _buildScoreChip('Pre-Test', preScore, AppColors.info),
                           AppSpacing.hGapMd,
                           _buildScoreChip('Post-Test', postScore, AppColors.success),
-                          if (preScore != null && postScore != null) ...[
-                            AppSpacing.hGapMd,
-                            _buildScoreChip(
-                              'Δ',
-                              postScore - preScore,
-                              postScore >= preScore ? AppColors.success : AppColors.danger,
-                              showSign: true,
-                            ),
-                          ],
+                          AppSpacing.hGapMd,
+                          _buildScoreChip(
+                            'Peningkatan',
+                            (preScore != null && postScore != null) ? (postScore - preScore) : null,
+                            (preScore != null && postScore != null)
+                                ? (postScore >= preScore ? AppColors.success : AppColors.danger)
+                                : AppColors.textSecondary,
+                            showSign: true,
+                          ),
                         ],
                       ),
                     ],
