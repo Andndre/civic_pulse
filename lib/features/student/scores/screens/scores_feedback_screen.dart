@@ -595,13 +595,15 @@ class _MaterialProgressCard extends ConsumerWidget {
                           ),
                           AppSpacing.vGapLg,
                           // Score legend (0-5 scale)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          Column(
                             children: [
-                              Expanded(child: _buildDialogScoreItem('Partisipasi', pScore)),
-                              Expanded(child: _buildDialogScoreItem('Pemahaman', uScore)),
-                              Expanded(child: _buildDialogScoreItem('Pembelajaran', lScore)),
-                              Expanded(child: _buildDialogScoreItem('Keterlibatan', seScore)),
+                              _buildDialogScoreRow('Partisipasi', pScore),
+                              Divider(color: AppColors.divider, height: 1),
+                              _buildDialogScoreRow('Pemahaman', uScore),
+                              Divider(color: AppColors.divider, height: 1),
+                              _buildDialogScoreRow('Pembelajaran', lScore),
+                              Divider(color: AppColors.divider, height: 1),
+                              _buildDialogScoreRow('Keterlibatan', seScore),
                             ],
                           ),
                         ],
@@ -636,30 +638,41 @@ class _MaterialProgressCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildDialogScoreItem(String label, double score) {
+  Widget _buildDialogScoreRow(String label, double score) {
     Color getScoreColor(double s) {
       if (s >= 3.5) return AppColors.success;
       if (s >= 2.5) return AppColors.warning;
       return AppColors.danger;
     }
 
-    return Column(
-      children: [
-        Text(
-          score.toStringAsFixed(1),
-          style: AppTypography.titleMedium.copyWith(
-            color: getScoreColor(score),
-            fontWeight: FontWeight.bold,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-        Text(
-          label,
-          style: AppTypography.labelSmall.copyWith(
-            color: AppColors.textSecondary,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: getScoreColor(score).withValues(alpha: 0.1),
+              borderRadius: AppRadius.chip,
+            ),
+            child: Text(
+              score.toStringAsFixed(1),
+              style: AppTypography.titleSmall.copyWith(
+                color: getScoreColor(score),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
-          textAlign: TextAlign.center,
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
