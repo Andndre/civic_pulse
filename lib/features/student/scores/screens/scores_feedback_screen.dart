@@ -177,10 +177,10 @@ class ScoresFeedbackScreen extends ConsumerWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        _buildScoreItem('Partisipasi', scores.participation),
-        _buildScoreItem('Pemahaman', scores.understanding),
-        _buildScoreItem('Pembelajaran', scores.learning),
-        _buildScoreItem('Keterlibatan', scores.socialEngagement),
+        Expanded(child: _buildScoreItem('Partisipasi', scores.participation)),
+        Expanded(child: _buildScoreItem('Pemahaman', scores.understanding)),
+        Expanded(child: _buildScoreItem('Pembelajaran', scores.learning)),
+        Expanded(child: _buildScoreItem('Keterlibatan', scores.socialEngagement)),
       ],
     );
   }
@@ -598,10 +598,10 @@ class _MaterialProgressCard extends ConsumerWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              _buildDialogScoreItem('Partisipasi', pScore),
-                              _buildDialogScoreItem('Pemahaman', uScore),
-                              _buildDialogScoreItem('Pembelajaran', lScore),
-                              _buildDialogScoreItem('Keterlibatan', seScore),
+                              Expanded(child: _buildDialogScoreItem('Partisipasi', pScore)),
+                              Expanded(child: _buildDialogScoreItem('Pemahaman', uScore)),
+                              Expanded(child: _buildDialogScoreItem('Pembelajaran', lScore)),
+                              Expanded(child: _buildDialogScoreItem('Keterlibatan', seScore)),
                             ],
                           ),
                         ],

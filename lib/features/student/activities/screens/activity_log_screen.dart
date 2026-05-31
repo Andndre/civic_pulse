@@ -112,66 +112,70 @@ class _ActivityLogScreenState extends ConsumerState<ActivityLogScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      builder: (context) => SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Filter Aktivitas',
-                  style: AppTypography.titleLarge.copyWith(
-                    color: AppColors.textPrimary,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Filter Aktivitas',
+                      style: AppTypography.titleLarge.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-            AppSpacing.vGapMd,
-            ..._categories.map((cat) {
-              final isSelected = _selectedCategory == cat['value'];
-              return ListTile(
-                leading: Icon(
-                  _getCategoryIcon(cat['value'] as String?),
-                  color: isSelected ? AppColors.primary : AppColors.textSecondary,
-                ),
-                title: Text(
-                  cat['label'] as String,
-                  style: AppTypography.bodyLarge.copyWith(
-                    color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  ),
-                ),
-                trailing: isSelected ? const Icon(Icons.check, color: AppColors.primary) : null,
-                onTap: () {
-                  setState(() => _selectedCategory = cat['value'] as String?);
-                  Navigator.pop(context);
-                },
-              );
-            }),
-            AppSpacing.vGapLg,
-            if (_selectedCategory != null)
-              Center(
-                child: TextButton(
-                  onPressed: () {
-                    setState(() => _selectedCategory = null);
-                    Navigator.pop(context);
-                  },
-                  child: Text(
-                    'Hapus Filter',
-                    style: AppTypography.labelLarge.copyWith(
-                      color: AppColors.danger,
+                AppSpacing.vGapMd,
+                ..._categories.map((cat) {
+                  final isSelected = _selectedCategory == cat['value'];
+                  return ListTile(
+                    leading: Icon(
+                      _getCategoryIcon(cat['value'] as String?),
+                      color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                    ),
+                    title: Text(
+                      cat['label'] as String,
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                    trailing: isSelected ? const Icon(Icons.check, color: AppColors.primary) : null,
+                    onTap: () {
+                      setState(() => _selectedCategory = cat['value'] as String?);
+                      Navigator.pop(context);
+                    },
+                  );
+                }),
+                AppSpacing.vGapLg,
+                if (_selectedCategory != null)
+                  Center(
+                    child: TextButton(
+                      onPressed: () {
+                        setState(() => _selectedCategory = null);
+                        Navigator.pop(context);
+                      },
+                      child: Text(
+                        'Hapus Filter',
+                        style: AppTypography.labelLarge.copyWith(
+                          color: AppColors.danger,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );

@@ -96,7 +96,7 @@ class LearningGalleryScreen extends ConsumerWidget {
                         padding: AppSpacing.screenPadding,
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          childAspectRatio: 0.75,
+                          childAspectRatio: 0.68,
                           crossAxisSpacing: AppSpacing.md,
                           mainAxisSpacing: AppSpacing.md,
                         ),
@@ -121,7 +121,7 @@ class LearningGalleryScreen extends ConsumerWidget {
                       padding: AppSpacing.screenPadding,
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        childAspectRatio: 0.75,
+                        childAspectRatio: 0.68,
                         crossAxisSpacing: AppSpacing.md,
                         mainAxisSpacing: AppSpacing.md,
                       ),
