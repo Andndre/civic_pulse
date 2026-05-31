@@ -102,19 +102,48 @@ class StudentHomeScreen extends ConsumerWidget {
                 ),
                 AppSpacing.vGapSm,
                 materialsAsync.when(
-                  data: (materials) => Column(
-                    children: materials.take(3).map((m) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                        child: _MaterialListTile(
-                          title: m.title,
-                          subtitle: '${m.gradeCategory} Kelas ${m.gradeLevel}',
-                          duration: m.estimatedDuration,
-                          onTap: () => context.go('/student/learning/${m.id}'),
+                  data: (materials) {
+                    if (materials.isEmpty) {
+                      return Container(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: AppRadius.card,
+                          border: Border.all(color: AppColors.divider),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(Icons.menu_book_outlined, size: 40, color: AppColors.textSecondary),
+                            AppSpacing.vGapSm,
+                            Text(
+                              'Belum Ada Materi',
+                              style: AppTypography.titleSmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+                            ),
+                            AppSpacing.vGapXs,
+                            Text(
+                              'Silakan bergabung ke kelas terlebih dahulu untuk melihat materi belajar Anda.',
+                              style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                         ),
                       );
-                    }).toList(),
-                  ),
+                    }
+                    return Column(
+                      children: materials.take(3).map((m) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                          child: _MaterialListTile(
+                            title: m.title,
+                            subtitle: '${m.gradeCategory} Kelas ${m.gradeLevel}',
+                            duration: m.estimatedDuration,
+                            onTap: () => context.go('/student/learning/${m.id}'),
+                          ),
+                        );
+                      }).toList(),
+                    );
+                  },
                   loading: () => const Column(
                     children: [
                       ShimmerListTile(),

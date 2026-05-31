@@ -33,8 +33,8 @@ final materialsProvider = FutureProvider<List<LearningMaterial>>((ref) async {
     );
   }
 
-  // Fallback: show all available materials
-  return service.getMaterials();
+  // If not enrolled in a class, return empty list
+  return [];
 });
 
 // Fallback provider untuk development - return semua materi
