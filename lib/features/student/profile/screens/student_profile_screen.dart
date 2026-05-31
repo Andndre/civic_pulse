@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../auth/data/models/auth_models.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../learning/providers/material_provider.dart';
+import '../../../../shared/services/data_models.dart' show PulseScores;
 
 class StudentProfileScreen extends ConsumerWidget {
   const StudentProfileScreen({super.key});
@@ -12,6 +14,7 @@ class StudentProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authNotifierProvider);
     final user = authState.user;
+    final pulseScoresAsync = ref.watch(pulseScoresProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -34,7 +37,7 @@ class StudentProfileScreen extends ConsumerWidget {
             AppSpacing.vGapLg,
 
             // PULSE Summary
-            _buildPulseSummaryCard(),
+            _buildPulseSummaryCard(pulseScoresAsync),
             AppSpacing.vGapLg,
 
             // Settings sections
@@ -118,56 +121,93 @@ class StudentProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildPulseSummaryCard() {
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+  Widget _buildPulseSummaryCard(AsyncValue<PulseScores> pulseScoresAsync) {
+    return pulseScoresAsync.when(
+      data: (scores) {
+        final overall = scores.overall;
+        Color bannerBgColor = AppColors.successLight;
+        Color iconColor = AppColors.success;
+        String statusText = 'Dalam batas baik!';
+        if (overall < 2.5) {
+          bannerBgColor = AppColors.dangerLight;
+          iconColor = AppColors.danger;
+          statusText = 'Perlu perhatian!';
+        } else if (overall < 3.5) {
+          bannerBgColor = AppColors.warningLight;
+          iconColor = AppColors.warning;
+          statusText = 'Perlu perbaikan!';
+        }
+
+        return AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.insights, color: AppColors.primary),
-              AppSpacing.hGapSm,
-              Text(
-                'Ringkasan PULSE',
-                style: AppTypography.titleMedium.copyWith(
-                  color: AppColors.textPrimary,
+              Row(
+                children: [
+                  Icon(Icons.insights, color: AppColors.primary),
+                  AppSpacing.hGapSm,
+                  Text(
+                    'Ringkasan PULSE',
+                    style: AppTypography.titleMedium.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              AppSpacing.vGapMd,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildPulseMetric('Partisipasi', scores.participation),
+                  _buildPulseMetric('Pemahaman', scores.understanding),
+                  _buildPulseMetric('Pembelajaran', scores.learning),
+                  _buildPulseMetric('Keterlibatan', scores.socialEngagement),
+                ],
+              ),
+              AppSpacing.vGapMd,
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: bannerBgColor,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.emoji_events, color: iconColor),
+                    AppSpacing.hGapSm,
+                    Expanded(
+                      child: Text(
+                        'Skor keseluruhan: ${overall.toStringAsFixed(1)} - $statusText',
+                        style: AppTypography.labelMedium.copyWith(
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          AppSpacing.vGapMd,
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildPulseMetric('Partisipasi', 3.5),
-              _buildPulseMetric('Pemahaman', 4.0),
-              _buildPulseMetric('Pembelajaran', 3.8),
-              _buildPulseMetric('Keterlibatan', 3.2),
-            ],
+        );
+      },
+      loading: () => AppCard(
+        child: SizedBox(
+          height: 120,
+          child: Center(
+            child: CircularProgressIndicator(),
           ),
-          AppSpacing.vGapMd,
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            decoration: BoxDecoration(
-              color: AppColors.successLight,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.emoji_events, color: AppColors.success),
-                AppSpacing.hGapSm,
-                Expanded(
-                  child: Text(
-                    'Skor keseluruhan: 3.6 - Dalam batas baik!',
-                    style: AppTypography.labelMedium.copyWith(
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-              ],
+        ),
+      ),
+      error: (e, _) => AppCard(
+        child: SizedBox(
+          height: 120,
+          child: Center(
+            child: Text(
+              'Gagal memuat ringkasan PULSE',
+              style: AppTypography.bodyMedium.copyWith(color: AppColors.danger),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
