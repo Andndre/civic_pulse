@@ -63,4 +63,6 @@ abstract class TeacherServiceInterface {
   Future<void> deleteClass(int classId);
   /// Ambil skor PULSE + test scores untuk siswa tertentu (untuk tampilan guru)
   Future<Map<String, dynamic>> getStudentPulseScores(int studentId);
+  /// Ambil statistik kelas, siswa, dan catatan anekdot untuk guru saat ini
+  Future<Map<String, dynamic>> getTeacherStats();
 }

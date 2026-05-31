@@ -679,4 +679,24 @@ class RealTeacherService implements TeacherServiceInterface {
       throw ApiException.fromDioException(e);
     }
   }
+
+  @override
+  Future<Map<String, dynamic>> getTeacherStats() async {
+    try {
+      final response = await _client.get('/teachers/me/stats');
+      final data = response.data;
+      return (data is Map && data.containsKey('data'))
+          ? data['data'] as Map<String, dynamic>
+          : data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return {
+          'classes_count': 0,
+          'students_count': 0,
+          'anecdotal_notes_count': 0,
+        };
+      }
+      throw ApiException.fromDioException(e);
+    }
+  }
 }

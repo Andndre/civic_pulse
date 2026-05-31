@@ -94,3 +94,9 @@ final studentPulseScoresProvider = FutureProvider.family<Map<String, dynamic>, i
   final service = ref.watch(teacherServiceProvider);
   return service.getStudentPulseScores(studentId);
 });
+
+// Teacher stats provider
+final teacherStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  final service = ref.watch(teacherServiceProvider);
+  return service.getTeacherStats();
+});

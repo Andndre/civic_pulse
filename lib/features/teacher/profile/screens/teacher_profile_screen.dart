@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../home/providers/teacher_provider.dart';
 
 class TeacherProfileScreen extends ConsumerWidget {
   const TeacherProfileScreen({super.key});
@@ -11,6 +12,7 @@ class TeacherProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authNotifierProvider);
     final user = authState.user;
+    final statsAsync = ref.watch(teacherStatsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -29,7 +31,7 @@ class TeacherProfileScreen extends ConsumerWidget {
             AppSpacing.vGapLg,
 
             // Stats summary
-            _buildStatsSummary(),
+            _buildStatsSummary(statsAsync),
             AppSpacing.vGapLg,
 
             // Profile details card
@@ -100,7 +102,7 @@ class TeacherProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatsSummary() {
+  Widget _buildStatsSummary(AsyncValue<Map<String, dynamic>> statsAsync) {
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,13 +120,33 @@ class TeacherProfileScreen extends ConsumerWidget {
             ],
           ),
           AppSpacing.vGapMd,
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildStatItem(Icons.class_, '2', 'Kelas'),
-              _buildStatItem(Icons.people, '60', 'Siswa'),
-              _buildStatItem(Icons.note, '12', 'Catatan'),
-            ],
+          statsAsync.when(
+            data: (stats) {
+              final classesCount = stats['classes_count']?.toString() ?? '0';
+              final studentsCount = stats['students_count']?.toString() ?? '0';
+              final notesCount = stats['anecdotal_notes_count']?.toString() ?? '0';
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildStatItem(Icons.class_, classesCount, 'Kelas'),
+                  _buildStatItem(Icons.people, studentsCount, 'Siswa'),
+                  _buildStatItem(Icons.note, notesCount, 'Catatan'),
+                ],
+              );
+            },
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (e, _) => const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+              child: Center(
+                child: Text(
+                  'Gagal memuat statistik',
+                  style: TextStyle(color: AppColors.danger),
+                ),
+              ),
+            ),
           ),
         ],
       ),
