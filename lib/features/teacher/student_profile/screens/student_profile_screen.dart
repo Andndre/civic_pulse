@@ -383,6 +383,30 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
           },
           dataSets: [
             RadarDataSet(
+              fillColor: Colors.transparent,
+              borderColor: Colors.transparent,
+              entryRadius: 0,
+              borderWidth: 0,
+              dataEntries: const [
+                RadarEntry(value: 0),
+                RadarEntry(value: 0),
+                RadarEntry(value: 0),
+                RadarEntry(value: 0),
+              ],
+            ),
+            RadarDataSet(
+              fillColor: Colors.transparent,
+              borderColor: Colors.transparent,
+              entryRadius: 0,
+              borderWidth: 0,
+              dataEntries: const [
+                RadarEntry(value: 5),
+                RadarEntry(value: 5),
+                RadarEntry(value: 5),
+                RadarEntry(value: 5),
+              ],
+            ),
+            RadarDataSet(
               fillColor: AppColors.primary.withValues(alpha: 0.3),
               borderColor: AppColors.primary,
               borderWidth: 2,
