@@ -193,6 +193,7 @@ class PulseStatement {
   final String dimension;
   final String statement;
   final int orderIndex;
+  final int? score;
 
   const PulseStatement({
     required this.id,
@@ -200,6 +201,7 @@ class PulseStatement {
     required this.dimension,
     required this.statement,
     required this.orderIndex,
+    this.score,
   });
 
   factory PulseStatement.fromJson(
@@ -212,6 +214,7 @@ class PulseStatement {
       dimension: json['dimension'] as String? ?? 'participation',
       statement: json['statement'] as String? ?? '',
       orderIndex: json['order_index'] as int? ?? json['id'] as int? ?? 1,
+      score: json['score'] as int?,
     );
   }
 
@@ -222,6 +225,7 @@ class PulseStatement {
       'dimension': dimension,
       'statement': statement,
       'order_index': orderIndex,
+      'score': score,
     };
   }
 }
@@ -403,12 +407,12 @@ class StudentProgress {
   final int studentId;
   final int materialId;
   final String preTestStatus;
-  final int? preTestScore;
+  final double? preTestScore;
   final String ebookStatus;
   final String postTestStatus;
-  final int? postTestScore;
+  final double? postTestScore;
   final String pulseStatus;
-  final int? pulseScore;
+  final double? pulseScore;
 
   const StudentProgress({
     required this.studentId,
@@ -430,12 +434,12 @@ class StudentProgress {
       studentId: studentId,
       materialId: json['id'] as int? ?? json['material_id'] as int? ?? 0,
       preTestStatus: pathStatus['pre_test'] as String? ?? 'locked',
-      preTestScore: studentScore['pre_test_score'] as int?,
+      preTestScore: (studentScore['pre_test_score'] as num?)?.toDouble(),
       ebookStatus: pathStatus['ebook'] as String? ?? 'locked',
       postTestStatus: pathStatus['post_test'] as String? ?? 'locked',
-      postTestScore: studentScore['post_test_score'] as int?,
+      postTestScore: (studentScore['post_test_score'] as num?)?.toDouble(),
       pulseStatus: pathStatus['pulse'] as String? ?? 'locked',
-      pulseScore: studentScore['pulse_score'] as int?,
+      pulseScore: (studentScore['pulse_score'] as num?)?.toDouble(),
     );
   }
 

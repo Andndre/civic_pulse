@@ -334,13 +334,13 @@ class ScoresFeedbackScreen extends ConsumerWidget {
   }
 }
 
-class _MaterialProgressCard extends StatelessWidget {
+class _MaterialProgressCard extends ConsumerWidget {
   final StudentProgress progress;
 
   const _MaterialProgressCard({required this.progress});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,19 +355,38 @@ class _MaterialProgressCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _buildStep('Pre-test', progress.preTestStatus, progress.preTestScore),
+                child: _buildStep(
+                  'Pre-test',
+                  progress.preTestStatus,
+                  progress.preTestScore,
+                ),
               ),
               const Icon(Icons.arrow_forward, size: 16, color: AppColors.textSecondary),
               Expanded(
-                child: _buildStep('E-Book', progress.ebookStatus, null),
+                child: _buildStep(
+                  'E-Book',
+                  progress.ebookStatus,
+                  null,
+                ),
               ),
               const Icon(Icons.arrow_forward, size: 16, color: AppColors.textSecondary),
               Expanded(
-                child: _buildStep('Post-test', progress.postTestStatus, progress.postTestScore),
+                child: _buildStep(
+                  'Post-test',
+                  progress.postTestStatus,
+                  progress.postTestScore,
+                ),
               ),
               const Icon(Icons.arrow_forward, size: 16, color: AppColors.textSecondary),
               Expanded(
-                child: _buildStep('PULSE', progress.pulseStatus, progress.pulseScore),
+                child: _buildStep(
+                  'PULSE',
+                  progress.pulseStatus,
+                  progress.pulseScore,
+                  onTap: progress.pulseStatus == 'completed'
+                      ? () => _showPulseDetailsDialog(context, ref, progress.materialId)
+                      : null,
+                ),
               ),
             ],
           ),
@@ -376,9 +395,9 @@ class _MaterialProgressCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStep(String label, String status, int? score) {
+  Widget _buildStep(String label, String status, double? score, {VoidCallback? onTap}) {
     final isCompleted = status == 'completed';
-    return Column(
+    final content = Column(
       children: [
         Container(
           width: 32,
@@ -403,7 +422,7 @@ class _MaterialProgressCard extends StatelessWidget {
         ),
         if (score != null)
           Text(
-            '$score%',
+            label == 'PULSE' ? '${score.toStringAsFixed(1)}/5' : '${score.toInt()}%',
             style: AppTypography.labelSmall.copyWith(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.bold,
@@ -411,5 +430,146 @@ class _MaterialProgressCard extends StatelessWidget {
           ),
       ],
     );
+
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppSpacing.sm),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+          child: content,
+        ),
+      );
+    }
+    return content;
+  }
+
+  void _showPulseDetailsDialog(BuildContext context, WidgetRef ref, int materialId) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Consumer(
+          builder: (context, ref, child) {
+            final statementsAsync = ref.watch(pulseStatementsProvider(materialId));
+            return AlertDialog(
+              backgroundColor: AppColors.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: AppRadius.card,
+              ),
+              title: Text(
+                'Detail Skor PULSE',
+                style: AppTypography.titleMedium.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: statementsAsync.when(
+                  data: (statements) {
+                    if (statements.isEmpty) {
+                      return const Center(child: Text('Tidak ada instrumen PULSE.'));
+                    }
+                    return ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: statements.length,
+                      separatorBuilder: (_, __) => const Divider(),
+                      itemBuilder: (context, index) {
+                        final stmt = statements[index];
+                        final score = stmt.score ?? 0;
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: AppSpacing.sm,
+                                      vertical: AppSpacing.xxs,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withValues(alpha: 0.1),
+                                      borderRadius: AppRadius.chip,
+                                    ),
+                                    child: Text(
+                                      _getDimensionLabel(stmt.dimension),
+                                      style: AppTypography.labelSmall.copyWith(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Row(
+                                    children: List.generate(5, (starIndex) {
+                                      return Icon(
+                                        starIndex < score ? Icons.star : Icons.star_border,
+                                        color: AppColors.secondary,
+                                        size: 18,
+                                      );
+                                    }),
+                                  ),
+                                ],
+                              ),
+                              AppSpacing.vGapSm,
+                              Text(
+                                stmt.statement,
+                                style: AppTypography.bodyMedium.copyWith(
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  loading: () => const SizedBox(
+                    height: 100,
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (e, _) => SizedBox(
+                    height: 100,
+                    child: Center(
+                      child: Text(
+                        'Gagal memuat detail skor.',
+                        style: TextStyle(color: AppColors.danger),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Tutup'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  String _getDimensionLabel(String dimension) {
+    switch (dimension.toLowerCase()) {
+      case 'participation':
+      case 'p':
+        return 'Partisipasi';
+      case 'understanding':
+      case 'u':
+        return 'Pemahaman';
+      case 'learning':
+      case 'l':
+        return 'Pembelajaran';
+      case 'social_engagement':
+      case 'se':
+        return 'Keterlibatan';
+      default:
+        return dimension;
+    }
   }
 }
