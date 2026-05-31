@@ -174,11 +174,43 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
               ),
               AppSpacing.vGapLg,
               AppButton(
+                label: 'Baca Kembali Materi',
+                variant: AppButtonVariant.primary,
+                onPressed: () => _showMaterialDialog(context, material),
+                fullWidth: true,
+              ),
+              AppSpacing.vGapMd,
+              AppButton(
                 label: 'Kembali Ke Galeri',
+                variant: AppButtonVariant.outline,
                 onPressed: () => context.go('/student/learning'),
                 fullWidth: true,
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showMaterialDialog(BuildContext context, LearningMaterial material) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(
+            title: const Text('Materi Belajar'),
+            backgroundColor: AppColors.surface,
+            foregroundColor: AppColors.textPrimary,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+          body: _EBookStep(
+            material: material,
+            onComplete: () => Navigator.pop(context),
           ),
         ),
       ),
