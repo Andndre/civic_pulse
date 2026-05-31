@@ -16,12 +16,8 @@ final teacherClassesProvider = FutureProvider<List<TeacherClass>>((ref) async {
 
 // Single class provider
 final classDetailProvider = FutureProvider.family<TeacherClass?, int>((ref, classId) async {
-  final classes = await ref.watch(teacherClassesProvider.future);
-  try {
-    return classes.firstWhere((c) => c.id == classId);
-  } catch (_) {
-    return null;
-  }
+  final service = ref.watch(teacherServiceProvider);
+  return service.getClassDetail(classId);
 });
 
 // Class students provider

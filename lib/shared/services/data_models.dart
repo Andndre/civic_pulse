@@ -490,17 +490,7 @@ class TeacherClass {
   }
 
   factory TeacherClass.fromListJson(Map<String, dynamic> json) {
-    return TeacherClass(
-      id: json['id'] as int? ?? 0,
-      name: json['name'] as String? ?? '',
-      gradeCategory: json['grade_category'] as String? ?? 'SMP',
-      gradeLevel: _parseGradeLevel(json['grade_level'] ?? json['grade']),
-      classCode: json['class_code'] as String? ?? '',
-      studentCount: json['student_count'] as int? ?? 0,
-      completedMaterials: 0,
-      totalMaterials: 3,
-      averagePulse: 0.0,
-    );
+    return TeacherClass.fromJson(json);
   }
 
   Map<String, dynamic> toJson() {
