@@ -407,12 +407,12 @@ class StudentProgress {
   final int studentId;
   final int materialId;
   final String preTestStatus;
-  final double? preTestScore;
+  final int? preTestScore;
   final String ebookStatus;
   final String postTestStatus;
-  final double? postTestScore;
+  final int? postTestScore;
   final String pulseStatus;
-  final double? pulseScore;
+  final int? pulseScore;
 
   const StudentProgress({
     required this.studentId,
@@ -434,12 +434,12 @@ class StudentProgress {
       studentId: studentId,
       materialId: json['id'] as int? ?? json['material_id'] as int? ?? 0,
       preTestStatus: pathStatus['pre_test'] as String? ?? 'locked',
-      preTestScore: (studentScore['pre_test_score'] as num?)?.toDouble(),
+      preTestScore: studentScore['pre_test_score'] as int?,
       ebookStatus: pathStatus['ebook'] as String? ?? 'locked',
       postTestStatus: pathStatus['post_test'] as String? ?? 'locked',
-      postTestScore: (studentScore['post_test_score'] as num?)?.toDouble(),
+      postTestScore: studentScore['post_test_score'] as int?,
       pulseStatus: pathStatus['pulse'] as String? ?? 'locked',
-      pulseScore: (studentScore['pulse_score'] as num?)?.toDouble(),
+      pulseScore: studentScore['pulse_score'] as int?,
     );
   }
 

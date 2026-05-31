@@ -395,7 +395,7 @@ class _MaterialProgressCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildStep(String label, String status, double? score, {VoidCallback? onTap}) {
+  Widget _buildStep(String label, String status, int? score, {VoidCallback? onTap}) {
     final isCompleted = status == 'completed';
     final content = Column(
       children: [
@@ -422,7 +422,7 @@ class _MaterialProgressCard extends ConsumerWidget {
         ),
         if (score != null)
           Text(
-            label == 'PULSE' ? '${score.toStringAsFixed(1)}/5' : '${score.toInt()}%',
+            '$score%',
             style: AppTypography.labelSmall.copyWith(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.bold,
@@ -444,6 +444,21 @@ class _MaterialProgressCard extends ConsumerWidget {
     return content;
   }
 
+  double _getAverageForDimension(List<PulseStatement> statements, String dimension) {
+    final filtered = statements.where((s) {
+      final dim = s.dimension.toLowerCase();
+      if (dimension == 'participation') return dim == 'participation' || dim == 'p';
+      if (dimension == 'understanding') return dim == 'understanding' || dim == 'u';
+      if (dimension == 'learning') return dim == 'learning' || dim == 'l';
+      if (dimension == 'social_engagement') return dim == 'social_engagement' || dim == 'se';
+      return false;
+    }).toList();
+
+    if (filtered.isEmpty) return 0.0;
+    final sum = filtered.fold<int>(0, (sum, item) => sum + (item.score ?? 0));
+    return sum / filtered.length;
+  }
+
   void _showPulseDetailsDialog(BuildContext context, WidgetRef ref, int materialId) {
     showDialog(
       context: context,
@@ -457,7 +472,7 @@ class _MaterialProgressCard extends ConsumerWidget {
                 borderRadius: AppRadius.card,
               ),
               title: Text(
-                'Detail Skor PULSE',
+                'Skor PULSE Materi',
                 style: AppTypography.titleMedium.copyWith(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.bold,
@@ -470,68 +485,87 @@ class _MaterialProgressCard extends ConsumerWidget {
                     if (statements.isEmpty) {
                       return const Center(child: Text('Tidak ada instrumen PULSE.'));
                     }
-                    return ListView.separated(
-                      shrinkWrap: true,
-                      itemCount: statements.length,
-                      separatorBuilder: (_, __) => const Divider(),
-                      itemBuilder: (context, index) {
-                        final stmt = statements[index];
-                        final score = stmt.score ?? 0;
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: AppSpacing.sm,
-                                      vertical: AppSpacing.xxs,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primary.withValues(alpha: 0.1),
-                                      borderRadius: AppRadius.chip,
-                                    ),
-                                    child: Text(
-                                      _getDimensionLabel(stmt.dimension),
-                                      style: AppTypography.labelSmall.copyWith(
-                                        color: AppColors.primary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  Row(
-                                    children: List.generate(5, (starIndex) {
-                                      return Icon(
-                                        starIndex < score ? Icons.star : Icons.star_border,
-                                        color: AppColors.secondary,
-                                        size: 18,
-                                      );
-                                    }),
-                                  ),
-                                ],
-                              ),
-                              AppSpacing.vGapSm,
-                              Text(
-                                stmt.statement,
-                                style: AppTypography.bodyMedium.copyWith(
+
+                    // Calculate averages for 4 dimensions
+                    final pScore = _getAverageForDimension(statements, 'participation');
+                    final uScore = _getAverageForDimension(statements, 'understanding');
+                    final lScore = _getAverageForDimension(statements, 'learning');
+                    final seScore = _getAverageForDimension(statements, 'social_engagement');
+
+                    return SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            height: 200,
+                            child: RadarChart(
+                              RadarChartData(
+                                radarShape: RadarShape.polygon,
+                                tickCount: 5,
+                                ticksTextStyle: AppTypography.labelSmall.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                                tickBorderData: BorderSide(
+                                  color: AppColors.divider,
+                                  width: 1,
+                                ),
+                                gridBorderData: BorderSide(
+                                  color: AppColors.divider,
+                                  width: 1,
+                                ),
+                                radarBorderData: const BorderSide(
+                                  color: AppColors.primary,
+                                  width: 2,
+                                ),
+                                titleTextStyle: AppTypography.labelMedium.copyWith(
                                   color: AppColors.textPrimary,
                                 ),
+                                getTitle: (index, angle) {
+                                  final titles = ['Partisipasi', 'Pemahaman', 'Pembelajaran', 'Keterlibatan'];
+                                  return RadarChartTitle(
+                                    text: titles[index],
+                                    angle: 0,
+                                  );
+                                },
+                                dataSets: [
+                                  RadarDataSet(
+                                    fillColor: AppColors.primary.withValues(alpha: 0.3),
+                                    borderColor: AppColors.primary,
+                                    borderWidth: 2,
+                                    dataEntries: [
+                                      RadarEntry(value: pScore),
+                                      RadarEntry(value: uScore),
+                                      RadarEntry(value: lScore),
+                                      RadarEntry(value: seScore),
+                                    ],
+                                  ),
+                                ],
+                                borderData: FlBorderData(show: false),
+                                radarBackgroundColor: Colors.transparent,
                               ),
+                            ),
+                          ),
+                          AppSpacing.vGapLg,
+                          // Score legend (0-5 scale)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _buildDialogScoreItem('Partisipasi', pScore),
+                              _buildDialogScoreItem('Pemahaman', uScore),
+                              _buildDialogScoreItem('Pembelajaran', lScore),
+                              _buildDialogScoreItem('Keterlibatan', seScore),
                             ],
                           ),
-                        );
-                      },
+                        ],
+                      ),
                     );
                   },
                   loading: () => const SizedBox(
-                    height: 100,
+                    height: 150,
                     child: Center(child: CircularProgressIndicator()),
                   ),
                   error: (e, _) => SizedBox(
-                    height: 100,
+                    height: 150,
                     child: Center(
                       child: Text(
                         'Gagal memuat detail skor.',
@@ -554,22 +588,30 @@ class _MaterialProgressCard extends ConsumerWidget {
     );
   }
 
-  String _getDimensionLabel(String dimension) {
-    switch (dimension.toLowerCase()) {
-      case 'participation':
-      case 'p':
-        return 'Partisipasi';
-      case 'understanding':
-      case 'u':
-        return 'Pemahaman';
-      case 'learning':
-      case 'l':
-        return 'Pembelajaran';
-      case 'social_engagement':
-      case 'se':
-        return 'Keterlibatan';
-      default:
-        return dimension;
+  Widget _buildDialogScoreItem(String label, double score) {
+    Color getScoreColor(double s) {
+      if (s >= 3.5) return AppColors.success;
+      if (s >= 2.5) return AppColors.warning;
+      return AppColors.danger;
     }
+
+    return Column(
+      children: [
+        Text(
+          score.toStringAsFixed(1),
+          style: AppTypography.titleMedium.copyWith(
+            color: getScoreColor(score),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          label,
+          style: AppTypography.labelSmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
   }
 }
