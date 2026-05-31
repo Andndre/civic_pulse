@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../shared/services/services.dart';
 import '../providers/material_provider.dart';
@@ -49,7 +51,7 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
                     description: 'Materi yang Anda cari tidak tersedia',
                   );
                 }
-                return _buildStepContent(material.title);
+                return _buildStepContent(material);
               },
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => EmptyState(
@@ -128,7 +130,7 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
     );
   }
 
-  Widget _buildStepContent(String materialTitle) {
+  Widget _buildStepContent(LearningMaterial material) {
     switch (_currentStep) {
       case 0:
         return _PreTestStep(
@@ -137,7 +139,7 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
         );
       case 1:
         return _EBookStep(
-          materialTitle: materialTitle,
+          material: material,
           onComplete: () => setState(() => _currentStep = 2),
         );
       case 2:
@@ -251,21 +253,264 @@ class _PreTestStep extends ConsumerWidget {
 }
 
 // E-Book Step
-class _EBookStep extends StatelessWidget {
-  final String materialTitle;
+class _EBookStep extends StatefulWidget {
+  final LearningMaterial material;
   final VoidCallback onComplete;
 
-  const _EBookStep({required this.materialTitle, required this.onComplete});
+  const _EBookStep({required this.material, required this.onComplete});
+
+  @override
+  State<_EBookStep> createState() => _EBookStepState();
+}
+
+class _EBookStepState extends State<_EBookStep> {
+  bool _hasRead = false;
+  bool _pdfError = false;
+
+  bool get _isPdf {
+    final url = widget.material.fileUrl ?? '';
+    return url.toLowerCase().contains('.pdf') || url.toLowerCase().contains('pdf');
+  }
+
+  bool get _hasFile => (widget.material.fileUrl ?? '').isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
-    return _StepPlaceholder(
-      icon: Icons.menu_book,
-      title: 'Baca Materi',
-      subtitle: 'Bacalah materi dengan seksama sebelum melanjutkan ke post-test',
-      materialTitle: materialTitle,
-      buttonLabel: 'Selesai Membaca',
-      onButtonPressed: onComplete,
+    if (!_hasFile) {
+      // Tidak ada file — tampilkan description atau pesan
+      return _buildNoFileView();
+    }
+
+    if (_isPdf && !_pdfError) {
+      return _buildPdfView();
+    }
+
+    return _buildWebFallbackView();
+  }
+
+  Widget _buildPdfView() {
+    return Column(
+      children: [
+        // Header
+        Container(
+          padding: AppSpacing.paddingMd,
+          color: AppColors.surface,
+          child: Row(
+            children: [
+              const Icon(Icons.picture_as_pdf, color: AppColors.danger),
+              AppSpacing.hGapSm,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.material.title,
+                      style: AppTypography.titleSmall.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (widget.material.description != null)
+                      Text(
+                        widget.material.description!,
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        // PDF Viewer
+        Expanded(
+          child: SfPdfViewer.network(
+            widget.material.fileUrl!,
+            onDocumentLoadFailed: (details) {
+              setState(() => _pdfError = true);
+            },
+            onPageChanged: (details) {
+              if (!_hasRead) setState(() => _hasRead = true);
+            },
+          ),
+        ),
+        // Bottom action
+        _buildBottomBar(),
+      ],
+    );
+  }
+
+  Widget _buildWebFallbackView() {
+    return Padding(
+      padding: AppSpacing.screenPadding,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.menu_book, size: 40, color: AppColors.primary),
+          ),
+          AppSpacing.vGapLg,
+          Text(
+            widget.material.title,
+            style: AppTypography.headlineMedium.copyWith(
+              color: AppColors.textPrimary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          if (widget.material.description != null) ...[
+            AppSpacing.vGapSm,
+            Container(
+              padding: AppSpacing.paddingMd,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceVariant,
+                borderRadius: AppRadius.radiusMd,
+              ),
+              child: Text(
+                widget.material.description!,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+          AppSpacing.vGapLg,
+          OutlinedButton.icon(
+            onPressed: () async {
+              final uri = Uri.parse(widget.material.fileUrl!);
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+                setState(() => _hasRead = true);
+              }
+            },
+            icon: const Icon(Icons.open_in_new),
+            label: const Text('Buka Materi'),
+          ),
+          AppSpacing.vGapXl,
+          AppButton(
+            label: 'Selesai Membaca',
+            onPressed: _hasRead ? widget.onComplete : null,
+            fullWidth: false,
+          ),
+          if (!_hasRead) ...[
+            AppSpacing.vGapSm,
+            Text(
+              'Buka materi terlebih dahulu',
+              style: AppTypography.labelSmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoFileView() {
+    return Padding(
+      padding: AppSpacing.screenPadding,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.menu_book, size: 40, color: AppColors.primary),
+          ),
+          AppSpacing.vGapLg,
+          Text(
+            widget.material.title,
+            style: AppTypography.headlineMedium.copyWith(
+              color: AppColors.textPrimary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          if (widget.material.description != null) ...[
+            AppSpacing.vGapMd,
+            Container(
+              padding: AppSpacing.paddingMd,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceVariant,
+                borderRadius: AppRadius.radiusMd,
+              ),
+              child: Text(
+                widget.material.description!,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ] else ...[
+            AppSpacing.vGapSm,
+            Text(
+              'Bacalah materi dengan seksama sebelum melanjutkan ke post-test',
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+          AppSpacing.vGapXl,
+          AppButton(
+            label: 'Selesai Membaca',
+            onPressed: widget.onComplete,
+            fullWidth: false,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomBar() {
+    return Container(
+      padding: AppSpacing.paddingMd,
+      color: AppColors.surface,
+      child: Row(
+        children: [
+          if (_hasRead)
+            const Row(
+              children: [
+                Icon(Icons.check_circle, color: AppColors.success, size: 20),
+                SizedBox(width: 6),
+                Text(
+                  'Sudah dibaca',
+                  style: TextStyle(color: AppColors.success, fontSize: 13),
+                ),
+              ],
+            )
+          else
+            Text(
+              'Scroll untuk membaca materi',
+              style: AppTypography.labelSmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          const Spacer(),
+          ElevatedButton(
+            onPressed: _hasRead ? widget.onComplete : null,
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size(0, AppSpacing.minTouchTarget),
+            ),
+            child: const Text('Selesai Membaca'),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -344,7 +589,6 @@ class _StepPlaceholder extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  final String? materialTitle;
   final String buttonLabel;
   final VoidCallback onButtonPressed;
 
@@ -352,7 +596,6 @@ class _StepPlaceholder extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
-    this.materialTitle,
     required this.buttonLabel,
     required this.onButtonPressed,
   });
@@ -381,22 +624,6 @@ class _StepPlaceholder extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          AppSpacing.vGapSm,
-          if (materialTitle != null)
-            Container(
-              padding: AppSpacing.paddingSm,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
-                borderRadius: AppRadius.radiusMd,
-              ),
-              child: Text(
-                materialTitle!,
-                style: AppTypography.titleSmall.copyWith(
-                  color: AppColors.textPrimary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
           AppSpacing.vGapMd,
           Text(
             subtitle,

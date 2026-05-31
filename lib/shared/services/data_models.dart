@@ -66,6 +66,7 @@ class LearningMaterial {
   final String title;
   final String? description;
   final String? thumbnailUrl;
+  final String? fileUrl;
   final String gradeCategory;
   final int gradeLevel;
   final int? estimatedDuration;
@@ -77,6 +78,7 @@ class LearningMaterial {
     required this.title,
     this.description,
     this.thumbnailUrl,
+    this.fileUrl,
     required this.gradeCategory,
     required this.gradeLevel,
     this.estimatedDuration,
@@ -91,6 +93,7 @@ class LearningMaterial {
       description: json['description'] as String?,
       thumbnailUrl:
           json['thumbnail_url'] as String? ?? json['thumbnail'] as String?,
+      fileUrl: _resolvePhotoUrl(json['file_url'] as String?),
       gradeCategory: json['grade_category'] as String? ?? 'SMP',
       gradeLevel: _parseGradeLevel(json['grade_level'] ?? json['grade']),
       estimatedDuration:
@@ -107,6 +110,7 @@ class LearningMaterial {
       'title': title,
       'description': description,
       'thumbnail_url': thumbnailUrl,
+      'file_url': fileUrl,
       'grade_category': gradeCategory,
       'grade_level': gradeLevel,
       'estimated_duration_minutes': estimatedDuration,
