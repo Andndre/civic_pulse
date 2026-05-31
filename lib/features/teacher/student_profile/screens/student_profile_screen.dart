@@ -29,6 +29,7 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
     final studentsAsync = ref.watch(classStudentsProvider(classIdInt));
     final notesAsync = ref.watch(anecdotalNotesProvider(studentIdInt));
     final activitiesAsync = ref.watch(studentActivitiesProvider(studentIdInt));
+    final pulseAsync = ref.watch(studentPulseScoresProvider(studentIdInt));
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -41,6 +42,15 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/teacher/class/${widget.classId}'),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              ref.invalidate(studentPulseScoresProvider(studentIdInt));
+              ref.invalidate(classStudentsProvider(classIdInt));
+            },
+          ),
+        ],
       ),
       body: studentsAsync.when(
         data: (students) {
@@ -48,7 +58,7 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
           if (student == null) {
             return const EmptyState(icon: Icons.person_off, title: 'Siswa Tidak Ditemukan', description: 'Data siswa tidak tersedia.');
           }
-          return _buildContent(student, notesAsync, studentIdInt, activitiesAsync);
+          return _buildContent(student, notesAsync, studentIdInt, activitiesAsync, pulseAsync);
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
@@ -62,7 +72,13 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
     );
   }
 
-  Widget _buildContent(ClassStudent student, AsyncValue<List<AnecdotalNote>> notesAsync, int studentId, AsyncValue<List<ActivityLog>> activitiesAsync) {
+  Widget _buildContent(
+    ClassStudent student,
+    AsyncValue<List<AnecdotalNote>> notesAsync,
+    int studentId,
+    AsyncValue<List<ActivityLog>> activitiesAsync,
+    AsyncValue<Map<String, dynamic>> pulseAsync,
+  ) {
     return SingleChildScrollView(
       padding: AppSpacing.screenPadding,
       child: Column(
@@ -75,13 +91,17 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
           // PULSE Matrix Grid
           Text('Matriks Skor PULSE', style: AppTypography.titleMedium.copyWith(color: AppColors.textPrimary)),
           AppSpacing.vGapMd,
-          _buildPulseMatrix(student),
+          _buildPulseMatrixFromAsync(student, pulseAsync),
           AppSpacing.vGapLg,
 
           // PULSE Radar Chart
           Text('Grafik Radar', style: AppTypography.titleMedium.copyWith(color: AppColors.textPrimary)),
           AppSpacing.vGapMd,
-          _buildRadarChart(student),
+          _buildRadarChartFromAsync(student, pulseAsync),
+          AppSpacing.vGapLg,
+
+          // Test Scores per material
+          _buildTestScoresSection(pulseAsync),
           AppSpacing.vGapLg,
 
           // Activity Logs Preview
@@ -178,12 +198,30 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
     );
   }
 
-  Widget _buildPulseMatrix(ClassStudent student) {
+  Widget _buildPulseMatrixFromAsync(ClassStudent student, AsyncValue<Map<String, dynamic>> pulseAsync) {
+    return pulseAsync.when(
+      data: (data) {
+        final scores = data['pulse_scores'] as Map<String, dynamic>? ?? {};
+        final participation = (scores['participation'] as num?)?.toDouble() ?? student.participation;
+        final understanding = (scores['understanding'] as num?)?.toDouble() ?? student.understanding;
+        final learning = (scores['learning'] as num?)?.toDouble() ?? student.learning;
+        final socialEngagement = (scores['social_engagement'] as num?)?.toDouble() ?? student.socialEngagement;
+        return _buildPulseMatrixWidget(participation, understanding, learning, socialEngagement);
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, s) => _buildPulseMatrixWidget(
+        student.participation, student.understanding,
+        student.learning, student.socialEngagement,
+      ),
+    );
+  }
+
+  Widget _buildPulseMatrixWidget(double p, double u, double l, double se) {
     final dimensions = [
-      {'label': 'Partisipasi', 'value': student.participation, 'dimension': 'P'},
-      {'label': 'Pemahaman', 'value': student.understanding, 'dimension': 'U'},
-      {'label': 'Pembelajaran', 'value': student.learning, 'dimension': 'L'},
-      {'label': 'Keterlibatan', 'value': student.socialEngagement, 'dimension': 'SE'},
+      {'label': 'Partisipasi', 'value': p, 'dimension': 'P'},
+      {'label': 'Pemahaman', 'value': u, 'dimension': 'U'},
+      {'label': 'Pembelajaran', 'value': l, 'dimension': 'L'},
+      {'label': 'Keterlibatan', 'value': se, 'dimension': 'SE'},
     ];
 
     return AppCard(
@@ -197,13 +235,12 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
                 child: Text('Skor', style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary), textAlign: TextAlign.center),
               ),
               Text('Status', style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary), textAlign: TextAlign.center),
-              const SizedBox(width: 48), // Progress bar space
+              const SizedBox(width: 48),
             ],
           ),
           AppSpacing.vGapSm,
           const Divider(height: 1),
           AppSpacing.vGapSm,
-          // Dimension rows
           ...dimensions.map((dim) => _buildMatrixRow(
             dim['label'] as String,
             dim['dimension'] as String,
@@ -307,7 +344,28 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
     );
   }
 
-  Widget _buildRadarChart(ClassStudent student) {
+  Widget _buildRadarChartFromAsync(ClassStudent student, AsyncValue<Map<String, dynamic>> pulseAsync) {
+    return pulseAsync.when(
+      data: (data) {
+        final scores = data['pulse_scores'] as Map<String, dynamic>? ?? {};
+        final p  = (scores['participation'] as num?)?.toDouble()  ?? student.participation;
+        final u  = (scores['understanding'] as num?)?.toDouble()  ?? student.understanding;
+        final l  = (scores['learning'] as num?)?.toDouble()       ?? student.learning;
+        final se = (scores['social_engagement'] as num?)?.toDouble() ?? student.socialEngagement;
+        return _buildRadarChartWidget(p, u, l, se);
+      },
+      loading: () => const SizedBox(
+        height: 220,
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, s) => _buildRadarChartWidget(
+        student.participation, student.understanding,
+        student.learning, student.socialEngagement,
+      ),
+    );
+  }
+
+  Widget _buildRadarChartWidget(double p, double u, double l, double se) {
     return SizedBox(
       height: 220,
       child: RadarChart(
@@ -329,10 +387,10 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
               borderColor: AppColors.primary,
               borderWidth: 2,
               dataEntries: [
-                RadarEntry(value: student.participation),
-                RadarEntry(value: student.understanding),
-                RadarEntry(value: student.learning),
-                RadarEntry(value: student.socialEngagement),
+                RadarEntry(value: p),
+                RadarEntry(value: u),
+                RadarEntry(value: l),
+                RadarEntry(value: se),
               ],
             ),
           ],
@@ -340,6 +398,87 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
           radarBackgroundColor: Colors.transparent,
         ),
       ),
+    );
+  }
+
+  Widget _buildTestScoresSection(AsyncValue<Map<String, dynamic>> pulseAsync) {
+    return pulseAsync.when(
+      data: (data) {
+        final testScores = data['test_scores'] as List<dynamic>? ?? [];
+        if (testScores.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Skor Pre-Test & Post-Test', style: AppTypography.titleMedium.copyWith(color: AppColors.textPrimary)),
+            AppSpacing.vGapMd,
+            ...testScores.map((item) {
+              final map = item as Map<String, dynamic>;
+              final materialTitle = map['material_title'] as String? ?? 'Materi #${map['material_id']}';
+              final preScore = map['pre_test_score'] as int?;
+              final postScore = map['post_test_score'] as int?;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(materialTitle, style: AppTypography.titleSmall.copyWith(color: AppColors.textPrimary)),
+                      AppSpacing.vGapSm,
+                      Row(
+                        children: [
+                          _buildScoreChip('Pre-Test', preScore, AppColors.info),
+                          AppSpacing.hGapMd,
+                          _buildScoreChip('Post-Test', postScore, AppColors.success),
+                          if (preScore != null && postScore != null) ...[
+                            AppSpacing.hGapMd,
+                            _buildScoreChip(
+                              'Δ',
+                              postScore - preScore,
+                              postScore >= preScore ? AppColors.success : AppColors.danger,
+                              showSign: true,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ],
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (e, s) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildScoreChip(String label, int? score, Color color, {bool showSign = false}) {
+    final text = score == null
+        ? '-'
+        : (showSign && score > 0 ? '+$score' : '$score');
+    return Column(
+      children: [
+        Text(
+          label,
+          style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: AppRadius.radiusSm,
+          ),
+          child: Text(
+            score != null ? '$text%' : '-',
+            style: AppTypography.labelMedium.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
     );
   }
 

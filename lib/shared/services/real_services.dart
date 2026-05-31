@@ -634,7 +634,7 @@ class RealTeacherService implements TeacherServiceInterface {
           'grade': gradeLevel,
           'grade_category': gradeCategory,
           'grade_level': gradeLevel,
-          if (homeroomTeacherId != null) 'homeroom_teacher_id': homeroomTeacherId,
+          'homeroom_teacher_id': homeroomTeacherId,
         },
       );
       final data = response.data;
@@ -650,6 +650,32 @@ class RealTeacherService implements TeacherServiceInterface {
     try {
       await _client.delete('${ApiConstants.classes}/$classId');
     } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getStudentPulseScores(int studentId) async {
+    try {
+      final response = await _client.get(
+        '${ApiConstants.students}/$studentId/pulse-scores',
+      );
+      final data = response.data;
+      return (data is Map && data.containsKey('data'))
+          ? data['data'] as Map<String, dynamic>
+          : data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return {
+          'pulse_scores': {
+            'participation': 0.0,
+            'understanding': 0.0,
+            'learning': 0.0,
+            'social_engagement': 0.0,
+          },
+          'test_scores': [],
+        };
+      }
       throw ApiException.fromDioException(e);
     }
   }

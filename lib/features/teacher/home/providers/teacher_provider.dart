@@ -89,5 +89,12 @@ final classSummaryProvider = FutureProvider.family<Map<String, dynamic>, int>((r
     'completedMaterials': classDetail?.completedMaterials ?? 0,
     'totalMaterials': classDetail?.totalMaterials ?? 0,
     'averagePulse': classDetail?.averagePulse ?? 0.0,
+    'classCode': classDetail?.classCode ?? '',
   };
+});
+
+// Student PULSE scores provider (untuk tampilan guru)
+final studentPulseScoresProvider = FutureProvider.family<Map<String, dynamic>, int>((ref, studentId) async {
+  final service = ref.watch(teacherServiceProvider);
+  return service.getStudentPulseScores(studentId);
 });
