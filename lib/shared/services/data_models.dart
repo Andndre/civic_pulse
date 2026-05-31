@@ -408,6 +408,7 @@ class StudentProgress {
   final String postTestStatus;
   final int? postTestScore;
   final String pulseStatus;
+  final int? pulseScore;
 
   const StudentProgress({
     required this.studentId,
@@ -418,6 +419,7 @@ class StudentProgress {
     required this.postTestStatus,
     this.postTestScore,
     required this.pulseStatus,
+    this.pulseScore,
   });
 
   factory StudentProgress.fromJson(Map<String, dynamic> json, int studentId) {
@@ -433,6 +435,7 @@ class StudentProgress {
       postTestStatus: pathStatus['post_test'] as String? ?? 'locked',
       postTestScore: studentScore['post_test_score'] as int?,
       pulseStatus: pathStatus['pulse'] as String? ?? 'locked',
+      pulseScore: studentScore['pulse_score'] as int?,
     );
   }
 
@@ -446,6 +449,7 @@ class StudentProgress {
       'post_test_status': postTestStatus,
       'post_test_score': postTestScore,
       'pulse_status': pulseStatus,
+      'pulse_score': pulseScore,
     };
   }
 }

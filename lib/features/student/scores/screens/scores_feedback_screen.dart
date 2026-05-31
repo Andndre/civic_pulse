@@ -367,7 +367,7 @@ class _MaterialProgressCard extends StatelessWidget {
               ),
               const Icon(Icons.arrow_forward, size: 16, color: AppColors.textSecondary),
               Expanded(
-                child: _buildStep('PULSE', progress.pulseStatus, null),
+                child: _buildStep('PULSE', progress.pulseStatus, progress.pulseScore),
               ),
             ],
           ),
