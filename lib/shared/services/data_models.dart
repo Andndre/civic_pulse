@@ -72,6 +72,8 @@ class LearningMaterial {
   final int? estimatedDuration;
   final int orderIndex;
   final String status;
+  final int? preTestScore;
+  final int? postTestScore;
 
   const LearningMaterial({
     required this.id,
@@ -84,9 +86,12 @@ class LearningMaterial {
     this.estimatedDuration,
     required this.orderIndex,
     required this.status,
+    this.preTestScore,
+    this.postTestScore,
   });
 
   factory LearningMaterial.fromJson(Map<String, dynamic> json) {
+    final studentScore = json['student_score'] as Map<String, dynamic>?;
     return LearningMaterial(
       id: json['id'] as int? ?? 0,
       title: json['title'] as String? ?? '',
@@ -101,6 +106,8 @@ class LearningMaterial {
           json['estimated_duration'] as int?,
       orderIndex: json['order_index'] as int? ?? json['order'] as int? ?? 1,
       status: json['status'] as String? ?? 'locked',
+      preTestScore: studentScore?['pre_test_score'] as int?,
+      postTestScore: studentScore?['post_test_score'] as int?,
     );
   }
 
@@ -116,6 +123,8 @@ class LearningMaterial {
       'estimated_duration_minutes': estimatedDuration,
       'order_index': orderIndex,
       'status': status,
+      'pre_test_score': preTestScore,
+      'post_test_score': postTestScore,
     };
   }
 }

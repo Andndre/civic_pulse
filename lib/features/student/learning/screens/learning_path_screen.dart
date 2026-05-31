@@ -25,44 +25,192 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
   Widget build(BuildContext context) {
     final materialAsync = ref.watch(materialProvider(widget.materialId));
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Belajar'),
-        backgroundColor: AppColors.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => _showExitDialog(context),
-        ),
-      ),
-      body: Column(
-        children: [
-          // Progress indicator
-          _buildProgressIndicator(),
-          // Content
-          Expanded(
-            child: materialAsync.when(
-              data: (material) {
-                if (material == null) {
-                  return const EmptyState(
-                    icon: Icons.error_outline,
-                    title: 'Materi Tidak Ditemukan',
-                    description: 'Materi yang Anda cari tidak tersedia',
-                  );
-                }
-                return _buildStepContent(material);
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => EmptyState(
-                icon: Icons.error_outline,
-                title: 'Error',
-                description: e.toString(),
+    return materialAsync.when(
+      data: (material) {
+        if (material == null) {
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            appBar: AppBar(
+              title: const Text('Belajar'),
+              backgroundColor: AppColors.surface,
+              elevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => context.go('/student/learning'),
               ),
             ),
+            body: const EmptyState(
+              icon: Icons.error_outline,
+              title: 'Materi Tidak Ditemukan',
+              description: 'Materi yang Anda cari tidak tersedia',
+            ),
+          );
+        }
+
+        final isCompleted = material.status == 'completed';
+
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: AppBar(
+            title: Text(isCompleted ? 'Hasil Evaluasi' : 'Belajar'),
+            backgroundColor: AppColors.surface,
+            elevation: 0,
+            leading: IconButton(
+              icon: Icon(isCompleted ? Icons.arrow_back : Icons.close),
+              onPressed: () => isCompleted ? context.go('/student/learning') : _showExitDialog(context),
+            ),
           ),
-        ],
+          body: isCompleted
+              ? _buildCompletedView(material)
+              : Column(
+                  children: [
+                    // Progress indicator
+                    _buildProgressIndicator(),
+                    // Content
+                    Expanded(
+                      child: _buildStepContent(material),
+                    ),
+                  ],
+                ),
+        );
+      },
+      loading: () => Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          title: const Text('Belajar'),
+          backgroundColor: AppColors.surface,
+          elevation: 0,
+        ),
+        body: const Center(child: CircularProgressIndicator()),
       ),
+      error: (e, _) => Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          title: const Text('Belajar'),
+          backgroundColor: AppColors.surface,
+          elevation: 0,
+        ),
+        body: EmptyState(
+          icon: Icons.error_outline,
+          title: 'Error',
+          description: e.toString(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompletedView(LearningMaterial material) {
+    final preScore = material.preTestScore;
+    final postScore = material.postTestScore;
+
+    return Padding(
+      padding: AppSpacing.screenPadding,
+      child: Center(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: AppColors.successLight.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_circle, size: 48, color: AppColors.success),
+              ),
+              AppSpacing.vGapLg,
+              Text(
+                'Materi Telah Selesai',
+                style: AppTypography.headlineMedium.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              AppSpacing.vGapSm,
+              Text(
+                material.title,
+                style: AppTypography.titleMedium.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              AppSpacing.vGapXl,
+              AppCard(
+                child: Column(
+                  children: [
+                    Text(
+                      'Hasil Evaluasi Belajar',
+                      style: AppTypography.titleSmall.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    AppSpacing.vGapMd,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildResultScoreMetric('Pre-Test', preScore, AppColors.info),
+                        _buildResultScoreMetric('Post-Test', postScore, AppColors.success),
+                        _buildResultScoreMetric(
+                          'Peningkatan',
+                          (preScore != null && postScore != null) ? (postScore - preScore) : null,
+                          (preScore != null && postScore != null && postScore >= preScore) ? AppColors.success : AppColors.danger,
+                          showSign: true,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              AppSpacing.vGapXl,
+              Text(
+                'Anda sudah menyelesaikan seluruh tahapan belajar, evaluasi, dan refleksi PULSE untuk materi ini.',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              AppSpacing.vGapLg,
+              AppButton(
+                label: 'Kembali Ke Galeri',
+                onPressed: () => context.go('/student/learning'),
+                fullWidth: true,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResultScoreMetric(String label, int? score, Color color, {bool showSign = false}) {
+    final text = score == null
+        ? '-'
+        : (showSign && score > 0 ? '+$score' : '$score');
+    return Column(
+      children: [
+        Text(
+          label,
+          style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary),
+        ),
+        AppSpacing.vGapXs,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: AppRadius.radiusMd,
+          ),
+          child: Text(
+            score != null ? '$text%' : '-',
+            style: AppTypography.titleLarge.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
