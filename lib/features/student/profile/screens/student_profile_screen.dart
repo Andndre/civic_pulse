@@ -275,18 +275,21 @@ class StudentProfileScreen extends ConsumerWidget {
           subtitle: 'Pengaturan notifikasi aplikasi',
           onTap: () => _showComingSoonSnackBar(context),
         ),
+        AppSpacing.vGapSm,
         _buildSettingsItem(
           icon: Icons.lock_outline,
           title: 'Privasi & Keamanan',
           subtitle: 'Ubah kata sandi, keamanan akun',
           onTap: () => _showComingSoonSnackBar(context),
         ),
+        AppSpacing.vGapSm,
         _buildSettingsItem(
           icon: Icons.help_outline,
           title: 'Bantuan',
           subtitle: 'FAQ, hubungi kami',
           onTap: () => _showComingSoonSnackBar(context),
         ),
+        AppSpacing.vGapSm,
         _buildSettingsItem(
           icon: Icons.info_outline,
           title: 'Tentang Aplikasi',

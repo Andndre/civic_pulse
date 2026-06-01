@@ -95,13 +95,14 @@ class ScoresFeedbackScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: SizedBox(
-              height: 180,
+              height: 220,
               child: RadarChartPlus(
                 ticks: const [1.0, 2.0, 3.0, 4.0, 5.0],
                 labels: const ['Partisipasi', 'Pemahaman', 'Pembelajaran', 'Keterlibatan'],
                 shape: RadarChartShape.polygon,
                 horizontalLabels: true,
                 labelSpacing: 8,
+                labelPadding: 32.0,
                 labelTextStyle: AppTypography.labelSmall.copyWith(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.bold,

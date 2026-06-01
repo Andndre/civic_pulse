@@ -61,12 +61,6 @@ const teacherNavItems = [
     route: '/teacher/home',
   ),
   NavItem(
-    label: 'Kelas',
-    icon: Icons.class_outlined,
-    activeIcon: Icons.class_,
-    route: '/teacher/home',
-  ),
-  NavItem(
     label: 'Profil',
     icon: Icons.person_outline,
     activeIcon: Icons.person,

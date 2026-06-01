@@ -374,6 +374,7 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
         shape: RadarChartShape.polygon,
         horizontalLabels: true,
         labelSpacing: 8,
+        labelPadding: 32.0,
         labelTextStyle: AppTypography.labelSmall.copyWith(
           color: AppColors.textPrimary,
           fontWeight: FontWeight.bold,

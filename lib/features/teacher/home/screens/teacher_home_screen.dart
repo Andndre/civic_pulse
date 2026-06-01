@@ -12,30 +12,48 @@ class TeacherHomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final classesAsync = ref.watch(teacherClassesProvider);
+    final statsAsync = ref.watch(teacherStatsProvider);
+    final user = ref.watch(currentUserProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Kelas Saya'),
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
+        title: const Text(
+          'Civic Pulse',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: AppColors.primary,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(teacherClassesProvider),
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: () {
+              ref.invalidate(teacherClassesProvider);
+              ref.invalidate(teacherStatsProvider);
+            },
           ),
         ],
       ),
-      body: classesAsync.when(
-        data: (classes) {
-          if (classes.isEmpty) {
-            return _buildEmptyState(context, ref);
-          }
-          return _buildClassGrid(context, ref, classes);
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(teacherClassesProvider);
+          ref.invalidate(teacherStatsProvider);
         },
-        loading: () => _buildLoadingGrid(),
-        error: (error, _) => _buildErrorState(ref, error),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildWelcomeHeader(user?.name, user?.avatarUrl),
+              _buildStatsDashboard(statsAsync),
+              _buildSectionHeader(context, ref, classesAsync),
+              _buildClassesContent(context, ref, classesAsync),
+            ],
+          ),
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showCreateClassDialog(context, ref),
@@ -47,52 +65,273 @@ class TeacherHomeScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildWelcomeHeader(String? name, String? avatarUrl) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.only(
+        left: AppSpacing.lg,
+        right: AppSpacing.lg,
+        bottom: AppSpacing.xl,
+        top: AppSpacing.sm,
+      ),
+      decoration: const BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Selamat Datang,',
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                AppSpacing.vGapXs,
+                Text(
+                  name ?? 'Guru',
+                  style: AppTypography.headlineLarge.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                AppSpacing.vGapXs,
+                Text(
+                  'Mari pantau karakter & perkembangan akademis siswa.',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: Colors.white.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          AppSpacing.hGapMd,
+          AvatarWidget(
+            imageUrl: avatarUrl,
+            name: name,
+            size: 56,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsDashboard(AsyncValue<Map<String, dynamic>> statsAsync) {
+    return statsAsync.when(
+      data: (stats) {
+        final classesCount = stats['classes_count'] ?? 0;
+        final studentsCount = stats['students_count'] ?? 0;
+        final notesCount = stats['anecdotal_notes_count'] ?? 0;
+
+        return Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  'Kelas',
+                  '$classesCount',
+                  Icons.school,
+                  AppColors.primary,
+                ),
+              ),
+              AppSpacing.hGapSm,
+              Expanded(
+                child: _buildStatCard(
+                  'Siswa',
+                  '$studentsCount',
+                  Icons.people,
+                  AppColors.success,
+                ),
+              ),
+              AppSpacing.hGapSm,
+              Expanded(
+                child: _buildStatCard(
+                  'Catatan',
+                  '$notesCount',
+                  Icons.assignment_outlined,
+                  AppColors.warning,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Row(
+          children: [
+            Expanded(child: _buildShimmerStatCard()),
+            AppSpacing.hGapSm,
+            Expanded(child: _buildShimmerStatCard()),
+            AppSpacing.hGapSm,
+            Expanded(child: _buildShimmerStatCard()),
+          ],
+        ),
+      ),
+      error: (e, _) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.xs),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 20, color: color),
+          ),
+          AppSpacing.vGapSm,
+          Text(
+            value,
+            style: AppTypography.headlineMedium.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            label,
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShimmerStatCard() {
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: const BoxDecoration(
+              color: AppColors.shimmerBase,
+              shape: BoxShape.circle,
+            ),
+          ),
+          AppSpacing.vGapSm,
+          Container(
+            width: 40,
+            height: 24,
+            color: AppColors.shimmerBase,
+          ),
+          AppSpacing.vGapXs,
+          Container(
+            width: 50,
+            height: 12,
+            color: AppColors.shimmerBase,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(BuildContext context, WidgetRef ref, AsyncValue<List<TeacherClass>> classesAsync) {
+    final count = classesAsync.maybeWhen(
+      data: (list) => list.length,
+      orElse: () => 0,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Daftar Kelas',
+            style: AppTypography.titleLarge.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          if (count > 0) ...[
+            const SizedBox(height: 2),
+            Text(
+              'Terdapat $count kelas aktif',
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClassesContent(BuildContext context, WidgetRef ref, AsyncValue<List<TeacherClass>> classesAsync) {
+    return classesAsync.when(
+      data: (classes) {
+        if (classes.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+            child: _buildEmptyState(context, ref),
+          );
+        }
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 0.78,
+            crossAxisSpacing: AppSpacing.md,
+            mainAxisSpacing: AppSpacing.md,
+          ),
+          itemCount: classes.length,
+          itemBuilder: (context, index) {
+            final cls = classes[index];
+            return _ClassCard(
+              cls: cls,
+              onTap: () => context.go('/teacher/class/${cls.id}'),
+            );
+          },
+        );
+      },
+      loading: () => GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.78,
+          crossAxisSpacing: AppSpacing.md,
+          mainAxisSpacing: AppSpacing.md,
+        ),
+        itemCount: 4,
+        itemBuilder: (context, index) => const ShimmerCard(),
+      ),
+      error: (error, _) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+        child: _buildErrorState(ref, error),
+      ),
+    );
+  }
+
   Widget _buildEmptyState(BuildContext context, WidgetRef ref) {
     return EmptyState(
       icon: Icons.school_outlined,
       title: 'Belum Ada Kelas',
-      description: 'Buat kelas baru untuk mulai memantau siswa.',
+      description: 'Buat kelas baru untuk mulai memantau perkembangan siswa.',
       actionLabel: 'Buat Kelas Pertama',
       onAction: () => _showCreateClassDialog(context, ref),
-    );
-  }
-
-  Widget _buildClassGrid(BuildContext context, WidgetRef ref, List<TeacherClass> classes) {
-    return RefreshIndicator(
-      onRefresh: () async {
-        ref.invalidate(teacherClassesProvider);
-      },
-      child: GridView.builder(
-        padding: AppSpacing.screenPadding,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 0.85,
-          crossAxisSpacing: AppSpacing.md,
-          mainAxisSpacing: AppSpacing.md,
-        ),
-        itemCount: classes.length,
-        itemBuilder: (context, index) {
-          final cls = classes[index];
-          return _ClassCard(
-            cls: cls,
-            onTap: () => context.go('/teacher/class/${cls.id}'),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildLoadingGrid() {
-    return GridView.builder(
-      padding: AppSpacing.screenPadding,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.85,
-        crossAxisSpacing: AppSpacing.md,
-        mainAxisSpacing: AppSpacing.md,
-      ),
-      itemCount: 4,
-      itemBuilder: (context, index) => const ShimmerCard(),
     );
   }
 
@@ -120,7 +359,10 @@ class TeacherHomeScreen extends ConsumerWidget {
           AppButton(
             label: 'Coba Lagi',
             variant: AppButtonVariant.primary,
-            onPressed: () => ref.invalidate(teacherClassesProvider),
+            onPressed: () {
+              ref.invalidate(teacherClassesProvider);
+              ref.invalidate(teacherStatsProvider);
+            },
           ),
         ],
       ),
@@ -151,6 +393,18 @@ class TeacherHomeScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Align(
+                alignment: Alignment.center,
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: AppColors.divider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -158,6 +412,7 @@ class TeacherHomeScreen extends ConsumerWidget {
                     'Buat Kelas Baru',
                     style: AppTypography.titleLarge.copyWith(
                       color: AppColors.textPrimary,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                   IconButton(
@@ -177,6 +432,7 @@ class TeacherHomeScreen extends ConsumerWidget {
                 'Jenjang',
                 style: AppTypography.labelLarge.copyWith(
                   color: AppColors.textPrimary,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
               AppSpacing.vGapSm,
@@ -189,12 +445,21 @@ class TeacherHomeScreen extends ConsumerWidget {
                     selected: isSelected,
                     onSelected: (selected) {
                       if (selected) {
-                        setState(() => selectedCategory = cat);
+                        setState(() {
+                          selectedCategory = cat;
+                          selectedGradeLevel = cat == 'SMP' ? 7 : 10;
+                        });
                       }
                     },
                     selectedColor: AppColors.primary,
+                    backgroundColor: AppColors.surfaceVariant,
+                    side: BorderSide.none,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
                     labelStyle: AppTypography.labelMedium.copyWith(
                       color: isSelected ? Colors.white : AppColors.textPrimary,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   );
                 }).toList(),
@@ -204,6 +469,7 @@ class TeacherHomeScreen extends ConsumerWidget {
                 'Tingkat',
                 style: AppTypography.labelLarge.copyWith(
                   color: AppColors.textPrimary,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
               AppSpacing.vGapSm,
@@ -222,8 +488,14 @@ class TeacherHomeScreen extends ConsumerWidget {
                       }
                     },
                     selectedColor: AppColors.primary,
+                    backgroundColor: AppColors.surfaceVariant,
+                    side: BorderSide.none,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
                     labelStyle: AppTypography.labelMedium.copyWith(
                       color: isSelected ? Colors.white : AppColors.textPrimary,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   );
                 }).toList(),
@@ -254,6 +526,7 @@ class TeacherHomeScreen extends ConsumerWidget {
                             ),
                           );
                           ref.invalidate(teacherClassesProvider);
+                          ref.invalidate(teacherStatsProvider);
                         }
                       } catch (e) {
                         if (context.mounted) {
@@ -286,25 +559,46 @@ class _ClassCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final studentsAsync = ref.watch(classStudentsProvider(cls.id));
-    final studentCount = studentsAsync.maybeWhen(data: (s) => s.length, orElse: () => cls.studentCount);
+    final studentCount = studentsAsync.maybeWhen(
+      data: (s) => s.length,
+      orElse: () => cls.studentCount,
+    );
+
     return AppCard(
       onTap: onTap,
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with class info
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.all(AppSpacing.sm),
+                padding: const EdgeInsets.all(AppSpacing.xs),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
-                child: Icon(Icons.class_, color: AppColors.primary),
+                child: Icon(Icons.school, size: 18, color: AppColors.primary),
               ),
-              const Spacer(),
-              Icon(Icons.chevron_right, color: AppColors.textSecondary),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: AppSpacing.xxs,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
+                ),
+                child: Text(
+                  cls.classCode,
+                  style: AppTypography.labelSmall.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
             ],
           ),
           AppSpacing.vGapMd,
@@ -312,27 +606,27 @@ class _ClassCard extends ConsumerWidget {
             cls.name,
             style: AppTypography.titleMedium.copyWith(
               color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
+          const SizedBox(height: 2),
           Text(
-            '${cls.gradeCategory} Kelas ${cls.gradeLevel}',
+            '${cls.gradeCategory} • Kelas ${cls.gradeLevel}',
             style: AppTypography.labelSmall.copyWith(
               color: AppColors.textSecondary,
             ),
           ),
           const Spacer(),
-          // Stats
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildStat(Icons.people, '$studentCount siswa'),
+              _buildStat(Icons.people_outline, '$studentCount siswa'),
               _buildPulseIndicator(cls.averagePulse),
             ],
           ),
           AppSpacing.vGapSm,
-          // Progress bar
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.sm),
             child: LinearProgressIndicator(
@@ -341,7 +635,7 @@ class _ClassCard extends ConsumerWidget {
                   : 0,
               backgroundColor: AppColors.divider,
               valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-              minHeight: 6,
+              minHeight: 5,
             ),
           ),
           AppSpacing.vGapXs,
@@ -349,6 +643,7 @@ class _ClassCard extends ConsumerWidget {
             '${cls.completedMaterials}/${cls.totalMaterials} materi selesai',
             style: AppTypography.labelSmall.copyWith(
               color: AppColors.textSecondary,
+              fontSize: 10,
             ),
           ),
         ],
@@ -391,7 +686,7 @@ class _ClassCard extends ConsumerWidget {
         borderRadius: AppRadius.chip,
       ),
       child: Text(
-        avgPulse.toStringAsFixed(1),
+        avgPulse == 0.0 ? '-' : avgPulse.toStringAsFixed(1),
         style: AppTypography.labelSmall.copyWith(
           color: color,
           fontWeight: FontWeight.bold,
