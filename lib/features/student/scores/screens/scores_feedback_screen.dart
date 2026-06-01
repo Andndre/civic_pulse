@@ -123,6 +123,7 @@ class ScoresFeedbackScreen extends ConsumerWidget {
                     return RadarChartTitle(
                       text: titles[index],
                       angle: 0,
+                      positionPercentageOffset: 0.15,
                     );
                   },
                   dataSets: [
@@ -480,14 +481,14 @@ class _MaterialProgressCard extends ConsumerWidget {
           ),
           textAlign: TextAlign.center,
         ),
-        if (score != null)
-          Text(
-            '$score%',
-            style: AppTypography.labelSmall.copyWith(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.bold,
-            ),
+        Text(
+          score != null ? '$score%' : '-',
+          style: AppTypography.labelSmall.copyWith(
+            color: score != null ? AppColors.textPrimary : Colors.transparent,
+            fontWeight: FontWeight.bold,
           ),
+          textAlign: TextAlign.center,
+        ),
       ],
     );
 
