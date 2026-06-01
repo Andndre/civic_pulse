@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_chart/fl_chart.dart';
+import 'package:radar_chart_plus/radar_chart_plus.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../shared/services/data_models.dart';
 import '../../learning/providers/material_provider.dart';
@@ -95,78 +95,41 @@ class ScoresFeedbackScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: SizedBox(
-              height: 155,
-              child: RadarChart(
-                RadarChartData(
-                  radarShape: RadarShape.polygon,
-                  tickCount: 5,
-                  ticksTextStyle: AppTypography.labelSmall.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                  tickBorderData: BorderSide(
-                    color: AppColors.divider,
-                    width: 1,
-                  ),
-                  gridBorderData: BorderSide(
-                    color: AppColors.divider,
-                    width: 1,
-                  ),
-                  radarBorderData: const BorderSide(
-                    color: AppColors.primary,
-                    width: 2,
-                  ),
-                  titleTextStyle: AppTypography.labelSmall.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  getTitle: (index, angle) {
-                    final titles = ['Partisipasi', 'Pemahaman', 'Pembelajaran', 'Keterlibatan'];
-                    return RadarChartTitle(
-                      text: titles[index],
-                      angle: 0,
-                      positionPercentageOffset: 0.25,
-                    );
-                  },
-                  dataSets: [
-                    RadarDataSet(
-                      fillColor: Colors.transparent,
-                      borderColor: Colors.transparent,
-                      entryRadius: 0,
-                      borderWidth: 0,
-                      dataEntries: const [
-                        RadarEntry(value: 0),
-                        RadarEntry(value: 0),
-                        RadarEntry(value: 0),
-                        RadarEntry(value: 0),
-                      ],
-                    ),
-                    RadarDataSet(
-                      fillColor: Colors.transparent,
-                      borderColor: Colors.transparent,
-                      entryRadius: 0,
-                      borderWidth: 0,
-                      dataEntries: const [
-                        RadarEntry(value: 5),
-                        RadarEntry(value: 5),
-                        RadarEntry(value: 5),
-                        RadarEntry(value: 5),
-                      ],
-                    ),
-                    RadarDataSet(
-                      fillColor: AppColors.primary.withValues(alpha: 0.3),
-                      borderColor: AppColors.primary,
-                      borderWidth: 2,
-                      dataEntries: [
-                        RadarEntry(value: scores.participation),
-                        RadarEntry(value: scores.understanding),
-                        RadarEntry(value: scores.learning),
-                        RadarEntry(value: scores.socialEngagement),
-                      ],
-                    ),
-                  ],
-                  borderData: FlBorderData(show: false),
-                  radarBackgroundColor: Colors.transparent,
+              height: 180,
+              child: RadarChartPlus(
+                ticks: const [1.0, 2.0, 3.0, 4.0, 5.0],
+                labels: const ['Partisipasi', 'Pemahaman', 'Pembelajaran', 'Keterlibatan'],
+                shape: RadarChartShape.polygon,
+                horizontalLabels: true,
+                labelSpacing: 8,
+                labelTextStyle: AppTypography.labelSmall.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.bold,
                 ),
+                tickTextStyle: AppTypography.labelSmall.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+                ringsStyle: RadarChartLineStyle(
+                  color: AppColors.divider,
+                  strokeWidth: 1,
+                ),
+                borderStyle: RadarChartLineStyle(
+                  color: AppColors.divider,
+                  strokeWidth: 1,
+                ),
+                dataSets: [
+                  RadarDataSet(
+                    data: [
+                      scores.participation,
+                      scores.understanding,
+                      scores.learning,
+                      scores.socialEngagement,
+                    ],
+                    borderColor: AppColors.primary,
+                    fillColor: AppColors.primary.withValues(alpha: 0.3),
+                    dotColor: AppColors.primary,
+                  ),
+                ],
               ),
             ),
           ),

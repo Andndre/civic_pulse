@@ -976,6 +976,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.2"
+  radar_chart_plus:
+    dependency: "direct main"
+    description:
+      name: radar_chart_plus
+      sha256: a462a2f04522cca8dba135daabe782eeb2647a07c983f3ddbbd8de0c92541cca
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.0"
   record_use:
     dependency: transitive
     description:

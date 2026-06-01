@@ -55,6 +55,7 @@ dependencies:
 
   # Google Fonts
   google_fonts: ^8.1.0
+  radar_chart_plus: ^3.0.0
 
 dev_dependencies:
   flutter_test:
