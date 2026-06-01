@@ -92,76 +92,79 @@ class ScoresFeedbackScreen extends ConsumerWidget {
             ],
           ),
           AppSpacing.vGapMd,
-          SizedBox(
-            height: 250,
-            child: RadarChart(
-              RadarChartData(
-                radarShape: RadarShape.polygon,
-                tickCount: 5,
-                ticksTextStyle: AppTypography.labelSmall.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-                tickBorderData: BorderSide(
-                  color: AppColors.divider,
-                  width: 1,
-                ),
-                gridBorderData: BorderSide(
-                  color: AppColors.divider,
-                  width: 1,
-                ),
-                radarBorderData: const BorderSide(
-                  color: AppColors.primary,
-                  width: 2,
-                ),
-                titleTextStyle: AppTypography.labelMedium.copyWith(
-                  color: AppColors.textPrimary,
-                ),
-                getTitle: (index, angle) {
-                  final titles = ['Partisipasi', 'Pemahaman', 'Pembelajaran', 'Keterlibatan'];
-                  return RadarChartTitle(
-                    text: titles[index],
-                    angle: 0,
-                  );
-                },
-                dataSets: [
-                  RadarDataSet(
-                    fillColor: Colors.transparent,
-                    borderColor: Colors.transparent,
-                    entryRadius: 0,
-                    borderWidth: 0,
-                    dataEntries: const [
-                      RadarEntry(value: 0),
-                      RadarEntry(value: 0),
-                      RadarEntry(value: 0),
-                      RadarEntry(value: 0),
-                    ],
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            child: SizedBox(
+              height: 180,
+              child: RadarChart(
+                RadarChartData(
+                  radarShape: RadarShape.polygon,
+                  tickCount: 5,
+                  ticksTextStyle: AppTypography.labelSmall.copyWith(
+                    color: AppColors.textSecondary,
                   ),
-                  RadarDataSet(
-                    fillColor: Colors.transparent,
-                    borderColor: Colors.transparent,
-                    entryRadius: 0,
-                    borderWidth: 0,
-                    dataEntries: const [
-                      RadarEntry(value: 5),
-                      RadarEntry(value: 5),
-                      RadarEntry(value: 5),
-                      RadarEntry(value: 5),
-                    ],
+                  tickBorderData: BorderSide(
+                    color: AppColors.divider,
+                    width: 1,
                   ),
-                  RadarDataSet(
-                    fillColor: AppColors.primary.withValues(alpha: 0.3),
-                    borderColor: AppColors.primary,
-                    borderWidth: 2,
-                    dataEntries: [
-                      RadarEntry(value: scores.participation),
-                      RadarEntry(value: scores.understanding),
-                      RadarEntry(value: scores.learning),
-                      RadarEntry(value: scores.socialEngagement),
-                    ],
+                  gridBorderData: BorderSide(
+                    color: AppColors.divider,
+                    width: 1,
                   ),
-                ],
-                borderData: FlBorderData(show: false),
-                radarBackgroundColor: Colors.transparent,
+                  radarBorderData: const BorderSide(
+                    color: AppColors.primary,
+                    width: 2,
+                  ),
+                  titleTextStyle: AppTypography.labelMedium.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                  getTitle: (index, angle) {
+                    final titles = ['Partisipasi', 'Pemahaman', 'Pembelajaran', 'Keterlibatan'];
+                    return RadarChartTitle(
+                      text: titles[index],
+                      angle: 0,
+                    );
+                  },
+                  dataSets: [
+                    RadarDataSet(
+                      fillColor: Colors.transparent,
+                      borderColor: Colors.transparent,
+                      entryRadius: 0,
+                      borderWidth: 0,
+                      dataEntries: const [
+                        RadarEntry(value: 0),
+                        RadarEntry(value: 0),
+                        RadarEntry(value: 0),
+                        RadarEntry(value: 0),
+                      ],
+                    ),
+                    RadarDataSet(
+                      fillColor: Colors.transparent,
+                      borderColor: Colors.transparent,
+                      entryRadius: 0,
+                      borderWidth: 0,
+                      dataEntries: const [
+                        RadarEntry(value: 5),
+                        RadarEntry(value: 5),
+                        RadarEntry(value: 5),
+                        RadarEntry(value: 5),
+                      ],
+                    ),
+                    RadarDataSet(
+                      fillColor: AppColors.primary.withValues(alpha: 0.3),
+                      borderColor: AppColors.primary,
+                      borderWidth: 2,
+                      dataEntries: [
+                        RadarEntry(value: scores.participation),
+                        RadarEntry(value: scores.understanding),
+                        RadarEntry(value: scores.learning),
+                        RadarEntry(value: scores.socialEngagement),
+                      ],
+                    ),
+                  ],
+                  borderData: FlBorderData(show: false),
+                  radarBackgroundColor: Colors.transparent,
+                ),
               ),
             ),
           ),
