@@ -449,10 +449,13 @@ class _MaterialProgressCard extends ConsumerWidget {
   }
 
   Widget _buildArrow() {
-    return Container(
-      height: 32,
-      alignment: Alignment.center,
-      child: const Icon(Icons.arrow_forward, size: 16, color: AppColors.textSecondary),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: Container(
+        height: 32,
+        alignment: Alignment.center,
+        child: const Icon(Icons.arrow_forward, size: 16, color: AppColors.textSecondary),
+      ),
     );
   }
 
@@ -492,17 +495,19 @@ class _MaterialProgressCard extends ConsumerWidget {
       ],
     );
 
+    final paddedContent = Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: content,
+    );
+
     if (onTap != null) {
       return InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppSpacing.sm),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-          child: content,
-        ),
+        child: paddedContent,
       );
     }
-    return content;
+    return paddedContent;
   }
 
   double _getAverageForDimension(List<PulseStatement> statements, String dimension) {
