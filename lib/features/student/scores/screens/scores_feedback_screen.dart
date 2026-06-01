@@ -174,35 +174,59 @@ class ScoresFeedbackScreen extends ConsumerWidget {
   }
 
   Widget _buildScoreLegend(PulseScores scores) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
+    return Column(
       children: [
-        Expanded(child: _buildScoreItem('Partisipasi', scores.participation)),
-        Expanded(child: _buildScoreItem('Pemahaman', scores.understanding)),
-        Expanded(child: _buildScoreItem('Pembelajaran', scores.learning)),
-        Expanded(child: _buildScoreItem('Keterlibatan', scores.socialEngagement)),
+        Row(
+          children: [
+            Expanded(child: _buildScoreItem('Partisipasi', scores.participation, Icons.how_to_reg)),
+            AppSpacing.hGapSm,
+            Expanded(child: _buildScoreItem('Pemahaman', scores.understanding, Icons.lightbulb_outline)),
+          ],
+        ),
+        AppSpacing.vGapSm,
+        Row(
+          children: [
+            Expanded(child: _buildScoreItem('Pembelajaran', scores.learning, Icons.school_outlined)),
+            AppSpacing.hGapSm,
+            Expanded(child: _buildScoreItem('Keterlibatan', scores.socialEngagement, Icons.people_outline)),
+          ],
+        ),
       ],
     );
   }
 
-  Widget _buildScoreItem(String label, double score) {
-    return Column(
-      children: [
-        Text(
-          score.toStringAsFixed(1),
-          style: AppTypography.titleMedium.copyWith(
-            color: _getScoreColor(score),
-            fontWeight: FontWeight.bold,
+  Widget _buildScoreItem(String label, double score, IconData icon) {
+    final color = _getScoreColor(score);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.05),
+        borderRadius: AppRadius.radiusSm,
+        border: Border.all(color: color.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: color),
+          AppSpacing.hGapXs,
+          Expanded(
+            child: Text(
+              label,
+              style: AppTypography.labelSmall.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        ),
-        Text(
-          label,
-          style: AppTypography.labelSmall.copyWith(
-            color: AppColors.textSecondary,
+          Text(
+            score.toStringAsFixed(1),
+            style: AppTypography.labelLarge.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          textAlign: TextAlign.center,
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -377,6 +401,7 @@ class _MaterialProgressCard extends ConsumerWidget {
           ),
           AppSpacing.vGapSm,
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: _buildStep(
@@ -385,7 +410,7 @@ class _MaterialProgressCard extends ConsumerWidget {
                   progress.preTestScore,
                 ),
               ),
-              const Icon(Icons.arrow_forward, size: 16, color: AppColors.textSecondary),
+              _buildArrow(),
               Expanded(
                 child: _buildStep(
                   'E-Book',
@@ -393,7 +418,7 @@ class _MaterialProgressCard extends ConsumerWidget {
                   null,
                 ),
               ),
-              const Icon(Icons.arrow_forward, size: 16, color: AppColors.textSecondary),
+              _buildArrow(),
               Expanded(
                 child: _buildStep(
                   'Post-test',
@@ -401,7 +426,7 @@ class _MaterialProgressCard extends ConsumerWidget {
                   progress.postTestScore,
                 ),
               ),
-              const Icon(Icons.arrow_forward, size: 16, color: AppColors.textSecondary),
+              _buildArrow(),
               Expanded(
                 child: _buildStep(
                   'PULSE',
@@ -416,6 +441,14 @@ class _MaterialProgressCard extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildArrow() {
+    return Container(
+      height: 32,
+      alignment: Alignment.center,
+      child: const Icon(Icons.arrow_forward, size: 16, color: AppColors.textSecondary),
     );
   }
 
