@@ -95,7 +95,7 @@ class ScoresFeedbackScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: SizedBox(
-              height: 180,
+              height: 155,
               child: RadarChart(
                 RadarChartData(
                   radarShape: RadarShape.polygon,
@@ -115,15 +115,16 @@ class ScoresFeedbackScreen extends ConsumerWidget {
                     color: AppColors.primary,
                     width: 2,
                   ),
-                  titleTextStyle: AppTypography.labelMedium.copyWith(
+                  titleTextStyle: AppTypography.labelSmall.copyWith(
                     color: AppColors.textPrimary,
+                    fontWeight: FontWeight.bold,
                   ),
                   getTitle: (index, angle) {
                     final titles = ['Partisipasi', 'Pemahaman', 'Pembelajaran', 'Keterlibatan'];
                     return RadarChartTitle(
                       text: titles[index],
                       angle: 0,
-                      positionPercentageOffset: 0.15,
+                      positionPercentageOffset: 0.25,
                     );
                   },
                   dataSets: [
