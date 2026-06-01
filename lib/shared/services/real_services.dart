@@ -388,6 +388,74 @@ class RealActivityService implements ActivityServiceInterface {
       throw ApiException.fromDioException(e);
     }
   }
+
+  @override
+  Future<ActivityLog> updateActivity({
+    required int activityId,
+    required String title,
+    required String category,
+    required String location,
+    required DateTime activityDate,
+    String? photoPath,
+  }) async {
+    try {
+      String mappedType;
+      switch (category) {
+        case 'participation':
+          mappedType = 'sports';
+          break;
+        case 'understanding':
+          mappedType = 'arts';
+          break;
+        case 'learning':
+          mappedType = 'competition';
+          break;
+        case 'social_engagement':
+          mappedType = 'volunteer';
+          break;
+        default:
+          mappedType = 'other';
+      }
+
+      final Map<String, dynamic> fields = {
+        'title': title,
+        'type': mappedType,
+        'location': location,
+        'date': activityDate.toIso8601String().split('T')[0],
+      };
+
+      final Response response;
+      if (photoPath != null && photoPath.isNotEmpty) {
+        final formData = FormData.fromMap({
+          ...fields,
+          '_method': 'PATCH',
+          'evidence_file': await MultipartFile.fromFile(
+            photoPath,
+            filename: photoPath.split('/').last,
+          ),
+        });
+        response = await _client.uploadFile('${ApiConstants.activities}/$activityId', data: formData);
+      } else {
+        response = await _client.patch('${ApiConstants.activities}/$activityId', data: fields);
+      }
+
+      final data = response.data;
+      final Map<String, dynamic> item =
+          (data is Map && data.containsKey('data')) ? data['data'] : data;
+      return ActivityLog.fromJson(item);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<void> deleteActivity(int activityId) async {
+    try {
+      await _client.delete('${ApiConstants.activities}/$activityId');
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
 }
 
 class RealAnalyticsService implements AnalyticsServiceInterface {

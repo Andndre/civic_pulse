@@ -36,6 +36,15 @@ abstract class ActivityServiceInterface {
     required DateTime activityDate,
     String? photoPath,
   });
+  Future<ActivityLog> updateActivity({
+    required int activityId,
+    required String title,
+    required String category,
+    required String location,
+    required DateTime activityDate,
+    String? photoPath,
+  });
+  Future<void> deleteActivity(int activityId);
 }
 
 abstract class AnalyticsServiceInterface {

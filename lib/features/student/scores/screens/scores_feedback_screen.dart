@@ -520,92 +520,13 @@ class _MaterialProgressCard extends ConsumerWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          SizedBox(
-                            height: 200,
-                            child: RadarChart(
-                              RadarChartData(
-                                radarShape: RadarShape.polygon,
-                                tickCount: 5,
-                                ticksTextStyle: AppTypography.labelSmall.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
-                                tickBorderData: BorderSide(
-                                  color: AppColors.divider,
-                                  width: 1,
-                                ),
-                                gridBorderData: BorderSide(
-                                  color: AppColors.divider,
-                                  width: 1,
-                                ),
-                                radarBorderData: const BorderSide(
-                                  color: AppColors.primary,
-                                  width: 2,
-                                ),
-                                titleTextStyle: AppTypography.labelMedium.copyWith(
-                                  color: AppColors.textPrimary,
-                                ),
-                                getTitle: (index, angle) {
-                                  final titles = ['Partisipasi', 'Pemahaman', 'Pembelajaran', 'Keterlibatan'];
-                                  return RadarChartTitle(
-                                    text: titles[index],
-                                    angle: 0,
-                                  );
-                                },
-                                dataSets: [
-                                  RadarDataSet(
-                                    fillColor: Colors.transparent,
-                                    borderColor: Colors.transparent,
-                                    entryRadius: 0,
-                                    borderWidth: 0,
-                                    dataEntries: const [
-                                      RadarEntry(value: 0),
-                                      RadarEntry(value: 0),
-                                      RadarEntry(value: 0),
-                                      RadarEntry(value: 0),
-                                    ],
-                                  ),
-                                  RadarDataSet(
-                                    fillColor: Colors.transparent,
-                                    borderColor: Colors.transparent,
-                                    entryRadius: 0,
-                                    borderWidth: 0,
-                                    dataEntries: const [
-                                      RadarEntry(value: 5),
-                                      RadarEntry(value: 5),
-                                      RadarEntry(value: 5),
-                                      RadarEntry(value: 5),
-                                    ],
-                                  ),
-                                  RadarDataSet(
-                                    fillColor: AppColors.primary.withValues(alpha: 0.3),
-                                    borderColor: AppColors.primary,
-                                    borderWidth: 2,
-                                    dataEntries: [
-                                      RadarEntry(value: pScore),
-                                      RadarEntry(value: uScore),
-                                      RadarEntry(value: lScore),
-                                      RadarEntry(value: seScore),
-                                    ],
-                                  ),
-                                ],
-                                borderData: FlBorderData(show: false),
-                                radarBackgroundColor: Colors.transparent,
-                              ),
-                            ),
-                          ),
-                          AppSpacing.vGapLg,
-                          // Score legend (0-5 scale)
-                          Column(
-                            children: [
-                              _buildDialogScoreRow('Partisipasi', pScore),
-                              Divider(color: AppColors.divider, height: 1),
-                              _buildDialogScoreRow('Pemahaman', uScore),
-                              Divider(color: AppColors.divider, height: 1),
-                              _buildDialogScoreRow('Pembelajaran', lScore),
-                              Divider(color: AppColors.divider, height: 1),
-                              _buildDialogScoreRow('Keterlibatan', seScore),
-                            ],
-                          ),
+                          _buildDialogScoreRow('Partisipasi', pScore),
+                          Divider(color: AppColors.divider, height: 1),
+                          _buildDialogScoreRow('Pemahaman', uScore),
+                          Divider(color: AppColors.divider, height: 1),
+                          _buildDialogScoreRow('Pembelajaran', lScore),
+                          Divider(color: AppColors.divider, height: 1),
+                          _buildDialogScoreRow('Keterlibatan', seScore),
                         ],
                       ),
                     );
@@ -645,30 +566,47 @@ class _MaterialProgressCard extends ConsumerWidget {
       return AppColors.danger;
     }
 
+    final color = getScoreColor(score);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: getScoreColor(score).withValues(alpha: 0.1),
-              borderRadius: AppRadius.chip,
-            ),
-            child: Text(
-              score.toStringAsFixed(1),
-              style: AppTypography.titleSmall.copyWith(
-                color: getScoreColor(score),
-                fontWeight: FontWeight.bold,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: AppRadius.chip,
+                ),
+                child: Text(
+                  score.toStringAsFixed(1),
+                  style: AppTypography.titleSmall.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          AppSpacing.vGapSm,
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: score / 5.0,
+              backgroundColor: color.withValues(alpha: 0.1),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+              minHeight: 8,
             ),
           ),
         ],

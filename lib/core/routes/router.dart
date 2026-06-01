@@ -12,6 +12,7 @@ import '../../features/student/learning/screens/learning_path_screen.dart';
 import '../../features/student/activities/screens/activity_log_screen.dart';
 import '../../features/student/activities/screens/add_activity_screen.dart';
 import '../../features/student/activities/screens/activity_detail_screen.dart';
+import '../../features/student/activities/screens/edit_activity_screen.dart';
 import '../../features/student/scores/screens/scores_feedback_screen.dart';
 import '../../features/student/profile/screens/student_profile_screen.dart';
 import '../../features/student/profile/screens/edit_profile_screen.dart';
@@ -139,6 +140,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) {
               final id = int.tryParse(state.pathParameters['id'] ?? '0') ?? 0;
               return ActivityDetailScreen(activityId: id);
+            },
+          ),
+          GoRoute(
+            path: '/student/activities/:id/edit',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['id'] ?? '0') ?? 0;
+              return EditActivityScreen(activityId: id);
             },
           ),
           GoRoute(

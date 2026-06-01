@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
-import '../../../../shared/services/data_models.dart';
 import '../providers/activity_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../shared/services/services.dart';
 
 class ActivityDetailScreen extends ConsumerWidget {
   final int activityId;
@@ -25,6 +26,16 @@ class ActivityDetailScreen extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
+        actions: activityAsync.value != null ? [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () => context.push('/student/activities/$activityId/edit'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+            onPressed: () => _confirmDelete(context, ref),
+          ),
+        ] : null,
       ),
       body: activityAsync.when(
         data: (activity) {
@@ -470,5 +481,79 @@ class ActivityDetailScreen extends ConsumerWidget {
       default:
         return location;
     }
+  }
+
+  void _confirmDelete(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: const Text('Hapus Aktivitas'),
+          content: const Text('Apakah Anda yakin ingin menghapus log aktivitas ini secara permanen?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Batal'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Row(
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        ),
+                        SizedBox(width: 16),
+                        Text('Menghapus aktivitas...'),
+                      ],
+                    ),
+                    duration: Duration(days: 1),
+                  ),
+                );
+
+                try {
+                  final service = ref.read(activityServiceProvider);
+                  await service.deleteActivity(activityId);
+                  
+                  ref.invalidate(activityListProvider);
+                  final user = ref.read(currentUserProvider);
+                  if (user != null) {
+                    ref.invalidate(studentActivitiesProvider(user.id));
+                  }
+                  
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).clearSnackBars();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Aktivitas berhasil dihapus'),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
+                    context.pop();
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).clearSnackBars();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Gagal menghapus: $e'),
+                        backgroundColor: AppColors.danger,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: const Text('Hapus', style: TextStyle(color: AppColors.danger)),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
