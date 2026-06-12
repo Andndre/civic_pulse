@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
@@ -17,8 +18,14 @@ class StudentHomeScreen extends ConsumerWidget {
     final materialsAsync = ref.watch(materialsProvider);
     final progressAsync = ref.watch(studentProgressProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) async {
+        if (didPop) return;
+        await SystemNavigator.pop();
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showJoinClassBottomSheet(context, ref),
         backgroundColor: AppColors.primary,
@@ -164,8 +171,9 @@ class StudentHomeScreen extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _showJoinClassBottomSheet(BuildContext context, WidgetRef ref) {
     final codeController = TextEditingController();
@@ -276,15 +284,7 @@ class StudentHomeScreen extends ConsumerWidget {
   }
 
   Widget _buildHeader(BuildContext context, String name) {
-    final hour = DateTime.now().hour;
-    String greeting;
-    if (hour < 12) {
-      greeting = 'Selamat Pagi';
-    } else if (hour < 17) {
-      greeting = 'Selamat Siang';
-    } else {
-      greeting = 'Selamat Sore';
-    }
+    const greeting = 'Selamat Datang';
 
     return Row(
       children: [

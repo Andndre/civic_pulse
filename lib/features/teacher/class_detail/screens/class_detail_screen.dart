@@ -167,18 +167,39 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen>
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
     return AppCard(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.md,
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              Icon(icon, color: color, size: 20),
-              AppSpacing.hGapSm,
-              Text(title, style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary)),
-            ],
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 22),
           ),
           AppSpacing.vGapSm,
-          Text(value, style: AppTypography.headlineMedium.copyWith(color: color, fontWeight: FontWeight.bold)),
+          Text(
+            value,
+            style: AppTypography.headlineMedium.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            title,
+            style: AppTypography.labelSmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );

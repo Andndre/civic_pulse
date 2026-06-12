@@ -80,18 +80,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: AppRadius.radiusMd,
-          ),
-          child: const Icon(
-            Icons.favorite,
-            size: 32,
-            color: AppColors.surface,
-          ),
+        SafeImageAsset(
+          'assets/Logo_civicpulse.png',
+          height: 60,
+          fit: BoxFit.contain,
         ),
         AppSpacing.vGapLg,
         Text(

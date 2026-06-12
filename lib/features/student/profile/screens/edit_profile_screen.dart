@@ -89,7 +89,30 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _saveProfile() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Format input tidak valid. Silakan periksa kembali.',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+      return;
+    }
 
     setState(() => _isSubmitting = true);
 
@@ -119,10 +142,24 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       setState(() => _isSubmitting = false);
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profil berhasil diperbarui!'),
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.check_circle_outline, color: Colors.white),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Profil berhasil diperbarui!',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
             backgroundColor: AppColors.success,
             behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
         context.pop();
@@ -130,9 +167,23 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         final errorMsg = ref.read(authNotifierProvider).errorMessage ?? 'Gagal memperbarui profil';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(errorMsg),
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    errorMsg,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
             backgroundColor: AppColors.danger,
             behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }

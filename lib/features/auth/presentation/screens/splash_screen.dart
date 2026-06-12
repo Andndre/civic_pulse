@@ -12,17 +12,35 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
+  bool _delayCompleted = false;
+  bool _navigated = false;
+
   @override
   void initState() {
     super.initState();
-    _checkAuth();
+    _checkDelay();
   }
 
-  Future<void> _checkAuth() async {
+  Future<void> _checkDelay() async {
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
+    setState(() {
+      _delayCompleted = true;
+    });
+    _navigateToNextScreen();
+  }
+
+  void _navigateToNextScreen() {
+    if (_navigated || !_delayCompleted) return;
 
     final authState = ref.read(authNotifierProvider);
+
+    // Skip redirect if auth status is still checking
+    if (authState.status == AuthStatus.initial || authState.status == AuthStatus.loading) {
+      return;
+    }
+
+    _navigated = true;
     if (authState.status == AuthStatus.authenticated) {
       final user = authState.user;
       if (user != null) {
@@ -35,6 +53,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         } else {
           context.go('/dashboard');
         }
+      } else {
+        context.go('/login');
       }
     } else {
       context.go('/login');
@@ -43,45 +63,19 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen for auth state changes so that if check completes after delay, we transition immediately
+    ref.listen<AuthState>(authNotifierProvider, (previous, next) {
+      _navigateToNextScreen();
+    });
+
     return Scaffold(
       backgroundColor: AppColors.primary,
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: AppRadius.radiusXl,
-              ),
-              child: const Icon(
-                Icons.favorite,
-                size: 60,
-                color: AppColors.primary,
-              ),
-            ),
-            AppSpacing.vGapLg,
-            Text(
-              'CivicPulse',
-              style: AppTypography.displayMedium.copyWith(
-                color: AppColors.surface,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            AppSpacing.vGapSm,
-            Text(
-              'Monitoring PULSE Peserta Didik',
-              style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.surface.withValues(alpha: 0.8),
-              ),
-            ),
-            AppSpacing.vGapXxl,
-            const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.surface),
-            ),
-          ],
+        child: SafeImageAsset(
+          'assets/splash_screen.png',
+          width: 140,
+          height: 140,
+          fit: BoxFit.contain,
         ),
       ),
     );

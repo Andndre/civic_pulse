@@ -9,7 +9,19 @@ class ApiClient {
   static ApiClient get instance => _instance ??= ApiClient._();
 
   late Dio _dio;
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+
+  static const _androidOptions = AndroidOptions(
+    encryptedSharedPreferences: true,
+  );
+
+  static const _iosOptions = IOSOptions(
+    accessibility: KeychainAccessibility.first_unlock,
+  );
+
+  final FlutterSecureStorage _storage = const FlutterSecureStorage(
+    aOptions: _androidOptions,
+    iOptions: _iosOptions,
+  );
 
   static const String _tokenKey = 'auth_token';
 
@@ -36,15 +48,28 @@ class ApiClient {
   Dio get dio => _dio;
 
   Future<String?> getToken() async {
-    return _storage.read(key: _tokenKey);
+    return _storage.read(
+      key: _tokenKey,
+      aOptions: _androidOptions,
+      iOptions: _iosOptions,
+    );
   }
 
   Future<void> setToken(String token) async {
-    await _storage.write(key: _tokenKey, value: token);
+    await _storage.write(
+      key: _tokenKey,
+      value: token,
+      aOptions: _androidOptions,
+      iOptions: _iosOptions,
+    );
   }
 
   Future<void> clearToken() async {
-    await _storage.delete(key: _tokenKey);
+    await _storage.delete(
+      key: _tokenKey,
+      aOptions: _androidOptions,
+      iOptions: _iosOptions,
+    );
   }
 
   Future<Response<T>> get<T>(
@@ -139,7 +164,11 @@ class _AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    final token = await _storage.read(key: _tokenKey);
+    final token = await _storage.read(
+      key: _tokenKey,
+      aOptions: ApiClient._androidOptions,
+      iOptions: ApiClient._iosOptions,
+    );
     if (token != null) {
       options.headers['Authorization'] = 'Bearer $token';
     }
@@ -150,7 +179,11 @@ class _AuthInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (err.response?.statusCode == 401) {
       // Token expired or invalid - clear token
-      _storage.delete(key: _tokenKey);
+      _storage.delete(
+        key: _tokenKey,
+        aOptions: ApiClient._androidOptions,
+        iOptions: ApiClient._iosOptions,
+      );
     }
     handler.next(err);
   }

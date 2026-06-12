@@ -92,19 +92,31 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Auth Routes
       GoRoute(
         path: '/splash',
-        builder: (context, state) => const SplashScreen(),
+        pageBuilder: (context, state) => NoTransitionPage<void>(
+          key: state.pageKey,
+          child: const SplashScreen(),
+        ),
       ),
       GoRoute(
         path: '/login',
-        builder: (context, state) => const LoginScreen(),
+        pageBuilder: (context, state) => NoTransitionPage<void>(
+          key: state.pageKey,
+          child: const LoginScreen(),
+        ),
       ),
       GoRoute(
         path: '/register',
-        builder: (context, state) => const RegisterScreen(),
+        pageBuilder: (context, state) => NoTransitionPage<void>(
+          key: state.pageKey,
+          child: const RegisterScreen(),
+        ),
       ),
       GoRoute(
         path: '/register/setup-class',
-        builder: (context, state) => const ClassSetupScreen(),
+        pageBuilder: (context, state) => NoTransitionPage<void>(
+          key: state.pageKey,
+          child: const ClassSetupScreen(),
+        ),
       ),
 
       // Student Routes (with shell)
@@ -114,52 +126,82 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: '/student/home',
-            builder: (context, state) => const StudentHomeScreen(),
+            pageBuilder: (context, state) => NoTransitionPage<void>(
+              key: state.pageKey,
+              child: const StudentHomeScreen(),
+            ),
           ),
           GoRoute(
             path: '/student/learning',
-            builder: (context, state) => const LearningGalleryScreen(),
+            pageBuilder: (context, state) => NoTransitionPage<void>(
+              key: state.pageKey,
+              child: const LearningGalleryScreen(),
+            ),
           ),
           GoRoute(
             path: '/student/learning/:id',
-            builder: (context, state) {
+            pageBuilder: (context, state) {
               final id = int.tryParse(state.pathParameters['id'] ?? '0') ?? 0;
-              return LearningPathScreen(materialId: id);
+              return NoTransitionPage<void>(
+                key: state.pageKey,
+                child: LearningPathScreen(materialId: id),
+              );
             },
           ),
           GoRoute(
             path: '/student/activities',
-            builder: (context, state) => const ActivityLogScreen(),
+            pageBuilder: (context, state) => NoTransitionPage<void>(
+              key: state.pageKey,
+              child: const ActivityLogScreen(),
+            ),
           ),
           GoRoute(
             path: '/student/activities/add',
-            builder: (context, state) => const AddActivityScreen(),
+            pageBuilder: (context, state) => NoTransitionPage<void>(
+              key: state.pageKey,
+              child: const AddActivityScreen(),
+            ),
           ),
           GoRoute(
             path: '/student/activities/:id',
-            builder: (context, state) {
+            pageBuilder: (context, state) {
               final id = int.tryParse(state.pathParameters['id'] ?? '0') ?? 0;
-              return ActivityDetailScreen(activityId: id);
+              return NoTransitionPage<void>(
+                key: state.pageKey,
+                child: ActivityDetailScreen(activityId: id),
+              );
             },
           ),
           GoRoute(
             path: '/student/activities/:id/edit',
-            builder: (context, state) {
+            pageBuilder: (context, state) {
               final id = int.tryParse(state.pathParameters['id'] ?? '0') ?? 0;
-              return EditActivityScreen(activityId: id);
+              return NoTransitionPage<void>(
+                key: state.pageKey,
+                child: EditActivityScreen(activityId: id),
+              );
             },
           ),
           GoRoute(
             path: '/student/scores',
-            builder: (context, state) => const ScoresFeedbackScreen(),
+            pageBuilder: (context, state) => NoTransitionPage<void>(
+              key: state.pageKey,
+              child: const ScoresFeedbackScreen(),
+            ),
           ),
           GoRoute(
             path: '/student/profile',
-            builder: (context, state) => const StudentProfileScreen(),
+            pageBuilder: (context, state) => NoTransitionPage<void>(
+              key: state.pageKey,
+              child: const StudentProfileScreen(),
+            ),
           ),
           GoRoute(
             path: '/student/profile/edit',
-            builder: (context, state) => const EditProfileScreen(),
+            pageBuilder: (context, state) => NoTransitionPage<void>(
+              key: state.pageKey,
+              child: const EditProfileScreen(),
+            ),
           ),
         ],
       ),
@@ -171,40 +213,58 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: '/teacher/home',
-            builder: (context, state) => const TeacherHomeScreen(),
+            pageBuilder: (context, state) => NoTransitionPage<void>(
+              key: state.pageKey,
+              child: const TeacherHomeScreen(),
+            ),
           ),
           GoRoute(
             path: '/teacher/class/:id',
-            builder: (context, state) {
+            pageBuilder: (context, state) {
               final classId = state.pathParameters['id']!;
-              return ClassDetailScreen(classId: classId);
+              return NoTransitionPage<void>(
+                key: state.pageKey,
+                child: ClassDetailScreen(classId: classId),
+              );
             },
           ),
           GoRoute(
             path: '/teacher/class/:classId/students/:studentId',
-            builder: (context, state) {
+            pageBuilder: (context, state) {
               final classId = state.pathParameters['classId']!;
               final studentId = state.pathParameters['studentId']!;
-              return TeacherStudentProfileScreen(
-                classId: classId,
-                studentId: studentId,
+              return NoTransitionPage<void>(
+                key: state.pageKey,
+                child: TeacherStudentProfileScreen(
+                  classId: classId,
+                  studentId: studentId,
+                ),
               );
             },
           ),
           GoRoute(
             path: '/teacher/activities/:id',
-            builder: (context, state) {
+            pageBuilder: (context, state) {
               final id = int.tryParse(state.pathParameters['id'] ?? '0') ?? 0;
-              return ActivityDetailScreen(activityId: id);
+              return NoTransitionPage<void>(
+                key: state.pageKey,
+                child: ActivityDetailScreen(activityId: id),
+              );
             },
           ),
           GoRoute(
             path: '/teacher/profile',
-            builder: (context, state) => const TeacherProfileScreen(),
+            pageBuilder: (context, state) => NoTransitionPage<void>(
+              key: state.pageKey,
+              child: const TeacherProfileScreen(),
+            ),
           ),
           GoRoute(
             path: '/teacher/profile/edit',
-            builder: (context, state) => const EditTeacherProfileScreen(),
+            pageBuilder: (context, state) => NoTransitionPage<void>(
+              key: state.pageKey,
+              child: const EditTeacherProfileScreen(),
+            ),
           ),
         ],
       ),

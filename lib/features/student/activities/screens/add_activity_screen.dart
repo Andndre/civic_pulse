@@ -140,7 +140,30 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   }
 
   Future<void> _submitActivity() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Format input tidak valid. Silakan periksa kembali.',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+      return;
+    }
 
     setState(() => _isSubmitting = true);
 
@@ -159,9 +182,24 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Aktivitas berhasil disimpan!'),
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.check_circle_outline, color: Colors.white),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Aktivitas berhasil disimpan!',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
             backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
         ref.invalidate(studentActivitiesProvider(studentId));
@@ -172,8 +210,23 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal menyimpan: $e'),
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Gagal menyimpan: ${e.toString().replaceAll('Exception: ', '')}',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
             backgroundColor: AppColors.danger,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }

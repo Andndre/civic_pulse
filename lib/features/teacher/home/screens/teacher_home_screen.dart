@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
@@ -15,7 +16,13 @@ class TeacherHomeScreen extends ConsumerWidget {
     final statsAsync = ref.watch(teacherStatsProvider);
     final user = ref.watch(currentUserProvider);
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) async {
+        if (didPop) return;
+        await SystemNavigator.pop();
+      },
+      child: Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text(
@@ -62,8 +69,9 @@ class TeacherHomeScreen extends ConsumerWidget {
         icon: const Icon(Icons.add),
         label: const Text('Buat Kelas'),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildWelcomeHeader(String? name, String? avatarUrl) {
     return Container(
@@ -182,17 +190,21 @@ class TeacherHomeScreen extends ConsumerWidget {
 
   Widget _buildStatCard(String label, String value, IconData icon, Color color) {
     return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.md,
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(AppSpacing.xs),
+            padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, size: 20, color: color),
+            child: Icon(icon, size: 22, color: color),
           ),
           AppSpacing.vGapSm,
           Text(
@@ -201,12 +213,15 @@ class TeacherHomeScreen extends ConsumerWidget {
               color: AppColors.textPrimary,
               fontWeight: FontWeight.bold,
             ),
+            textAlign: TextAlign.center,
           ),
+          const SizedBox(height: 2),
           Text(
             label,
             style: AppTypography.bodySmall.copyWith(
               color: AppColors.textSecondary,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -215,13 +230,17 @@ class TeacherHomeScreen extends ConsumerWidget {
 
   Widget _buildShimmerStatCard() {
     return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.md,
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 32,
-            height: 32,
+            width: 38,
+            height: 38,
             decoration: const BoxDecoration(
               color: AppColors.shimmerBase,
               shape: BoxShape.circle,
@@ -507,36 +526,89 @@ class TeacherHomeScreen extends ConsumerWidget {
                   label: 'Buat Kelas',
                   variant: AppButtonVariant.primary,
                   onPressed: () async {
-                    if (nameController.text.isNotEmpty) {
-                      try {
-                        final service = ref.read(teacherServiceProvider);
-                        final user = ref.read(currentUserProvider);
-                        final code = await service.createClass(
-                          name: nameController.text,
-                          gradeCategory: selectedCategory,
-                          gradeLevel: selectedGradeLevel,
-                          homeroomTeacherId: user?.id,
+                    if (nameController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Row(
+                            children: [
+                              Icon(Icons.error_outline, color: Colors.white),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Nama kelas tidak boleh kosong!',
+                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                          backgroundColor: AppColors.danger,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+
+                    try {
+                      final service = ref.read(teacherServiceProvider);
+                      final user = ref.read(currentUserProvider);
+                      final code = await service.createClass(
+                        name: nameController.text.trim(),
+                        gradeCategory: selectedCategory,
+                        gradeLevel: selectedGradeLevel,
+                        homeroomTeacherId: user?.id,
+                      );
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                const Icon(Icons.check_circle_outline, color: Colors.white),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Kelas berhasil dibuat! Kode: $code',
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            backgroundColor: AppColors.success,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
                         );
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Kelas berhasil dibuat! Kode: $code'),
-                              backgroundColor: AppColors.success,
+                        ref.invalidate(teacherClassesProvider);
+                        ref.invalidate(teacherStatsProvider);
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                const Icon(Icons.error_outline, color: Colors.white),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    e.toString().replaceAll('Exception: ', ''),
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ],
                             ),
-                          );
-                          ref.invalidate(teacherClassesProvider);
-                          ref.invalidate(teacherStatsProvider);
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(e.toString().replaceAll('Exception: ', '')),
-                              backgroundColor: AppColors.danger,
+                            backgroundColor: AppColors.danger,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                          );
-                        }
+                          ),
+                        );
                       }
                     }
                   },

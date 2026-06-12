@@ -31,7 +31,30 @@ class _ClassSetupScreenState extends ConsumerState<ClassSetupScreen> {
   }
 
   Future<void> _handleCreateClass() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Format input tidak valid. Silakan periksa kembali.',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -51,7 +74,30 @@ class _ClassSetupScreenState extends ConsumerState<ClassSetupScreen> {
   }
 
   Future<void> _handleJoinClass() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Format input tidak valid. Silakan periksa kembali.',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -89,7 +135,25 @@ class _ClassSetupScreenState extends ConsumerState<ClassSetupScreen> {
     await Clipboard.setData(ClipboardData(text: _generatedClassCode!));
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kode kelas berhasil disalin')),
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.check_circle_outline, color: Colors.white),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Kode kelas berhasil disalin',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
       );
     }
   }
@@ -113,8 +177,23 @@ class _ClassSetupScreenState extends ConsumerState<ClassSetupScreen> {
       if (next.errorMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(next.errorMessage!),
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    next.errorMessage!,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
             backgroundColor: AppColors.danger,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
         ref.read(authNotifierProvider.notifier).clearError();

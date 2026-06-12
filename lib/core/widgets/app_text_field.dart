@@ -98,6 +98,22 @@ class _AppTextFieldState extends State<AppTextField> {
           autofocus: widget.autofocus,
           inputFormatters: widget.inputFormatters,
           textCapitalization: widget.textCapitalization,
+          validator: (value) {
+            if (widget.validator != null) {
+              final err = widget.validator!(value);
+              if (_errorText != err) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    setState(() {
+                      _errorText = err;
+                    });
+                  }
+                });
+              }
+              return err;
+            }
+            return null;
+          },
           style: AppTypography.bodyMedium.copyWith(
             color: AppColors.textPrimary,
           ),

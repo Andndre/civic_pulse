@@ -109,6 +109,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        SafeImageAsset(
+          'assets/Logo_civicpulse.png',
+          height: 60,
+          fit: BoxFit.contain,
+        ),
+        AppSpacing.vGapLg,
         Text(
           'Buat Akun Baru',
           style: AppTypography.headlineLarge.copyWith(
