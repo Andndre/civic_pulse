@@ -2,7 +2,7 @@ class ApiConstants {
   ApiConstants._();
 
   // Base URL - change this to your Laravel API URL
-  static const String baseUrl = 'http://192.168.2.93:8000/api/v1';
+  static const String baseUrl = 'https://civicpulse.digowave.com/api/v1';
 
   // Timeouts
   static const Duration connectTimeout = Duration(seconds: 30);
