@@ -22,28 +22,55 @@ Kabar baiknya: butir 3 berarti sebagian besar "bahan baku" yang diminta dosen (a
 
 ---
 
-## 2. Konsep Solusi: "PULSE Activity Engine"
+## 2. Kepemilikan & Pengelolaan Materi: Model Per-Kelas (Google Classroom)
+
+Temuan tambahan dari transkrip (menit ~38:40-39:10 dan ~48:14): ada diskusi soal siapa yang input materi — admin atau guru. Kesimpulan yang lebih tepat: **materi harus mengikuti model Google Classroom** — tiap kelas yang dibuat guru punya set materinya sendiri, bukan bank materi bersama per jenjang yang dikelola admin terpusat.
+
+### 2.1 Dari "Bank Materi per Jenjang" ke "Materi per Kelas"
+
+Sebelumnya (skema saat ini): `learning_materials` terikat ke `grade_category` + `grade_level` — semua kelas SMP kelas 7 dari guru manapun berbagi materi yang sama, diinput admin terpusat.
+
+Baru: materi terikat ke `class_id` (instance kelas spesifik yang dibuat guru lewat `POST /classes`). **Guru A** yang mengajar Kelas 7A bisa menyusun materi berbeda dari **Guru B** di Kelas 7B, walau sama-sama kelas 7. Siswa hanya melihat materi dari kelas yang benar-benar dia ikuti (via `class_code`), bukan seluruh bank jenjang.
+
+Ini sekaligus menjawab tuntas diskusi "guru vs admin" di transkrip — bukan soal memberi guru izin admin tambahan, tapi karena materi memang **milik kelasnya sendiri**. Otorisasinya jadi pengecekan kepemilikan biasa (`classes.teacher_id == guru yang login`), persis seperti guru mengelola siswa di kelasnya sekarang — tidak perlu peran "Guru Admin" baru.
+
+### 2.2 Reuse Materi Antar Kelas (Duplikasi)
+
+Guru yang mengajar lebih dari satu kelas (misal 2 kelas 7 berbeda) tidak harus input materi dari nol tiap kelas. Disediakan aksi **"Duplikat ke Kelas Lain"** — materi (beserta seluruh Papan Aktivitas & soalnya) disalin ke kelas tujuan, lalu independen (mengedit salinan tidak memengaruhi materi asal).
+
+### 2.3 Bank Template dari Admin (Dipertahankan)
+
+Fitur import Excel/template dari Admin **tetap dipertahankan**, tapi perannya berubah dari "satu-satunya sumber materi" menjadi **starting point opsional**: Admin menyiapkan bank soal/template materi generik (per jenjang, bukan per kelas), guru bisa **impor lalu sesuaikan** ke kelasnya masing-masing. Materi final tetap dimiliki & dikelola oleh kelas/guru, bukan admin.
+
+---
+
+## 3. Konsep Solusi: "PULSE Activity Engine"
 
 Prinsip desain: **satu mesin konten yang dikonfigurasi lewat data** (mirip cara soal pre/post-test sekarang dikonfigurasi admin), bukan game custom yang di-hardcode per materi. Ini penting supaya admin/guru tetap bisa menambah materi baru tanpa perlu development ulang tiap kali.
+
+**Keputusan dosen: angket Likert PULSE dihapus total** — tidak ada lagi tahap terpisah "Refleksi PULSE". Konsekuensinya, keempat dimensi PULSE harus terukur dari apa yang terjadi **di antara Pre-Test dan Post-Test** (yaitu di dalam Papan Aktivitas itu sendiri), otomatis kalau memungkinkan — dan kalau satu dimensi memang tidak mungkin dinilai otomatis (Social Engagement), skornya **ditunda** dan difinalisasi belakangan lewat penilaian manual guru. Lihat 3.4 untuk detail prinsip ini.
 
 Alur belajar baru yang diusulkan:
 
 ```
-Pre-Test  →  Papan Aktivitas (ganti E-Book)  →  Post-Test  →  Tantangan Sosial (ganti Refleksi PULSE)
+Pre-Test  →  Papan Aktivitas (ganti E-Book + Refleksi PULSE, berisi Kartu Materi, Kartu Tantangan, dan Kartu Tantangan Sosial)  →  Post-Test
 ```
 
-### 2.1 Papan Aktivitas (Learning Board)
+Tidak ada lagi tahap ke-4. Tantangan Sosial (dulunya "Refleksi PULSE") sekarang jadi salah satu kotak **di dalam** Papan Aktivitas, bukan langkah terpisah setelah Post-Test — supaya sesuai arahan dosen bahwa penilaian PULSE harus terjadi di antara pre-test dan post-test.
 
-Materi dipecah menjadi rangkaian "kotak" berurutan (mirip ular tangga/board game), bukan satu dokumen panjang. Tiap kotak adalah salah satu dari dua jenis node:
+### 3.1 Papan Aktivitas (Learning Board)
+
+Materi dipecah menjadi rangkaian "kotak" berurutan (mirip ular tangga/board game), bukan satu dokumen panjang. Tiap kotak adalah salah satu dari tiga jenis node:
 
 | Jenis Node | Isi | Contoh |
 |---|---|---|
 | **Kartu Materi** | Potongan materi singkat (2-4 kalimat + gambar/ilustrasi opsional) | "Toleransi beragama berarti menghormati praktik ibadah orang lain meski berbeda keyakinan." |
-| **Kartu Tantangan** | Salah satu dari beberapa jenis mini-game (lihat 2.1.1), terkait kartu materi sebelumnya | "Cocokkan istilah dengan definisinya", "Seret ke keranjang Toleran/Intoleran", dsb. |
+| **Kartu Tantangan** | Salah satu dari beberapa jenis mini-game (lihat 3.1.1), terkait kartu materi sebelumnya | "Cocokkan istilah dengan definisinya", "Seret ke keranjang Toleran/Intoleran", dsb. |
+| **Kartu Tantangan Sosial** | Minimal satu per materi — instruksi aksi nyata terkait topik, siswa unggah bukti (lihat 3.2) | "Dokumentasikan satu momen kamu bersikap toleran minggu ini." |
 
 Siswa harus menyelesaikan kotak secara berurutan (tidak bisa lompat/skip), sehingga jumlah kotak yang diselesaikan menjadi ukuran **Partisipasi** yang objektif (bukan klaim sendiri), dan jawaban benar/salah kartu tantangan menjadi ukuran **Understanding** tambahan sebelum Post-Test.
 
-#### 2.1.1 Jenis Mini-Game Kartu Tantangan
+#### 3.1.1 Jenis Mini-Game Kartu Tantangan
 
 Supaya papan aktivitas terasa variatif (bukan kuis pilihan ganda berulang-ulang), Kartu Tantangan punya beberapa jenis mekanik. Semua jenis memakai **satu skema data generik** (`game_type` + `payload` json — lihat bagian 4), bukan tabel terpisah per jenis, supaya menambah jenis baru nanti tidak perlu migrasi ulang.
 
@@ -63,36 +90,43 @@ Tidak ada satu pun yang butuh package baru — semua widget di atas sudah tersed
 
 Skenario bercabang (cerita dengan titik keputusan berkonsekuensi) sengaja **tidak** dimasukkan sebagai jenis Kartu Tantangan — mekanismenya lebih berat (alur multi-langkah), lebih cocok jadi template terpisah untuk materi tertentu saja, bukan tipe kartu standar di semua materi.
 
-### 2.2 Tantangan Sosial (Social Challenge)
+### 3.2 Tantangan Sosial (Social Challenge)
 
-Menggantikan angket Likert. Setelah Post-Test, siswa diberi **instruksi konkret yang terikat topik materi** (bukan generik), misalnya:
+Menggantikan angket Likert sepenuhnya. Muncul sebagai salah satu kotak **di dalam** Papan Aktivitas (jadi tetap di antara Pre-Test dan Post-Test, sesuai arahan dosen), berisi **instruksi konkret yang terikat topik materi** (bukan generik), misalnya:
 
 > "Dokumentasikan satu momen kamu bekerja sama atau bersikap toleran dengan teman yang berbeda agama/suku minggu ini. Unggah foto/video singkat + 1-2 kalimat cerita."
 
-Siswa mengunggah bukti (foto/video), lalu **guru yang menilai** (approve/reject + skor 1-5) melalui halaman review — bukan siswa menilai diri sendiri. Ini secara teknis **memakai ulang model `ActivityLog`** yang sudah ada, hanya ditambah keterikatan ke `material_id` dan status review guru. Skor dari guru inilah yang menjadi sumber utama dimensi **Social Engagement**.
+Siswa mengunggah bukti (foto/video) saat mencapai kotak ini, lalu **melanjutkan ke kotak berikutnya tanpa menunggu** (Partisipasi & Understanding tetap bisa selesai penuh hari itu juga). Skor Social Engagement-nya sendiri berstatus **"tertunda" (pending)** sampai **guru menilai** (approve/reject + skor 1-5) lewat halaman review — bukan siswa menilai diri sendiri. Ini secara teknis **memakai ulang model `ActivityLog`** yang sudah ada, hanya ditambah keterikatan ke `material_id`/node papan dan status review guru.
 
-### 2.3 Pemetaan ke 4 Dimensi PULSE
+Konsekuensi: skor PULSE materi tampil sebagai **provisional (3 dari 4 dimensi)** sampai guru menuntaskan review, baru kemudian **Social Engagement final** dan skor keseluruhan dianggap tuntas.
+
+### 3.3 Pemetaan ke 4 Dimensi PULSE
 
 | Dimensi | Sumber Data (Baru) | Cara Hitung |
 |---|---|---|
-| **Participation** | Papan Aktivitas | % kotak diselesaikan tanpa skip, dari total kotak materi |
-| **Understanding** | Kartu Tantangan + Post-Test | % jawaban benar gabungan |
-| **Learning** | Pre-Test vs Post-Test (sudah ada, tidak berubah) | Selisih skor post − pre |
-| **Social Engagement** | Tantangan Sosial (dinilai guru) | Skor guru 1-5, dinormalisasi ke skala yang sama |
+| **Participation** | Papan Aktivitas | % kotak diselesaikan tanpa skip, dari total kotak materi — **otomatis, tersedia begitu Post-Test selesai** |
+| **Understanding** | Kartu Tantangan + Post-Test | % jawaban benar gabungan — **otomatis, tersedia begitu Post-Test selesai** |
+| **Learning** | Pre-Test vs Post-Test (sudah ada, tidak berubah) | Selisih skor post − pre — **otomatis, tersedia begitu Post-Test selesai** |
+| **Social Engagement** | Kartu Tantangan Sosial (dinilai guru) | Skor guru 1-5, dinormalisasi ke skala yang sama — **tidak bisa otomatis, berstatus "pending" sampai guru mengisi penilaian manual** |
 
-### 2.4 Nasib Refleksi Likert (Pulse Self-Report)
+### 3.4 Prinsip Penilaian: Otomatis, atau Tertunda Sampai Guru Menilai — Tidak Ada Self-Report
 
-Direkomendasikan **tidak dihapus total**, tapi diturunkan perannya jadi jurnal reflektif pelengkap (opsional, tidak dihitung sebagai skor resmi) — supaya infrastruktur yang sudah dibangun (`PulseStatement`, `pulse_responses`) tidak terbuang percuma, tapi tidak lagi jadi satu-satunya sumber angka PULSE. **Ini salah satu poin yang perlu dikonfirmasi ke dosen** (lihat bagian 7).
+**Keputusan final dosen: angket Likert (`PulseStatement`, `pulse_responses`) dihapus total**, bukan sekadar diturunkan jadi pelengkap. Prinsip penggantinya:
+
+1. Kalau satu dimensi PULSE **bisa** diukur objektif dari interaksi siswa (Participation, Understanding, Learning) — dihitung **otomatis** begitu siswa menyelesaikan Papan Aktivitas + Post-Test, tidak menunggu siapa pun.
+2. Kalau satu dimensi **tidak memungkinkan** diukur otomatis (Social Engagement — butuh judgment manusia atas bukti nyata) — skornya **ditunda (status: pending)** dan **difinalisasi belakangan oleh guru** lewat halaman review, bukan diisi sendiri oleh siswa lewat angket.
+
+Tidak ada jalan tengah "jurnal reflektif pelengkap" — kalau tidak bisa objektif & otomatis, jawabannya selalu "tunda ke guru", bukan "tanya siswa".
 
 ---
 
-## 3. Contoh Konkret End-to-End: Materi "Toleransi Antar Umat Beragama" (SMA Kelas 10)
+## 4. Contoh Konkret End-to-End: Materi "Toleransi Antar Umat Beragama" (SMA Kelas 10)
 
 Supaya tidak abstrak, berikut contoh isi lengkap satu materi sebagai bahan demo:
 
 **Pre-Test** (5 soal pilihan ganda dasar tentang konsep toleransi — format sama seperti sekarang, tidak berubah).
 
-**Papan Aktivitas** (8 kotak, memakai 3 jenis mini-game fase pertama):
+**Papan Aktivitas** (9 kotak, memakai 3 jenis mini-game fase pertama + 1 Tantangan Sosial):
 1. Kartu Materi — "Apa itu toleransi beragama?"
 2. Kartu Tantangan (**Sortir Kategori**) — seret 6 contoh sikap ke keranjang "Toleran" vs "Intoleran"
 3. Kartu Materi — "Toleransi dalam UUD 1945 & Pancasila sila 1"
@@ -101,23 +135,50 @@ Supaya tidak abstrak, berikut contoh isi lengkap satu materi sebagai bahan demo:
 6. Kartu Tantangan (**Swipe Benar/Salah**) — 5 pernyataan cepat tentang sikap toleran, swipe benar/salah
 7. Kartu Materi — "Dampak intoleransi terhadap persatuan bangsa"
 8. Kartu Tantangan (**Pilihan Ganda**, fallback) — kuis ringkasan (2-3 soal cepat)
+9. **Kartu Tantangan Sosial** — instruksi: *"Amati dan dokumentasikan satu tindakan toleransi atau kerja sama lintas budaya/agama di lingkunganmu minggu ini. Unggah foto/video + ceritakan singkat apa yang terjadi."* Siswa unggah bukti, lalu **langsung lanjut ke Post-Test** tanpa menunggu — skor Social Engagement berstatus "pending" sampai guru mereview dari antrean → guru memberi skor 1-5 + catatan.
 
-**Post-Test** (5 soal, evaluasi setelah papan aktivitas).
-
-**Tantangan Sosial** — instruksi: *"Amati dan dokumentasikan satu tindakan toleransi atau kerja sama lintas budaya/agama di lingkunganmu minggu ini. Unggah foto/video + ceritakan singkat apa yang terjadi."* → masuk antrean review guru → guru memberi skor 1-5 + catatan.
+**Post-Test** (5 soal, evaluasi setelah papan aktivitas — menandai materi "selesai (PULSE Sosial menunggu penilaian guru)" sampai guru menuntaskan review kotak 9).
 
 ---
 
-## 4. Perubahan Skema Database (Backend Laravel)
+## 5. Perubahan Skema Database (Backend Laravel)
 
 Referensi: `DB_SCHEMA.dbml` yang sudah ada. Perubahan dirancang **aditif** (tidak mengubah tabel lama secara merusak), supaya materi lama (PDF) tetap berfungsi selama migrasi bertahap.
 
 ```dbml
-// Materi kini punya tipe aktivitas — default tetap PDF lama, opt-in ke board game
+// Materi sekarang milik SATU kelas (bukan bank bersama per jenjang), plus tipe aktivitas
 Table learning_materials {
-  ...kolom lama tetap...
+  ...kolom lama tetap (title, description, thumbnail_url, order_index, status, dst)...
+  class_id bigint [not null, ref: > classes.id]   // penentu utama siapa yang melihat materi ini
   activity_type enum('classic_pdf', 'learning_board') [not null, default: 'classic_pdf']
+
+  indexes {
+    class_id
+  }
 }
+// grade_category & grade_level tetap disimpan sebagai atribut deskriptif (dipakai untuk filter
+// bank template admin di bawah), tapi TIDAK lagi menentukan siapa yang melihat materi — itu
+// sekarang murni lewat class_id.
+
+// BARU: bank template opsional dari Admin — tidak terikat kelas manapun, hanya starting point
+Table material_templates {
+  id bigint [pk, increment]
+  title varchar(255) [not null]
+  description text [null]
+  grade_category enum('SMP', 'SMA') [not null]
+  grade_level tinyint [not null]
+  created_by bigint [not null, ref: > users.id]   // admin yang menyiapkan template
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    (grade_category, grade_level)
+  }
+}
+// Struktur konten template (learning_nodes & questions versi template) bentuknya sama dengan
+// milik learning_materials, tapi saat guru "impor" template ke kelasnya, isinya DISALIN
+// (bukan direferensikan) ke learning_materials + learning_nodes miliknya sendiri — supaya
+// materi kelas tetap independen begitu guru mulai menyesuaikannya.
 
 // BARU: urutan kotak Papan Aktivitas per materi
 // Kartu Tantangan TIDAK memakai tabel questions lama — datanya beragam bentuk
@@ -126,9 +187,9 @@ Table learning_nodes {
   id bigint [pk, increment]
   material_id bigint [not null, ref: > learning_materials.id]
   order_index int [not null, default: 0]
-  node_type enum('content', 'challenge') [not null]
+  node_type enum('content', 'challenge', 'social_task') [not null]
   title varchar(150) [null]
-  body text [null]            // teks kartu materi (untuk node_type = content)
+  body text [null]            // teks kartu materi (untuk node_type = content), atau instruksi (untuk social_task)
   image_url varchar(500) [null]
 
   // Kolom di bawah hanya untuk node_type = challenge:
@@ -142,6 +203,12 @@ Table learning_nodes {
     (material_id, order_index)
   }
 }
+
+// DIHAPUS (bukan lagi dipakai — keputusan dosen: angket Likert dihapus total):
+// Table pulse_statements { ... }
+// Table pulse_responses { ... }
+// Table student_pulse_scores.overall_score tetap ada sebagai agregat 4 dimensi,
+// tapi sumber datanya sekarang dari learning_node_progress + activity_logs, bukan pulse_responses.
 
 // BARU: progres siswa per kotak (untuk hitung % partisipasi & understanding)
 Table learning_node_progress {
@@ -161,28 +228,89 @@ Table learning_node_progress {
   }
 }
 
-// UBAH: activity_logs — tambah keterikatan ke materi + review guru
+// UBAH: activity_logs — tambah keterikatan ke node papan + review guru
 Table activity_logs {
   ...kolom lama tetap (student_id, title, category, location, activity_date, photo_url)...
   material_id bigint [null, ref: > learning_materials.id]   // null = aktivitas bebas (fitur lama tetap jalan)
+  node_id bigint [null, ref: > learning_nodes.id]           // node_type = social_task yang memicu submission ini
   review_status enum('pending', 'approved', 'rejected') [null, default: 'pending']  // hanya relevan jika material_id terisi
   teacher_score tinyint [null]        // 1-5, diisi guru saat review
   reviewed_by bigint [null, ref: > users.id]
   reviewed_at timestamp [null]
 }
 
-// UBAH: tracking status per materi — tambah status tantangan sosial
+// UBAH: tracking status per materi — ganti ebook_status & pulse_status (Likert, dihapus)
+// dengan status Papan Aktivitas + status finalisasi Social Engagement
 Table student_material_progress {
-  ...kolom lama tetap...
-  social_task_status enum('not_started', 'pending_review', 'completed') [not null, default: 'not_started']
+  ...kolom lama tetap (student_id, material_id, pre_test_status, pre_test_score, post_test_status, post_test_score)...
+  board_status enum('not_started', 'in_progress', 'completed') [not null, default: 'not_started']  // ganti ebook_status
+  social_engagement_status enum('not_submitted', 'pending_review', 'finalized') [not null, default: 'not_submitted']  // ganti pulse_status
 }
 ```
 
 ---
 
-## 5. Perubahan API (menambah ke `API_SPECIFICATION.md`)
+## 6. Perubahan API (menambah ke `API_SPECIFICATION.md`)
 
 Mengikuti format & style endpoint yang sudah ada di dokumen (section 5 Learning Materials & 6 Activity Logs).
+
+### 5.x Get Class Materials (ganti `GET /materials?grade_category=SMP&grade_level=7`)
+
+```
+GET /classes/{classId}/materials
+```
+
+**Headers:** `Authorization: Bearer {token}` — guru hanya boleh akses kelas miliknya sendiri (`classes.teacher_id`), siswa hanya kelas yang sudah dia join.
+
+### 5.x Teacher: Create/Update Material (scoped ke kelas)
+
+```
+POST /classes/{classId}/materials
+PUT  /materials/{id}
+```
+
+**Headers:** `Authorization: Bearer {token}` (role: teacher, harus pemilik `classId`)
+
+### 5.x Duplikat Materi ke Kelas Lain
+
+```
+POST /materials/{id}/duplicate
+```
+
+**Request Body:**
+```json
+{ "target_class_id": 12 }
+```
+
+**Success Response (201):**
+```json
+{
+  "success": true,
+  "message": "Materi berhasil diduplikat",
+  "data": { "new_material_id": 88, "class_id": 12 }
+}
+```
+
+### 5.x Import Template Admin ke Kelas
+
+```
+GET  /material-templates?grade_category=SMA&grade_level=10
+POST /classes/{classId}/materials/import-template
+```
+
+**Request Body:**
+```json
+{ "template_id": 5 }
+```
+
+**Success Response (201):**
+```json
+{
+  "success": true,
+  "message": "Template berhasil diimpor, silakan sesuaikan isinya",
+  "data": { "material_id": 89, "class_id": 12 }
+}
+```
 
 ### 5.x Get Learning Board (ganti `GET /materials/{id}/ebook`)
 
@@ -227,6 +355,11 @@ GET /materials/{id}/learning-board
             { "id": "s2", "text": "Toleransi berarti menghormati hak orang lain untuk berbeda", "answer": true }
           ]
         }
+      },
+      {
+        "id": 9, "order_index": 9, "node_type": "social_task",
+        "title": "Tantangan Sosial",
+        "body": "Amati dan dokumentasikan satu tindakan toleransi atau kerja sama lintas budaya/agama di lingkunganmu minggu ini. Unggah foto/video + ceritakan singkat apa yang terjadi."
       }
     ]
   }
@@ -252,10 +385,12 @@ POST /materials/{id}/learning-board/nodes/{nodeId}/complete
 }
 ```
 
-### 5.x Submit Social Challenge (ganti `POST /materials/{id}/pulse-response`)
+### 5.x Submit Social Challenge (ganti `POST /materials/{id}/pulse-response` — endpoint Likert lama dihapus)
+
+Dipanggil saat siswa mencapai kotak `node_type: social_task` di Papan Aktivitas. Siswa **tidak menunggu** hasil review untuk lanjut ke kotak berikutnya / Post-Test.
 
 ```
-POST /materials/{id}/social-challenge
+POST /materials/{id}/learning-board/nodes/{nodeId}/social-task
 ```
 
 **Headers:** `Authorization: Bearer {token}` (role: student), `multipart/form-data`
@@ -266,8 +401,8 @@ POST /materials/{id}/social-challenge
 ```json
 {
   "success": true,
-  "message": "Tantangan sosial dikirim, menunggu review guru",
-  "data": { "activity_log_id": 210, "material_id": 1, "review_status": "pending" }
+  "message": "Tantangan sosial dikirim, menunggu review guru. Kamu bisa lanjut ke kotak berikutnya.",
+  "data": { "activity_log_id": 210, "material_id": 1, "node_id": 9, "review_status": "pending" }
 }
 ```
 
@@ -287,15 +422,16 @@ POST /activities/{id}/review
 
 ---
 
-## 6. Perubahan Frontend Flutter
+## 7. Perubahan Frontend Flutter
 
 | File | Perubahan |
 |---|---|
-| `lib/shared/services/data_models.dart` | Tambah model `LearningNode` (dengan `gameType` + `payload` dinamis); extend `ActivityLog` dengan `materialId`, `reviewStatus`, `teacherScore` |
-| `lib/features/student/learning/screens/learning_path_screen.dart` | Ganti `_EBookStep` → `_LearningBoardStep` (render kartu materi/tantangan berurutan); ganti `_PulseStep` → `_SocialChallengeStep` (form upload + caption) |
-| `lib/features/student/learning/widgets/challenge_games/` (baru) | Satu widget per `game_type`: `MatchingGameCard`, `SortingGameCard`, `TrueFalseSwipeCard` (fase 1); `OrderingGameCard`, `PictureQuizCard`, `FillBlankCard`, `MemoryFlipCard` (fase lanjutan) — dipilih lewat `switch (node.gameType)` di `_LearningBoardStep` |
+| `lib/shared/services/data_models.dart` | Tambah model `LearningNode` (dengan `gameType` + `payload` dinamis); tambah `classId` pada `LearningMaterial`; extend `ActivityLog` dengan `materialId`, `reviewStatus`, `teacherScore` |
+| `lib/features/student/learning/screens/learning_path_screen.dart` | Alur jadi 3 langkah: ganti `_EBookStep` → `_LearningBoardStep` (render kartu materi/tantangan/sosial berurutan); **hapus** `_PulseStep` sepenuhnya (angket Likert dihapus total) |
+| `lib/features/student/learning/widgets/challenge_games/` (baru) | Satu widget per `game_type`: `MatchingGameCard`, `SortingGameCard`, `TrueFalseSwipeCard` (fase 1); `OrderingGameCard`, `PictureQuizCard`, `FillBlankCard`, `MemoryFlipCard` (fase lanjutan) — dipilih lewat `switch (node.gameType)`. Plus `SocialTaskCard` khusus untuk `node_type: social_task` (form upload foto/video + caption, submit lalu langsung lanjut) — semua dirender berurutan di dalam `_LearningBoardStep` |
+| `lib/features/teacher/class_detail/screens/manage_materials_screen.dart` (baru) | Layar guru untuk CRUD materi kelasnya sendiri: susun Papan Aktivitas, tombol "Duplikat ke Kelas Lain", tombol "Impor dari Template Admin". Dioptimalkan untuk **Flutter Web** (layar lebar, drag-reorder kartu), tapi tetap satu codebase dengan app mobile |
 | `lib/features/teacher/` | Screen baru: antrean review Tantangan Sosial (list pending + form approve/reject/skor) |
-| `lib/features/student/learning/providers/material_provider.dart` | Provider baru untuk `learningBoardProvider`, mutasi `completeNodeProvider` |
+| `lib/features/student/learning/providers/material_provider.dart` | Ganti filter grade-level jadi `classId`; provider baru untuk `learningBoardProvider`, mutasi `completeNodeProvider` |
 
 Semua widget game di atas dibangun dari widget bawaan Flutter (`Draggable`, `DragTarget`, `Dismissible`, `ReorderableListView`, `AnimatedSwitcher`) — tidak menambah dependency baru di `pubspec.yaml`.
 
@@ -303,24 +439,94 @@ Materi lama yang masih `activity_type = classic_pdf` tetap dirender dengan `_EBo
 
 ---
 
-## 7. Roadmap & Estimasi
+## 8. Roadmap & Estimasi
 
 | Fase | Deliverable | Estimasi |
 |---|---|---|
 | 1 | Finalisasi isi 1 materi contoh (seperti contoh Toleransi di atas) — bisa jadi bahan demo/paper-prototype ke dosen sebelum coding | 2 hari |
 | 2 | Backend: migrasi tabel baru + endpoint (`learning_nodes`, `learning_node_progress`, extend `activity_logs`) | 3-4 hari |
-| 3 | Frontend: `_LearningBoardStep` + 3 widget game fase pertama (Mencocokkan, Sortir, Swipe Benar/Salah) | 4-5 hari |
-| 4 | Frontend: `_SocialChallengeStep` (upload bukti) + halaman review guru | 3 hari |
+| 2b | Backend + Frontend: materi jadi per-kelas (`class_id`), layar guru "Kelola Materi Kelas" (Flutter Web), fitur duplikasi antar kelas, import bank template admin | 3-4 hari |
+| 3 | Frontend: `_LearningBoardStep` + 3 widget game fase pertama (Mencocokkan, Sortir, Swipe Benar/Salah), hapus `_PulseStep` lama | 4-5 hari |
+| 4 | Frontend: `SocialTaskCard` (kotak Tantangan Sosial di dalam papan, upload bukti) + halaman antrean review guru | 3 hari |
 | 5 | Redesain landing page pemilihan jenjang (SD/SMP/SMA/PT, hanya SMA aktif) — item terpisah dari masukan meeting sebelumnya | 2 hari |
 | 6 | Testing end-to-end + siapkan materi contoh untuk demo Rektor | 2 hari |
 
-**Total estimasi: ±16-18 hari kerja (±3 minggu).** Ini lebih panjang dari estimasi verbal "2 minggu" yang disebut di meeting sebelumnya — perlu didiskusikan prioritas: kemungkinan Fase 1, 3, 4 (papan aktivitas + tantangan sosial untuk 1 materi contoh) cukup untuk demo tanggal 10, sementara Fase 5-6 menyusul.
+**Target penyelesaian: 2 minggu.** Backend (Fase 2, 2b) dan frontend (Fase 3, 4) dikerjakan paralel, bukan berurutan, sehingga total ±19-22 hari kerja tetap muat dalam kalender 2 minggu. Semua fase (termasuk Fase 5 dan bagian lanjutan Fase 2b) dikerjakan tanpa deprioritas.
+
+### Checklist Per Fase
+
+Centang tiap item saat selesai. Ini yang jadi sumber kebenaran progres — update `PROGRESS.md` untuk catatan sesi, tapi status "selesai/belum" tiap task tetap di sini.
+
+**Fase 1 — Materi contoh**
+- [ ] Finalisasi isi 9 kotak Papan Aktivitas materi "Toleransi Antar Umat Beragama" (bagian 4)
+- [ ] Siapkan 5 soal Pre-Test & 5 soal Post-Test
+- [ ] Review isi materi ke dosen sebelum mulai coding
+
+**Fase 2 — Backend: Papan Aktivitas inti**
+- [ ] Migrasi `learning_nodes` (`node_type`, `game_type`, `payload`)
+- [ ] Migrasi `learning_node_progress`
+- [ ] Extend `activity_logs` (`material_id`, `node_id`, `review_status`, `teacher_score`, `reviewed_by`, `reviewed_at`)
+- [ ] Update `student_material_progress` (`board_status`, `social_engagement_status`)
+- [ ] Hapus/nonaktifkan `pulse_statements` & `pulse_responses`
+- [ ] Endpoint `GET /materials/{id}/learning-board`
+- [ ] Endpoint `POST /materials/{id}/learning-board/nodes/{nodeId}/complete`
+- [ ] Endpoint `POST /materials/{id}/learning-board/nodes/{nodeId}/social-task`
+- [ ] Endpoint `GET /teacher/social-challenges` + `POST /activities/{id}/review`
+
+**Fase 2b — Materi per kelas**
+- [ ] Migrasi `learning_materials.class_id`
+- [ ] Migrasi `material_templates`
+- [ ] Endpoint `GET /classes/{classId}/materials`
+- [ ] Endpoint `POST /classes/{classId}/materials` & `PUT /materials/{id}`
+- [ ] Endpoint `POST /materials/{id}/duplicate`
+- [ ] Endpoint `GET /material-templates` & `POST /classes/{classId}/materials/import-template`
+- [ ] Layar guru `manage_materials_screen.dart` (Flutter Web)
+
+**Fase 3 — Frontend: Learning Board**
+- [ ] Model `LearningNode` di `data_models.dart`
+- [ ] `_LearningBoardStep` (ganti `_EBookStep`)
+- [ ] `MatchingGameCard`
+- [ ] `SortingGameCard`
+- [ ] `TrueFalseSwipeCard`
+- [ ] Hapus `_PulseStep`
+- [ ] `learningBoardProvider` + `completeNodeProvider`
+
+**Fase 4 — Tantangan Sosial + review guru**
+- [ ] `SocialTaskCard` widget
+- [ ] Halaman antrean review guru (list pending)
+- [ ] Form approve/reject + skor 1-5 (pakai rubrik draft di bagian 9)
+
+**Fase 5 — Landing page**
+- [ ] Redesain tampilan awal (SD/SMP/SMA/PT), hanya SMA aktif untuk fase ini
+- [ ] Konsolidasi alur "pilih kelas" supaya tidak ditanya dua kali
+
+**Fase 6 — Testing & demo**
+- [ ] Testing end-to-end alur siswa (Pre-Test → Papan Aktivitas → Post-Test)
+- [ ] Testing end-to-end alur guru (kelola materi kelas, review Tantangan Sosial)
+- [ ] Siapkan materi contoh final untuk demo Rektor
 
 ---
 
-## 8. Keputusan yang Perlu Dikonfirmasi ke Dosen
+## 9. Keputusan
 
-1. Apakah Refleksi PULSE (angket Likert) **dihapus total**, atau tetap ada sebagai jurnal reflektif pelengkap yang tidak dihitung skor resmi?
-2. Untuk demo tanggal 10: cukup **1 materi contoh** lengkap (Papan Aktivitas + Tantangan Sosial), atau perlu lebih dari satu topik?
-3. Rubrik penilaian guru untuk Tantangan Sosial (skala 1-5) — perlu instrumen/kriteria penilaian yang lebih jelas supaya penilaian antar guru konsisten.
-4. Prioritas jika waktu 2 minggu tidak cukup untuk semua fase: apakah redesain landing page (Fase 5) boleh menyusul setelah demo, atau wajib selesai bersamaan?
+### Sudah diputuskan (dikonfirmasi dosen)
+
+- **Materi per kelas, bukan per jenjang** — guru mengelola materi di kelasnya sendiri lewat kepemilikan kelas (`teacher_id`), bukan lewat peran "Guru Admin" terpisah.
+- **Duplikasi materi antar kelas diizinkan** — guru dengan banyak kelas bisa menyalin materi ke kelas lain miliknya, lalu mengedit salinan secara independen.
+- **Bank template Admin dipertahankan** sebagai starting point opsional (import Excel/template per jenjang), bukan lagi satu-satunya sumber materi.
+- **Input materi di Flutter Web** (bukan panel Laravel/Blade terpisah) — satu codebase dengan app mobile, cocok untuk authoring yang butuh layar lebar (drag-reorder kartu papan aktivitas).
+- **Angket Likert PULSE dihapus total.** Sebagai gantinya: Participation/Understanding/Learning dinilai otomatis dari Papan Aktivitas + Pre/Post-Test; Social Engagement (yang tidak mungkin otomatis) skornya **ditunda** dan difinalisasi lewat penilaian manual guru — lihat prinsip di bagian 3.4.
+- **Demo tanggal 10 cukup 1 materi contoh** (Toleransi Antar Umat Beragama, bagian 4) — tidak perlu materi tambahan.
+- **Waktu dianggap cukup untuk semua fase** — Fase 5 (redesain landing page) dan bagian lanjutan Fase 2b (duplikasi, import template) **tidak** perlu ditunda, dikerjakan bersamaan sesuai roadmap di bagian 8.
+
+### Masih perlu dilengkapi (usulan draft, mohon dikonfirmasi/direvisi dosen)
+
+Rubrik penilaian guru untuk Tantangan Sosial (skala 1-5) belum ada kriteria eksplisit dari dosen. Supaya penilaian antar guru konsisten, berikut **usulan draft** yang bisa disesuaikan:
+
+| Skor | Kriteria |
+|---|---|
+| 1 | Tidak ada bukti, atau bukti tidak relevan dengan instruksi/topik materi |
+| 2 | Ada bukti, tapi tidak sesuai instruksi (mis. foto tidak berkaitan dengan toleransi) |
+| 3 | Bukti sesuai instruksi, tapi ceritanya dangkal/tidak menjelaskan konteks |
+| 4 | Bukti sesuai + cerita menjelaskan konteks & keterkaitan dengan materi dengan baik |
+| 5 | Bukti sesuai + cerita reflektif mendalam, menunjukkan inisiatif lebih dari sekadar instruksi minimum |
