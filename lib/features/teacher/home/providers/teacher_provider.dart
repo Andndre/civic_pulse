@@ -100,3 +100,45 @@ final teacherStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final service = ref.watch(teacherServiceProvider);
   return service.getTeacherStats();
 });
+
+// Pending Social Challenges provider (Fase 4)
+final pendingSocialChallengesProvider = FutureProvider<List<ActivityLog>>((ref) async {
+  final service = ref.watch(teacherServiceProvider);
+  return service.getPendingSocialChallenges();
+});
+
+// Notifier untuk mereview tantangan sosial secara async (Fase 4)
+class ReviewSocialChallengeNotifier extends AsyncNotifier<void> {
+  @override
+  Future<void> build() async {}
+
+  Future<void> review({
+    required int activityId,
+    required String status,
+    required int score,
+    String? note,
+  }) async {
+    state = const AsyncLoading();
+    try {
+      final service = ref.read(teacherServiceProvider);
+      await service.reviewSocialChallenge(
+        activityId: activityId,
+        status: status,
+        score: score,
+        note: note,
+      );
+      state = const AsyncData(null);
+      // Invalidate pending queue dan stats agar beranda guru ter-update
+      ref.invalidate(pendingSocialChallengesProvider);
+      ref.invalidate(teacherStatsProvider);
+      ref.invalidate(teacherClassesProvider);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+      rethrow;
+    }
+  }
+}
+
+final reviewSocialChallengeProvider = AsyncNotifierProvider<ReviewSocialChallengeNotifier, void>(
+  ReviewSocialChallengeNotifier.new,
+);

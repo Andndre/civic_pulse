@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../shared/services/services.dart';
 import '../providers/material_provider.dart';
+import '../widgets/challenge_games/content_card.dart';
+import '../widgets/challenge_games/matching_game_card.dart';
+import '../widgets/challenge_games/multiple_choice_card.dart';
+import '../widgets/challenge_games/sorting_game_card.dart';
+import '../widgets/challenge_games/true_false_swipe_card.dart';
 
 class LearningPathScreen extends ConsumerStatefulWidget {
   final int materialId;
@@ -17,9 +23,8 @@ class LearningPathScreen extends ConsumerStatefulWidget {
 }
 
 class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
-  int _currentStep = 0; // 0=PreTest, 1=EBook, 2=PostTest, 3=Pulse
-
-  final List<String> _steps = ['Pre-Test', 'Materi', 'Post-Test', 'Refleksi PULSE'];
+  int _currentStep = 0;
+  bool _initialized = false;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +54,23 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
 
         final isCompleted = material.status == 'completed';
 
+        final steps = material.isLearningBoard
+            ? ['Pre-Test', 'Baca E-Book', 'Papan Aktivitas', 'Post-Test']
+            : ['Pre-Test', 'Baca E-Book', 'Post-Test'];
+
+        if (!_initialized) {
+          if (material.preTestScore == null) {
+            _currentStep = 0;
+          } else if (material.ebookStatus != 'completed') {
+            _currentStep = 1;
+          } else if (material.isLearningBoard && material.boardStatus != 'completed') {
+            _currentStep = 2;
+          } else {
+            _currentStep = material.isLearningBoard ? 3 : 2;
+          }
+          _initialized = true;
+        }
+
         return Scaffold(
           backgroundColor: AppColors.background,
           appBar: AppBar(
@@ -57,7 +79,9 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
             elevation: 0,
             leading: IconButton(
               icon: Icon(isCompleted ? Icons.arrow_back : Icons.close),
-              onPressed: () => isCompleted ? context.go('/student/learning') : _showExitDialog(context),
+              onPressed: () => isCompleted
+                  ? context.go('/student/learning')
+                  : _showExitDialog(context),
             ),
           ),
           body: isCompleted
@@ -65,11 +89,9 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
               : Column(
                   children: [
                     // Progress indicator
-                    _buildProgressIndicator(),
+                    _buildProgressIndicator(steps),
                     // Content
-                    Expanded(
-                      child: _buildStepContent(material),
-                    ),
+                    Expanded(child: _buildStepContent(material)),
                   ],
                 ),
         );
@@ -117,7 +139,11 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
                   color: AppColors.successLight.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check_circle, size: 48, color: AppColors.success),
+                child: const Icon(
+                  Icons.check_circle,
+                  size: 48,
+                  color: AppColors.success,
+                ),
               ),
               AppSpacing.vGapLg,
               Text(
@@ -151,12 +177,26 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        _buildResultScoreMetric('Pre-Test', preScore, AppColors.info),
-                        _buildResultScoreMetric('Post-Test', postScore, AppColors.success),
+                        _buildResultScoreMetric(
+                          'Pre-Test',
+                          preScore,
+                          AppColors.info,
+                        ),
+                        _buildResultScoreMetric(
+                          'Post-Test',
+                          postScore,
+                          AppColors.success,
+                        ),
                         _buildResultScoreMetric(
                           'Peningkatan',
-                          (preScore != null && postScore != null) ? (postScore - preScore) : null,
-                          (preScore != null && postScore != null && postScore >= preScore) ? AppColors.success : AppColors.danger,
+                          (preScore != null && postScore != null)
+                              ? (postScore - preScore)
+                              : null,
+                          (preScore != null &&
+                                  postScore != null &&
+                                  postScore >= preScore)
+                              ? AppColors.success
+                              : AppColors.danger,
                           showSign: true,
                         ),
                       ],
@@ -217,7 +257,12 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
     );
   }
 
-  Widget _buildResultScoreMetric(String label, int? score, Color color, {bool showSign = false}) {
+  Widget _buildResultScoreMetric(
+    String label,
+    int? score,
+    Color color, {
+    bool showSign = false,
+  }) {
     final text = score == null
         ? '-'
         : (showSign && score > 0 ? '+$score' : '$score');
@@ -225,7 +270,9 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
       children: [
         Text(
           label,
-          style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary),
+          style: AppTypography.labelSmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
         ),
         AppSpacing.vGapXs,
         Container(
@@ -246,14 +293,14 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
     );
   }
 
-  Widget _buildProgressIndicator() {
+  Widget _buildProgressIndicator(List<String> steps) {
     return Container(
       padding: AppSpacing.paddingMd,
       color: AppColors.surface,
       child: Column(
         children: [
           Row(
-            children: List.generate(_steps.length, (index) {
+            children: List.generate(steps.length, (index) {
               final isCompleted = index < _currentStep;
               final isCurrent = index == _currentStep;
               return Expanded(
@@ -266,13 +313,17 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
                         color: isCompleted
                             ? AppColors.success
                             : isCurrent
-                                ? AppColors.primary
-                                : AppColors.surfaceVariant,
+                            ? AppColors.primary
+                            : AppColors.surfaceVariant,
                         shape: BoxShape.circle,
                       ),
                       child: Center(
                         child: isCompleted
-                            ? const Icon(Icons.check, size: 16, color: Colors.white)
+                            ? const Icon(
+                                Icons.check,
+                                size: 16,
+                                color: Colors.white,
+                              )
                             : Text(
                                 '${index + 1}',
                                 style: AppTypography.labelSmall.copyWith(
@@ -283,7 +334,7 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
                               ),
                       ),
                     ),
-                    if (index < _steps.length - 1)
+                    if (index < steps.length - 1)
                       Expanded(
                         child: Container(
                           height: 2,
@@ -299,7 +350,7 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
           ),
           AppSpacing.vGapSm,
           Text(
-            _steps[_currentStep],
+            steps[_currentStep],
             style: AppTypography.titleSmall.copyWith(
               color: AppColors.primary,
               fontWeight: FontWeight.w600,
@@ -311,29 +362,70 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
   }
 
   Widget _buildStepContent(LearningMaterial material) {
-    switch (_currentStep) {
-      case 0:
-        return _PreTestStep(
-          materialId: widget.materialId,
-          onComplete: () => setState(() => _currentStep = 1),
-        );
-      case 1:
-        return _EBookStep(
-          material: material,
-          onComplete: () => setState(() => _currentStep = 2),
-        );
-      case 2:
-        return _PostTestStep(
-          materialId: widget.materialId,
-          onComplete: () => setState(() => _currentStep = 3),
-        );
-      case 3:
-        return _PulseStep(
-          materialId: widget.materialId,
-          onComplete: () => _showCompletionDialog(),
-        );
-      default:
-        return const SizedBox.shrink();
+    if (material.isLearningBoard) {
+      switch (_currentStep) {
+        case 0:
+          return _PreTestStep(
+            materialId: widget.materialId,
+            onComplete: () => setState(() => _currentStep = 1),
+          );
+        case 1:
+          return _EBookStep(
+            material: material,
+            onComplete: () async {
+              try {
+                await ref.read(materialServiceProvider).completeMedia(material.id);
+                // Invalidate material cache to fetch updated statuses
+                ref.invalidate(materialProvider(material.id));
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Gagal memperbarui progress media: $e'),
+                      backgroundColor: AppColors.danger,
+                    ),
+                  );
+                }
+                return;
+              }
+              if (mounted) {
+                setState(() => _currentStep = 2);
+              }
+            },
+          );
+        case 2:
+          return _LearningBoardStep(
+            material: material,
+            onComplete: () => setState(() => _currentStep = 3),
+          );
+        case 3:
+          return _PostTestStep(
+            materialId: widget.materialId,
+            onComplete: _showCompletionDialog,
+          );
+        default:
+          return const SizedBox.shrink();
+      }
+    } else {
+      switch (_currentStep) {
+        case 0:
+          return _PreTestStep(
+            materialId: widget.materialId,
+            onComplete: () => setState(() => _currentStep = 1),
+          );
+        case 1:
+          return _EBookStep(
+            material: material,
+            onComplete: () => setState(() => _currentStep = 2),
+          );
+        case 2:
+          return _PostTestStep(
+            materialId: widget.materialId,
+            onComplete: _showCompletionDialog,
+          );
+        default:
+          return const SizedBox.shrink();
+      }
     }
   }
 
@@ -406,7 +498,9 @@ class _PreTestStep extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final questionsAsync = ref.watch(questionsProvider((materialId: materialId, type: 'pre')));
+    final questionsAsync = ref.watch(
+      questionsProvider((materialId: materialId, type: 'pre')),
+    );
 
     return questionsAsync.when(
       data: (questions) {
@@ -422,7 +516,8 @@ class _PreTestStep extends ConsumerWidget {
         return _QuizView(
           questions: questions,
           title: 'Pre-Test',
-          subtitle: 'Jawab pertanyaan berikut untuk mengukur pemahaman awal Anda',
+          subtitle:
+              'Jawab pertanyaan berikut untuk mengukur pemahaman awal Anda',
           onComplete: onComplete,
         );
       },
@@ -432,7 +527,497 @@ class _PreTestStep extends ConsumerWidget {
   }
 }
 
-// E-Book Step
+// =============================================================================
+// LEARNING BOARD STEP (Fase 3) — ganti _EBookStep untuk materi learning_board
+// =============================================================================
+class _LearningBoardStep extends ConsumerStatefulWidget {
+  final LearningMaterial material;
+  final VoidCallback onComplete;
+
+  const _LearningBoardStep({required this.material, required this.onComplete});
+
+  @override
+  ConsumerState<_LearningBoardStep> createState() => _LearningBoardStepState();
+}
+
+class _LearningBoardStepState extends ConsumerState<_LearningBoardStep> {
+  int _currentNodeIndex = 0;
+  bool _isSubmitting = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final boardAsync = ref.watch(learningBoardProvider(widget.material.id));
+
+    return boardAsync.when(
+      data: (nodes) {
+        if (nodes.isEmpty) {
+          return _StepPlaceholder(
+            icon: Icons.grid_view_outlined,
+            title: 'Papan Aktivitas',
+            subtitle: 'Tidak ada aktivitas untuk materi ini',
+            buttonLabel: 'Lanjut ke Post-Test',
+            onButtonPressed: widget.onComplete,
+          );
+        }
+
+        // Find first incomplete node or use _currentNodeIndex
+        final startIndex = _findCurrentNodeIndex(nodes);
+        final effectiveIndex = _currentNodeIndex.clamp(startIndex, nodes.length - 1);
+        final node = nodes[effectiveIndex];
+        final completed = nodes.where((n) => n.isCompleted).length;
+        final total = nodes.length;
+
+        return Column(
+          children: [
+            // Progress header
+            _buildBoardHeader(completed, total, effectiveIndex, nodes.length),
+            // Node content
+            Expanded(
+              child: _isSubmitting
+                  ? const Center(child: CircularProgressIndicator())
+                  : _buildNodeCard(node, nodes, effectiveIndex),
+            ),
+          ],
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
+            AppSpacing.vGapMd,
+            Text('Gagal memuat papan aktivitas:\n$e',
+                textAlign: TextAlign.center,
+                style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
+            AppSpacing.vGapMd,
+            AppButton(
+              label: 'Coba Lagi',
+              onPressed: () => ref.invalidate(learningBoardProvider(widget.material.id)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  int _findCurrentNodeIndex(List<LearningNode> nodes) {
+    // Resume from last incomplete node
+    for (int i = 0; i < nodes.length; i++) {
+      if (!nodes[i].isCompleted) return i;
+    }
+    return nodes.length - 1; // all done
+  }
+
+  Widget _buildBoardHeader(int completed, int total, int currentIdx, int nodeCount) {
+    final percent = total > 0 ? completed / total : 0.0;
+    return Container(
+      padding: AppSpacing.paddingMd,
+      color: AppColors.surface,
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight.withValues(alpha: 0.12),
+                  borderRadius: AppRadius.radiusSm,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.grid_view_rounded, size: 13, color: AppColors.primary),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Papan Aktivitas',
+                      style: AppTypography.labelSmall.copyWith(color: AppColors.primary),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              Text(
+                'Kotak ${currentIdx + 1} dari $nodeCount',
+                style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: AppRadius.radiusSm,
+            child: LinearProgressIndicator(
+              value: percent,
+              backgroundColor: AppColors.surfaceVariant,
+              valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+              minHeight: 6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNodeCard(LearningNode node, List<LearningNode> nodes, int index) {
+    if (node.isContent) {
+      return ContentCard(
+        node: node,
+        onComplete: () => _onNodeDone(node, nodes, index, {}),
+      );
+    }
+    if (node.isSocialTask) {
+      return _SocialTaskCard(
+        node: node,
+        material: widget.material,
+        onComplete: () => _onNodeDone(node, nodes, index, {}),
+      );
+    }
+    if (node.isChallenge) {
+      return _buildChallengeCard(node, nodes, index);
+    }
+    return _StepPlaceholder(
+      icon: Icons.help_outline,
+      title: 'Kotak Tidak Dikenal',
+      subtitle: 'Tipe node tidak dikenal: ${node.nodeType}',
+      buttonLabel: 'Lewati',
+      onButtonPressed: () => _onNodeDone(node, nodes, index, {}),
+    );
+  }
+
+  Widget _buildChallengeCard(LearningNode node, List<LearningNode> nodes, int index) {
+    void Function(Map<String, dynamic>) onDone = (answer) => _onNodeDone(node, nodes, index, answer);
+    switch (node.gameType) {
+      case 'matching':
+        return MatchingGameCard(node: node, onComplete: onDone);
+      case 'sorting':
+        return SortingGameCard(node: node, onComplete: onDone);
+      case 'true_false_swipe':
+        return TrueFalseSwipeCard(node: node, onComplete: onDone);
+      case 'multiple_choice':
+      default:
+        return MultipleChoiceCard(node: node, onComplete: onDone);
+    }
+  }
+
+  Future<void> _onNodeDone(
+    LearningNode node,
+    List<LearningNode> nodes,
+    int index,
+    Map<String, dynamic> answer,
+  ) async {
+    // Social task is handled by _SocialTaskCard itself
+    if (!node.isSocialTask) {
+      setState(() => _isSubmitting = true);
+      try {
+        await ref.read(completeNodeProvider.notifier).complete(
+          materialId: widget.material.id,
+          nodeId: node.id,
+          submittedAnswer: answer,
+        );
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Gagal menyimpan: $e'),
+            backgroundColor: AppColors.danger,
+          ));
+        }
+      } finally {
+        if (mounted) setState(() => _isSubmitting = false);
+      }
+    }
+
+    if (!mounted) return;
+
+    if (index < nodes.length - 1) {
+      setState(() => _currentNodeIndex = index + 1);
+    } else {
+      // All nodes done → go to Post-Test
+      widget.onComplete();
+    }
+  }
+}
+
+// =============================================================================
+// SOCIAL TASK CARD — upload bukti untuk Tantangan Sosial
+// =============================================================================
+class _SocialTaskCard extends ConsumerStatefulWidget {
+  final LearningNode node;
+  final LearningMaterial material;
+  final VoidCallback onComplete;
+
+  const _SocialTaskCard({
+    required this.node,
+    required this.material,
+    required this.onComplete,
+  });
+
+  @override
+  ConsumerState<_SocialTaskCard> createState() => _SocialTaskCardState();
+}
+
+class _SocialTaskCardState extends ConsumerState<_SocialTaskCard> {
+  final _captionController = TextEditingController();
+  String? _photoPath;
+  bool _isSubmitting = false;
+  bool _submitted = false;
+
+  @override
+  void dispose() {
+    _captionController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickPhoto() async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+      if (picked != null) {
+        setState(() => _photoPath = picked.path);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memilih foto: $e'), backgroundColor: AppColors.danger),
+        );
+      }
+    }
+  }
+
+  Future<void> _submit() async {
+    if (_captionController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tulis cerita singkat terlebih dahulu')),
+      );
+      return;
+    }
+    setState(() => _isSubmitting = true);
+    try {
+      await ref.read(materialServiceProvider).submitSocialTask(
+        materialId: widget.material.id,
+        nodeId: widget.node.id,
+        caption: _captionController.text.trim(),
+        photoPath: _photoPath,
+      );
+      setState(() {
+        _isSubmitting = false;
+        _submitted = true;
+      });
+    } catch (e) {
+      setState(() => _isSubmitting = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mengirim: $e'), backgroundColor: AppColors.danger),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isSubmitting) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_submitted) {
+      return _buildSuccessView();
+    }
+    return _buildFormView();
+  }
+
+  Widget _buildSuccessView() {
+    return Padding(
+      padding: AppSpacing.screenPadding,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: AppColors.successLight.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.check_circle, size: 48, color: AppColors.success),
+          ),
+          AppSpacing.vGapLg,
+          Text(
+            'Tantangan Sosial Dikirim!',
+            style: AppTypography.headlineSmall.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          AppSpacing.vGapSm,
+          Text(
+            'Bukti kamu sedang menunggu review guru.\nKamu bisa lanjut ke Post-Test sekarang.',
+            style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
+            textAlign: TextAlign.center,
+          ),
+          AppSpacing.vGapXl,
+          AppButton(
+            label: 'Lanjut ke Post-Test',
+            variant: AppButtonVariant.primary,
+            onPressed: widget.onComplete,
+            fullWidth: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFormView() {
+    return SingleChildScrollView(
+      padding: AppSpacing.screenPadding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xxs),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.12),
+              borderRadius: AppRadius.radiusSm,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.people_outline, size: 14, color: AppColors.primary),
+                const SizedBox(width: 4),
+                Text(
+                  'Tantangan Sosial',
+                  style: AppTypography.labelSmall.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ),
+          AppSpacing.vGapMd,
+          if (widget.node.title != null)
+            Text(
+              widget.node.title!,
+              style: AppTypography.titleMedium.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          AppSpacing.vGapSm,
+          if (widget.node.body != null)
+            Container(
+              padding: AppSpacing.paddingMd,
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight.withValues(alpha: 0.07),
+                borderRadius: AppRadius.radiusMd,
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+              ),
+              child: Text(
+                widget.node.body!,
+                style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary, height: 1.6),
+              ),
+            ),
+          AppSpacing.vGapLg,
+          Text(
+            'Unggah Bukti (Foto)',
+            style: AppTypography.labelMedium.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          AppSpacing.vGapSm,
+          GestureDetector(
+            onTap: _pickPhoto,
+            child: Container(
+              width: double.infinity,
+              height: 140,
+              decoration: BoxDecoration(
+                color: _photoPath != null
+                    ? AppColors.successLight.withValues(alpha: 0.08)
+                    : AppColors.surfaceVariant,
+                borderRadius: AppRadius.radiusMd,
+                border: Border.all(
+                  color: _photoPath != null ? AppColors.success : AppColors.divider,
+                  style: BorderStyle.solid,
+                ),
+              ),
+              child: _photoPath != null
+                  ? Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.check_circle, color: AppColors.success, size: 32),
+                        AppSpacing.vGapSm,
+                        Text(
+                          'Foto dipilih ✓',
+                          style: AppTypography.labelMedium.copyWith(color: AppColors.success),
+                        ),
+                        AppSpacing.vGapXs,
+                        Text(
+                          'Ketuk untuk ganti',
+                          style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.add_photo_alternate_outlined, size: 40, color: AppColors.textSecondary),
+                        AppSpacing.vGapSm,
+                        Text(
+                          'Ketuk untuk pilih foto',
+                          style: AppTypography.labelMedium.copyWith(color: AppColors.textSecondary),
+                        ),
+                        Text(
+                          '(opsional)',
+                          style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+          AppSpacing.vGapLg,
+          Text(
+            'Ceritakan Singkat',
+            style: AppTypography.labelMedium.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          AppSpacing.vGapSm,
+          TextField(
+            controller: _captionController,
+            maxLines: 4,
+            maxLength: 500,
+            decoration: InputDecoration(
+              hintText: 'Ceritakan apa yang kamu lakukan, di mana, dan bagaimana kaitannya dengan toleransi...',
+              hintStyle: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+              border: OutlineInputBorder(
+                borderRadius: AppRadius.radiusMd,
+                borderSide: const BorderSide(color: AppColors.divider),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: AppRadius.radiusMd,
+                borderSide: const BorderSide(color: AppColors.primary, width: 2),
+              ),
+              filled: true,
+              fillColor: AppColors.surface,
+            ),
+          ),
+          AppSpacing.vGapMd,
+          AppButton(
+            label: 'Kirim Tantangan Sosial',
+            variant: AppButtonVariant.primary,
+            onPressed: _submit,
+            fullWidth: true,
+          ),
+          AppSpacing.vGapSm,
+          Text(
+            'Kamu dapat lanjut ke Post-Test setelah mengirim. Skor Social Engagement akan dinilai guru.',
+            style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// E-Book Step (dipertahankan untuk backward-compat materi classic_pdf)
 class _EBookStep extends StatefulWidget {
   final LearningMaterial material;
   final VoidCallback onComplete;
@@ -449,7 +1034,8 @@ class _EBookStepState extends State<_EBookStep> {
 
   bool get _isPdf {
     final url = widget.material.fileUrl ?? '';
-    return url.toLowerCase().contains('.pdf') || url.toLowerCase().contains('pdf');
+    return url.toLowerCase().contains('.pdf') ||
+        url.toLowerCase().contains('pdf');
   }
 
   bool get _hasFile => (widget.material.fileUrl ?? '').isNotEmpty;
@@ -538,7 +1124,11 @@ class _EBookStepState extends State<_EBookStep> {
               color: AppColors.primaryLight.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.menu_book, size: 40, color: AppColors.primary),
+            child: const Icon(
+              Icons.menu_book,
+              size: 40,
+              color: AppColors.primary,
+            ),
           ),
           AppSpacing.vGapLg,
           Text(
@@ -610,7 +1200,11 @@ class _EBookStepState extends State<_EBookStep> {
               color: AppColors.primaryLight.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.menu_book, size: 40, color: AppColors.primary),
+            child: const Icon(
+              Icons.menu_book,
+              size: 40,
+              color: AppColors.primary,
+            ),
           ),
           AppSpacing.vGapLg,
           Text(
@@ -704,7 +1298,9 @@ class _PostTestStep extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final questionsAsync = ref.watch(questionsProvider((materialId: materialId, type: 'post')));
+    final questionsAsync = ref.watch(
+      questionsProvider((materialId: materialId, type: 'post')),
+    );
 
     return questionsAsync.when(
       data: (questions) {
@@ -720,7 +1316,8 @@ class _PostTestStep extends ConsumerWidget {
         return _QuizView(
           questions: questions,
           title: 'Post-Test',
-          subtitle: 'Jawab pertanyaan berikut untuk mengukur pemahaman Anda setelah membaca materi',
+          subtitle:
+              'Jawab pertanyaan berikut untuk mengukur pemahaman Anda setelah membaca materi',
           onComplete: onComplete,
           showScoreComparison: true,
         );
@@ -731,38 +1328,7 @@ class _PostTestStep extends ConsumerWidget {
   }
 }
 
-// PULSE Step
-class _PulseStep extends ConsumerWidget {
-  final int materialId;
-  final VoidCallback onComplete;
 
-  const _PulseStep({required this.materialId, required this.onComplete});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final statementsAsync = ref.watch(pulseStatementsProvider(materialId));
-
-    return statementsAsync.when(
-      data: (statements) {
-        if (statements.isEmpty) {
-          return _StepPlaceholder(
-            icon: Icons.favorite_outline,
-            title: 'Refleksi PULSE',
-            subtitle: 'Tidak ada pernyataan refleksi untuk materi ini',
-            buttonLabel: 'Selesaikan',
-            onButtonPressed: onComplete,
-          );
-        }
-        return _LikertAssessmentView(
-          statements: statements,
-          onComplete: onComplete,
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
-    );
-  }
-}
 
 // Step Placeholder Widget
 class _StepPlaceholder extends StatelessWidget {
@@ -855,9 +1421,7 @@ class _QuizViewState extends ConsumerState<_QuizView> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_isSubmitted) {
@@ -896,72 +1460,86 @@ class _QuizViewState extends ConsumerState<_QuizView> {
             valueColor: const AlwaysStoppedAnimation(AppColors.primary),
           ),
           AppSpacing.vGapLg,
-          // Question
-          Text(
-            question.content,
-            style: AppTypography.titleMedium.copyWith(
-              color: AppColors.textPrimary,
-            ),
-          ),
-          AppSpacing.vGapLg,
-          // Options
-          ...question.options.entries.map((entry) {
-            final isSelected = _answers[question.id] == entry.key;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-              child: InkWell(
-                onTap: () {
-                  setState(() {
-                    _answers[question.id] = entry.key;
-                  });
-                },
-                borderRadius: AppRadius.radiusMd,
-                child: Container(
-                  padding: AppSpacing.cardPaddingCompact,
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.primaryLight.withValues(alpha: 0.2)
-                        : AppColors.surface,
-                    borderRadius: AppRadius.radiusMd,
-                    border: Border.all(
-                      color: isSelected ? AppColors.primary : AppColors.divider,
-                      width: isSelected ? 2 : 1,
+          // Scrollable Question & Options Content
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Question
+                  Text(
+                    question.content,
+                    style: AppTypography.titleMedium.copyWith(
+                      color: AppColors.textPrimary,
                     ),
                   ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: isSelected ? AppColors.primary : AppColors.surfaceVariant,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            entry.key,
-                            style: AppTypography.labelMedium.copyWith(
-                              color: isSelected ? AppColors.textOnPrimary : AppColors.textPrimary,
+                  AppSpacing.vGapLg,
+                  // Options
+                  ...question.options.entries.map((entry) {
+                    final isSelected = _answers[question.id] == entry.key;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      child: InkWell(
+                        onTap: () {
+                          setState(() {
+                            _answers[question.id] = entry.key;
+                          });
+                        },
+                        borderRadius: AppRadius.radiusMd,
+                        child: Container(
+                          padding: AppSpacing.cardPaddingCompact,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.primaryLight.withValues(alpha: 0.2)
+                                : AppColors.surface,
+                            borderRadius: AppRadius.radiusMd,
+                            border: Border.all(
+                              color: isSelected ? AppColors.primary : AppColors.divider,
+                              width: isSelected ? 2 : 1,
                             ),
                           ),
-                        ),
-                      ),
-                      AppSpacing.hGapMd,
-                      Expanded(
-                        child: Text(
-                          entry.value,
-                          style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.textPrimary,
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 28,
+                                height: 28,
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : AppColors.surfaceVariant,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    entry.key,
+                                    style: AppTypography.labelMedium.copyWith(
+                                      color: isSelected
+                                          ? AppColors.textOnPrimary
+                                          : AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              AppSpacing.hGapMd,
+                              Expanded(
+                                child: Text(
+                                  entry.value,
+                                  style: AppTypography.bodyMedium.copyWith(
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
+                    );
+                  }),
+                ],
               ),
-            );
-          }),
-          const Spacer(),
+            ),
+          ),
+          AppSpacing.vGapMd,
           // Navigation
           Row(
             children: [
@@ -983,7 +1561,9 @@ class _QuizViewState extends ConsumerState<_QuizView> {
                 )
               else
                 ElevatedButton(
-                  onPressed: _answers.length == widget.questions.length ? _submitQuiz : null,
+                  onPressed: _answers.length == widget.questions.length
+                      ? _submitQuiz
+                      : null,
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(0, AppSpacing.minTouchTarget),
                   ),
@@ -1008,20 +1588,21 @@ class _QuizViewState extends ConsumerState<_QuizView> {
     final type = firstQuestion.type;
 
     final answersList = widget.questions.map((q) {
-      return {
-        'question_id': q.id,
-        'answer': _answers[q.id] ?? '',
-      };
+      return {'question_id': q.id, 'answer': _answers[q.id] ?? ''};
     }).toList();
 
     try {
-      final result = await ref.read(materialServiceProvider).submitTestResponse(
-        materialId: materialId,
-        type: type,
-        answers: answersList,
-      );
+      final result = await ref
+          .read(materialServiceProvider)
+          .submitTestResponse(
+            materialId: materialId,
+            type: type,
+            answers: answersList,
+          );
 
-      final returnedScore = result['score'] is num ? (result['score'] as num).toInt() : 0;
+      final returnedScore = result['score'] is num
+          ? (result['score'] as num).toInt()
+          : 0;
       final comparison = result['comparison'] as Map<String, dynamic>?;
 
       setState(() {
@@ -1055,7 +1636,9 @@ class _QuizViewState extends ConsumerState<_QuizView> {
             width: 100,
             height: 100,
             decoration: BoxDecoration(
-              color: _score >= 70 ? AppColors.successLight : AppColors.warningLight,
+              color: _score >= 70
+                  ? AppColors.successLight
+                  : AppColors.warningLight,
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -1109,10 +1692,7 @@ class _QuizViewState extends ConsumerState<_QuizView> {
             ),
           ],
           AppSpacing.vGapXl,
-          AppButton(
-            label: 'Lanjutkan',
-            onPressed: widget.onComplete,
-          ),
+          AppButton(label: 'Lanjutkan', onPressed: widget.onComplete),
         ],
       ),
     );
@@ -1124,7 +1704,11 @@ class _ScoreChip extends StatelessWidget {
   final String score;
   final Color color;
 
-  const _ScoreChip({required this.label, required this.score, required this.color});
+  const _ScoreChip({
+    required this.label,
+    required this.score,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1132,268 +1716,18 @@ class _ScoreChip extends StatelessWidget {
       children: [
         Text(
           label,
-          style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary),
+          style: AppTypography.labelSmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
         ),
         Text(
           score,
-          style: AppTypography.titleMedium.copyWith(color: color, fontWeight: FontWeight.bold),
+          style: AppTypography.titleMedium.copyWith(
+            color: color,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );
-  }
-}
-
-// Likert Assessment View
-class _LikertAssessmentView extends ConsumerStatefulWidget {
-  final List<PulseStatement> statements;
-  final VoidCallback onComplete;
-
-  const _LikertAssessmentView({required this.statements, required this.onComplete});
-
-  @override
-  ConsumerState<_LikertAssessmentView> createState() => _LikertAssessmentViewState();
-}
-
-class _LikertAssessmentViewState extends ConsumerState<_LikertAssessmentView> {
-  final Map<int, int> _responses = {};
-  int _currentIndex = 0;
-  bool _isLoading = false;
-
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
-    }
-
-    final statement = widget.statements[_currentIndex];
-    final dimension = _getDimensionLabel(statement.dimension);
-
-    return Padding(
-      padding: AppSpacing.screenPadding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Progress
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm,
-                  vertical: AppSpacing.xxs,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight.withValues(alpha: 0.2),
-                  borderRadius: AppRadius.radiusSm,
-                ),
-                child: Text(
-                  dimension,
-                  style: AppTypography.labelSmall.copyWith(
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '${_currentIndex + 1}/${widget.statements.length}',
-                style: AppTypography.labelMedium.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-          LinearProgressIndicator(
-            value: (_currentIndex + 1) / widget.statements.length,
-            backgroundColor: AppColors.surfaceVariant,
-            valueColor: const AlwaysStoppedAnimation(AppColors.primary),
-          ),
-          AppSpacing.vGapXl,
-          // Statement
-          Text(
-            statement.statement,
-            style: AppTypography.titleMedium.copyWith(
-              color: AppColors.textPrimary,
-            ),
-          ),
-          AppSpacing.vGapLg,
-          // Likert Scale
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(5, (index) {
-              final value = index + 1;
-              final isSelected = _responses[statement.id] == value;
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _responses[statement.id] = value;
-                  });
-                },
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primary : AppColors.surface,
-                    borderRadius: AppRadius.radiusMd,
-                    border: Border.all(
-                      color: isSelected ? AppColors.primary : AppColors.divider,
-                      width: 2,
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '$value',
-                        style: AppTypography.titleMedium.copyWith(
-                          color: isSelected ? AppColors.textOnPrimary : AppColors.textPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        _getScaleLabel(value),
-                        style: AppTypography.labelSmall.copyWith(
-                          fontSize: 8,
-                          color: isSelected ? AppColors.textOnPrimary : AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }),
-          ),
-          AppSpacing.vGapSm,
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Tidak Pernah',
-                style: AppTypography.labelSmall.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              Text(
-                'Selalu',
-                style: AppTypography.labelSmall.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-          const Spacer(),
-          // Navigation
-          Row(
-            children: [
-              if (_currentIndex > 0)
-                TextButton(
-                  onPressed: () => setState(() => _currentIndex--),
-                  child: const Text('Sebelumnya'),
-                ),
-              const Spacer(),
-              if (_currentIndex < widget.statements.length - 1)
-                ElevatedButton(
-                  onPressed: _responses.containsKey(statement.id)
-                      ? () => setState(() => _currentIndex++)
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(0, AppSpacing.minTouchTarget),
-                  ),
-                  child: const Text('Selanjutnya'),
-                )
-              else
-                ElevatedButton(
-                  onPressed: _responses.length == widget.statements.length
-                      ? _submitPulse
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(0, AppSpacing.minTouchTarget),
-                  ),
-                  child: const Text('Kumpulkan'),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _submitPulse() async {
-    if (widget.statements.isEmpty) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    final firstStatement = widget.statements.first;
-    final materialId = firstStatement.materialId;
-
-    final responseList = widget.statements.map((s) {
-      return {
-        'statement_id': s.id,
-        'score': _responses[s.id] ?? 3,
-      };
-    }).toList();
-
-    try {
-      await ref.read(materialServiceProvider).submitPulseResponse(
-        materialId: materialId,
-        responses: responseList,
-      );
-
-      ref.invalidate(pulseScoresProvider);
-      ref.invalidate(studentProgressProvider);
-      ref.invalidate(materialsProvider);
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      widget.onComplete();
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal mengirimkan refleksi: $e'),
-            backgroundColor: AppColors.danger,
-          ),
-        );
-      }
-    }
-  }
-
-  String _getDimensionLabel(String dimension) {
-    switch (dimension) {
-      case 'participation':
-        return 'Partisipasi';
-      case 'understanding':
-        return 'Pemahaman';
-      case 'learning':
-        return 'Pembelajaran';
-      case 'social_engagement':
-        return 'Keterlibatan Sosial';
-      default:
-        return dimension;
-    }
-  }
-
-  String _getScaleLabel(int value) {
-    switch (value) {
-      case 1:
-        return 'Tidak';
-      case 2:
-        return 'Jarang';
-      case 3:
-        return 'Kadang';
-      case 4:
-        return 'Sering';
-      case 5:
-        return 'Selalu';
-      default:
-        return '';
-    }
   }
 }

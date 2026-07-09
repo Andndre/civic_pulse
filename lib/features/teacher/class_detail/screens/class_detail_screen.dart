@@ -60,6 +60,7 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen>
           PopupMenuButton<String>(
             onSelected: (value) => _handleMenuAction(context, value, classIdInt),
             itemBuilder: (context) => [
+              const PopupMenuItem(value: 'materials', child: Text('Kelola Materi')),
               const PopupMenuItem(value: 'edit', child: Text('Edit Kelas')),
               const PopupMenuItem(value: 'delete', child: Text('Hapus Kelas')),
             ],
@@ -327,6 +328,16 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen>
               AppSpacing.vGapXl,
               SizedBox(
                 width: double.infinity,
+                child: AppButton(
+                  label: 'Kelola Materi Kelas',
+                  variant: AppButtonVariant.secondary,
+                  icon: Icons.menu_book,
+                  onPressed: () => context.push('/teacher/class/$classId/materials'),
+                ),
+              ),
+              AppSpacing.vGapMd,
+              SizedBox(
+                width: double.infinity,
                 child: AppButton(label: 'Bagikan Kode Kelas', variant: AppButtonVariant.primary, icon: Icons.share, onPressed: () => _shareClassCode(context, classAsync)),
               ),
             ],
@@ -384,7 +395,11 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen>
   }
 
   void _handleMenuAction(BuildContext context, String action, int classId) {
-    if (action == 'delete') _showDeleteConfirmation(context, classId);
+    if (action == 'delete') {
+      _showDeleteConfirmation(context, classId);
+    } else if (action == 'materials') {
+      context.push('/teacher/class/$classId/materials');
+    }
   }
 
   void _showDeleteConfirmation(BuildContext context, int classId) {

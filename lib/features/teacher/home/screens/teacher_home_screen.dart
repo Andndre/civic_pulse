@@ -40,6 +40,7 @@ class TeacherHomeScreen extends ConsumerWidget {
             onPressed: () {
               ref.invalidate(teacherClassesProvider);
               ref.invalidate(teacherStatsProvider);
+              ref.invalidate(pendingSocialChallengesProvider);
             },
           ),
         ],
@@ -48,6 +49,7 @@ class TeacherHomeScreen extends ConsumerWidget {
         onRefresh: () async {
           ref.invalidate(teacherClassesProvider);
           ref.invalidate(teacherStatsProvider);
+          ref.invalidate(pendingSocialChallengesProvider);
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -56,6 +58,7 @@ class TeacherHomeScreen extends ConsumerWidget {
             children: [
               _buildWelcomeHeader(user?.name, user?.avatarUrl),
               _buildStatsDashboard(statsAsync),
+              _buildPendingChallengesBanner(context, ref),
               _buildSectionHeader(context, ref, classesAsync),
               _buildClassesContent(context, ref, classesAsync),
             ],
@@ -128,6 +131,94 @@ class TeacherHomeScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPendingChallengesBanner(BuildContext context, WidgetRef ref) {
+    final pendingAsync = ref.watch(pendingSocialChallengesProvider);
+    return pendingAsync.maybeWhen(
+      data: (list) {
+        if (list.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(
+            left: AppSpacing.lg,
+            right: AppSpacing.lg,
+            bottom: AppSpacing.md,
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: AppColors.warning.withValues(alpha: 0.08),
+              borderRadius: AppRadius.radiusMd,
+              border: Border.all(
+                color: AppColors.warning.withValues(alpha: 0.5),
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  decoration: const BoxDecoration(
+                    color: AppColors.warning,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.assignment_late_outlined,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+                AppSpacing.hGapMd,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Tantangan Sosial',
+                        style: AppTypography.labelLarge.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Terdapat ${list.length} antrean review pending',
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                AppSpacing.hGapSm,
+                TextButton(
+                  onPressed: () => context.go('/teacher/social-challenges/review'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.warning,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Tinjau',
+                        style: AppTypography.labelMedium.copyWith(
+                          color: AppColors.warning,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.chevron_right, size: 16, color: AppColors.warning),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
     );
   }
 

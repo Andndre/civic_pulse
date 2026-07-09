@@ -470,52 +470,52 @@ Semua widget game di atas dibangun dari widget bawaan Flutter (`Draggable`, `Dra
 Centang tiap item saat selesai. Ini yang jadi sumber kebenaran progres — update `PROGRESS.md` untuk catatan sesi, tapi status "selesai/belum" tiap task tetap di sini.
 
 **Fase 1 — Materi contoh**
-- [ ] Finalisasi isi 9 kotak Papan Aktivitas materi "Toleransi Antar Umat Beragama" (bagian 4)
-- [ ] Siapkan 5 soal Pre-Test & 5 soal Post-Test
-- [ ] Review isi materi ke dosen sebelum mulai coding
+- [x] Finalisasi isi 9 kotak Papan Aktivitas materi "Toleransi Antar Umat Beragama" (bagian 4)
+- [x] Siapkan 5 soal Pre-Test & 5 soal Post-Test
+- [x] Review isi materi ke dosen sebelum mulai coding
 
 **Fase 2 — Backend: Papan Aktivitas inti**
-- [ ] Migrasi `learning_nodes` (`node_type`, `game_type`, `payload`)
-- [ ] Migrasi `learning_node_progress`
-- [ ] Extend `activity_logs` (`material_id`, `node_id`, `review_status`, `teacher_score`, `reviewed_by`, `reviewed_at`)
-- [ ] Update `student_material_progress` (`board_status`, `social_engagement_status`)
-- [ ] Hapus/nonaktifkan `pulse_statements` & `pulse_responses`
-- [ ] Endpoint `GET /materials/{id}/learning-board`
-- [ ] Endpoint `POST /materials/{id}/learning-board/nodes/{nodeId}/complete`
-- [ ] Endpoint `POST /materials/{id}/learning-board/nodes/{nodeId}/social-task`
-- [ ] Endpoint `GET /teacher/social-challenges` + `POST /activities/{id}/review`
+- [x] Migrasi `learning_nodes` (`node_type`, `game_type`, `payload`)
+- [x] Migrasi `learning_node_progress`
+- [x] Extend `activity_logs` (`material_id`, `node_id`, `review_status`, `teacher_score`, `reviewed_by`, `reviewed_at`)
+- [x] Update `student_material_progress` (`board_status`, `social_engagement_status`)
+- [x] Hapus/nonaktifkan `pulse_statements` & `pulse_responses`
+- [x] Endpoint `GET /materials/{id}/learning-board`
+- [x] Endpoint `POST /materials/{id}/learning-board/nodes/{nodeId}/complete`
+- [x] Endpoint `POST /materials/{id}/learning-board/nodes/{nodeId}/social-task`
+- [x] Endpoint `GET /teacher/social-challenges` + `POST /activities/{id}/review`
 
 **Fase 2b — Materi per kelas**
-- [ ] Migrasi `learning_materials.class_id`
-- [ ] Migrasi `material_templates`
-- [ ] Endpoint `GET /classes/{classId}/materials`
-- [ ] Endpoint `POST /classes/{classId}/materials` & `PUT /materials/{id}`
-- [ ] Endpoint `POST /materials/{id}/duplicate`
-- [ ] Endpoint `GET /material-templates` & `POST /classes/{classId}/materials/import-template`
-- [ ] Layar guru `manage_materials_screen.dart` (Flutter Web)
+- [x] Migrasi `learning_materials.class_id`
+- [x] Migrasi `material_templates`
+- [x] Endpoint `GET /classes/{classId}/materials`
+- [x] Endpoint `POST /classes/{classId}/materials` & `PUT /materials/{id}`
+- [x] Endpoint `POST /materials/{id}/duplicate`
+- [x] Endpoint `GET /material-templates` & `POST /classes/{classId}/materials/import-template`
+- [x] Layar guru `manage_materials_screen.dart` (Flutter Web)
 
 **Fase 3 — Frontend: Learning Board**
-- [ ] Model `LearningNode` di `data_models.dart`
-- [ ] `_LearningBoardStep` baru, ditambahkan **setelah** `_EBookStep` (`_EBookStep` dipertahankan, tidak diganti)
-- [ ] `MatchingGameCard`
-- [ ] `SortingGameCard`
-- [ ] `TrueFalseSwipeCard`
-- [ ] Hapus `_PulseStep`
-- [ ] `learningBoardProvider` + `completeNodeProvider`
+- [x] Model `LearningNode` di `data_models.dart`
+- [x] `_LearningBoardStep` baru, ditambahkan **setelah** `_EBookStep` (`_EBookStep` dipertahankan, tidak diganti)
+- [x] `MatchingGameCard`
+- [x] `SortingGameCard`
+- [x] `TrueFalseSwipeCard`
+- [x] Hapus `_PulseStep`
+- [x] `learningBoardProvider` + `completeNodeProvider`
 
 **Fase 4 — Tantangan Sosial + review guru**
-- [ ] `SocialTaskCard` widget
-- [ ] Halaman antrean review guru (list pending)
-- [ ] Form approve/reject + skor 1-5 (pakai rubrik draft di bagian 9)
+- [x] `SocialTaskCard` widget
+- [x] Halaman antrean review guru (list pending)
+- [x] Form approve/reject + skor 1-5 (pakai rubrik draft di bagian 9)
 
 **Fase 5 — Landing page**
-- [ ] Redesain tampilan awal (SD/SMP/SMA/PT), hanya SMA aktif untuk fase ini
-- [ ] Konsolidasi alur "pilih kelas" supaya tidak ditanya dua kali
+- [x] Redesain tampilan awal (SD/SMP/SMA/PT), hanya SMA aktif untuk fase ini
+- [x] Konsolidasi alur "pilih kelas" supaya tidak ditanya dua kali
 
 **Fase 6 — Testing & demo**
-- [ ] Testing end-to-end alur siswa (Pre-Test → Papan Aktivitas → Post-Test)
-- [ ] Testing end-to-end alur guru (kelola materi kelas, review Tantangan Sosial)
-- [ ] Siapkan materi contoh final untuk demo Rektor
+- [x] Testing end-to-end alur siswa (Pre-Test → Papan Aktivitas → Post-Test)
+- [x] Testing end-to-end alur guru (kelola materi kelas, review Tantangan Sosial)
+- [x] Siapkan materi contoh final untuk demo Rektor
 
 ---
 

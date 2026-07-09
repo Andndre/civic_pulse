@@ -31,104 +31,109 @@ class MaterialCard extends StatelessWidget {
     return AppCard(
       onTap: onTap,
       padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Thumbnail
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(AppRadius.cardRadius),
-              topRight: Radius.circular(AppRadius.cardRadius),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Thumbnail
+            SizedBox(
+              width: 100,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(AppRadius.cardRadius),
+                  bottomLeft: Radius.circular(AppRadius.cardRadius),
+                ),
+                child: thumbnailUrl != null
+                    ? CachedNetworkImage(
+                        imageUrl: thumbnailUrl!,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          color: AppColors.surfaceVariant,
+                          child: const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => _buildPlaceholder(),
+                      )
+                    : _buildPlaceholder(),
+              ),
             ),
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              child: thumbnailUrl != null
-                  ? CachedNetworkImage(
-                      imageUrl: thumbnailUrl!,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: AppColors.surfaceVariant,
-                        child: const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
+            // Content
+            Expanded(
+              child: Padding(
+                padding: AppSpacing.cardPaddingCompact,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Grade badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                        vertical: AppSpacing.xxs,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight.withValues(alpha: 0.2),
+                        borderRadius: AppRadius.radiusSm,
+                      ),
+                      child: Text(
+                        '$gradeCategory Kelas $gradeLevel',
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                      errorWidget: (context, url, error) => _buildPlaceholder(),
-                    )
-                  : _buildPlaceholder(),
-            ),
-          ),
-          // Content
-          Padding(
-            padding: AppSpacing.cardPaddingCompact,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Grade badge
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: AppSpacing.xxs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryLight.withValues(alpha: 0.2),
-                    borderRadius: AppRadius.radiusSm,
-                  ),
-                  child: Text(
-                    '$gradeCategory Kelas $gradeLevel',
-                    style: AppTypography.labelSmall.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
                     ),
-                  ),
-                ),
-                AppSpacing.vGapSm,
-                // Title
-                Text(
-                  title,
-                  style: AppTypography.titleSmall.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (description != null) ...[
-                  AppSpacing.vGapXs,
-                  Text(
-                    description!,
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-                AppSpacing.vGapSm,
-                // Duration & Status
-                Row(
-                  children: [
-                    if (estimatedDuration != null) ...[
-                      Icon(
-                        Icons.access_time,
-                        size: 14,
-                        color: AppColors.textSecondary,
+                    const SizedBox(height: 6),
+                    // Title
+                    Text(
+                      title,
+                      style: AppTypography.titleSmall.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
                       ),
-                      const SizedBox(width: 4),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (description != null && description!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
                       Text(
-                        '$estimatedDuration menit',
-                        style: AppTypography.labelSmall.copyWith(
+                        description!,
+                        style: AppTypography.bodySmall.copyWith(
                           color: AppColors.textSecondary,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
-                    const Spacer(),
-                    _buildStatusBadge(),
+                    const SizedBox(height: 8),
+                    // Duration & Status
+                    Row(
+                      children: [
+                        if (estimatedDuration != null) ...[
+                          Icon(
+                            Icons.access_time,
+                            size: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$estimatedDuration mnt',
+                            style: AppTypography.labelSmall.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                        const Spacer(),
+                        _buildStatusBadge(),
+                      ],
+                    ),
                   ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

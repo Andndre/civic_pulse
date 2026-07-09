@@ -61,6 +61,46 @@ final pulseStatementsProvider = FutureProvider.family<List<PulseStatement>, int>
   return service.getPulseStatements(materialId);
 });
 
+// Learning Board provider (Fase 3)
+final learningBoardProvider = FutureProvider.family<List<LearningNode>, int>((ref, materialId) async {
+  final service = ref.watch(materialServiceProvider);
+  return service.getLearningBoard(materialId);
+});
+
+// Complete node provider - AsyncNotifier so UI can call it imperatively
+class CompleteNodeNotifier extends AsyncNotifier<NodeCompleteResult?> {
+  @override
+  Future<NodeCompleteResult?> build() async => null;
+
+  Future<NodeCompleteResult> complete({
+    required int materialId,
+    required int nodeId,
+    required Map<String, dynamic> submittedAnswer,
+  }) async {
+    state = const AsyncLoading();
+    try {
+      final service = ref.read(materialServiceProvider);
+      final result = await service.completeNode(
+        materialId: materialId,
+        nodeId: nodeId,
+        submittedAnswer: submittedAnswer,
+      );
+      state = AsyncData(result);
+      // Invalidate board so it re-fetches updated progress
+      ref.invalidate(learningBoardProvider(materialId));
+      ref.invalidate(materialProvider(materialId));
+      return result;
+    } catch (e, st) {
+      state = AsyncError(e, st);
+      rethrow;
+    }
+  }
+}
+
+final completeNodeProvider = AsyncNotifierProvider<CompleteNodeNotifier, NodeCompleteResult?>(
+  CompleteNodeNotifier.new,
+);
+
 // Progress provider
 final studentProgressProvider = FutureProvider<List<StudentProgress>>((ref) async {
   final analyticsService = ref.watch(analyticsServiceProvider);

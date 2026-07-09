@@ -67,6 +67,7 @@ class LearningMaterial {
   final String? description;
   final String? thumbnailUrl;
   final String? fileUrl;
+  final String? audioUrl;
   final String gradeCategory;
   final int gradeLevel;
   final int? estimatedDuration;
@@ -74,6 +75,11 @@ class LearningMaterial {
   final String status;
   final int? preTestScore;
   final int? postTestScore;
+  // Learning Board fields (Fase 3)
+  final String activityType; // 'classic_pdf' | 'learning_board'
+  final String boardStatus; // 'not_started' | 'in_progress' | 'completed'
+  final String socialEngagementStatus; // 'not_submitted' | 'pending_review' | 'finalized'
+  final String ebookStatus; // 'locked' | 'available' | 'completed'
 
   const LearningMaterial({
     required this.id,
@@ -81,6 +87,7 @@ class LearningMaterial {
     this.description,
     this.thumbnailUrl,
     this.fileUrl,
+    this.audioUrl,
     required this.gradeCategory,
     required this.gradeLevel,
     this.estimatedDuration,
@@ -88,10 +95,17 @@ class LearningMaterial {
     required this.status,
     this.preTestScore,
     this.postTestScore,
+    this.activityType = 'classic_pdf',
+    this.boardStatus = 'not_started',
+    this.socialEngagementStatus = 'not_submitted',
+    this.ebookStatus = 'locked',
   });
+
+  bool get isLearningBoard => activityType == 'learning_board';
 
   factory LearningMaterial.fromJson(Map<String, dynamic> json) {
     final studentScore = json['student_score'] as Map<String, dynamic>?;
+    final pathStatus = json['learning_path_status'] as Map<String, dynamic>?;
     return LearningMaterial(
       id: json['id'] as int? ?? 0,
       title: json['title'] as String? ?? '',
@@ -99,6 +113,7 @@ class LearningMaterial {
       thumbnailUrl:
           json['thumbnail_url'] as String? ?? json['thumbnail'] as String?,
       fileUrl: _resolvePhotoUrl(json['file_url'] as String?),
+      audioUrl: _resolvePhotoUrl(json['audio_url'] as String?),
       gradeCategory: json['grade_category'] as String? ?? 'SMP',
       gradeLevel: _parseGradeLevel(json['grade_level'] ?? json['grade']),
       estimatedDuration:
@@ -108,6 +123,10 @@ class LearningMaterial {
       status: json['status'] as String? ?? 'locked',
       preTestScore: studentScore?['pre_test_score'] as int?,
       postTestScore: studentScore?['post_test_score'] as int?,
+      activityType: json['activity_type'] as String? ?? 'classic_pdf',
+      boardStatus: pathStatus?['board'] as String? ?? json['board_status'] as String? ?? 'not_started',
+      socialEngagementStatus: pathStatus?['social_engagement'] as String? ?? json['social_engagement_status'] as String? ?? 'not_submitted',
+      ebookStatus: pathStatus?['ebook'] as String? ?? json['ebook_status'] as String? ?? 'locked',
     );
   }
 
@@ -118,6 +137,7 @@ class LearningMaterial {
       'description': description,
       'thumbnail_url': thumbnailUrl,
       'file_url': fileUrl,
+      'audio_url': audioUrl,
       'grade_category': gradeCategory,
       'grade_level': gradeLevel,
       'estimated_duration_minutes': estimatedDuration,
@@ -125,6 +145,10 @@ class LearningMaterial {
       'status': status,
       'pre_test_score': preTestScore,
       'post_test_score': postTestScore,
+      'activity_type': activityType,
+      'board_status': boardStatus,
+      'social_engagement_status': socialEngagementStatus,
+      'ebook_status': ebookStatus,
     };
   }
 }
@@ -282,21 +306,37 @@ class StudentClass {
 class ActivityLog {
   final int id;
   final int studentId;
+  final String? studentName;
   final String title;
   final String category;
   final String location;
+  final String description;
   final DateTime activityDate;
   final String? photoUrl;
+  // Social Challenge fields (Fase 3)
+  final int? materialId;
+  final int? nodeId;
+  final String? reviewStatus; // 'pending' | 'approved' | 'rejected'
+  final int? teacherScore; // 1-5
 
   const ActivityLog({
     required this.id,
     required this.studentId,
+    this.studentName,
     required this.title,
     required this.category,
     required this.location,
+    this.description = '',
     required this.activityDate,
     this.photoUrl,
+    this.materialId,
+    this.nodeId,
+    this.reviewStatus,
+    this.teacherScore,
   });
+
+  bool get isSocialChallenge => materialId != null;
+  bool get isPendingReview => reviewStatus == 'pending';
 
   factory ActivityLog.fromJson(Map<String, dynamic> json, {int? studentId}) {
     String getCategoryFromType(String? type) {
@@ -336,9 +376,11 @@ class ActivityLog {
               : parseId(json['student_id']) != 0
                   ? parseId(json['student_id'])
                   : studentId ?? 0,
+      studentName: (json['student'] as Map?)?['name'] as String?,
       title: json['title'] as String? ?? '',
       category: getCategoryFromType(rawCategory),
       location: json['location'] as String? ?? 'sekolah',
+      description: json['description'] as String? ?? '',
       activityDate: DateTime.parse(
         json['date'] as String? ??
             json['activity_date'] as String? ??
@@ -349,6 +391,10 @@ class ActivityLog {
             json['photo_url'] as String? ??
             json['photo'] as String?,
       ),
+      materialId: json['material_id'] as int?,
+      nodeId: json['node_id'] as int?,
+      reviewStatus: json['review_status'] as String?,
+      teacherScore: json['teacher_score'] as int?,
     );
   }
 
@@ -356,11 +402,17 @@ class ActivityLog {
     return {
       'id': id,
       'student_id': studentId,
+      'student_name': studentName,
       'title': title,
       'category': category,
       'location': location,
+      'description': description,
       'activity_date': activityDate.toIso8601String(),
       'photo_url': photoUrl,
+      'material_id': materialId,
+      'node_id': nodeId,
+      'review_status': reviewStatus,
+      'teacher_score': teacherScore,
     };
   }
 }
@@ -635,6 +687,99 @@ class AnecdotalNote {
       'dimension': dimension,
       'created_at': createdAt.toIso8601String(),
     };
+  }
+}
+
+// =============================================================================
+// LEARNING BOARD MODELS (Fase 3)
+// =============================================================================
+
+class LearningNode {
+  final int id;
+  final int materialId;
+  final int orderIndex;
+  final String nodeType; // 'content' | 'challenge' | 'social_task'
+  final String? title;
+  final String? body;
+  final String? imageUrl;
+  // For challenge nodes:
+  final String? gameType; // 'multiple_choice' | 'matching' | 'sorting' | 'true_false_swipe'
+  final Map<String, dynamic>? payload;
+  // Progress (filled after fetching board with progress)
+  final bool isCompleted;
+  final Map<String, dynamic>? submittedAnswer;
+  final bool? isCorrect;
+
+  const LearningNode({
+    required this.id,
+    required this.materialId,
+    required this.orderIndex,
+    required this.nodeType,
+    this.title,
+    this.body,
+    this.imageUrl,
+    this.gameType,
+    this.payload,
+    this.isCompleted = false,
+    this.submittedAnswer,
+    this.isCorrect,
+  });
+
+  bool get isContent => nodeType == 'content';
+  bool get isChallenge => nodeType == 'challenge';
+  bool get isSocialTask => nodeType == 'social_task';
+
+  factory LearningNode.fromJson(Map<String, dynamic> json) {
+    final progressJson = json['progress'] as Map<String, dynamic>?;
+    return LearningNode(
+      id: json['id'] as int? ?? 0,
+      materialId: json['material_id'] as int? ?? 0,
+      orderIndex: json['order_index'] as int? ?? 0,
+      nodeType: json['node_type'] as String? ?? 'content',
+      title: json['title'] as String?,
+      body: json['body'] as String?,
+      imageUrl: _resolvePhotoUrl(json['image_url'] as String?),
+      gameType: json['game_type'] as String?,
+      payload: json['payload'] as Map<String, dynamic>?,
+      isCompleted: progressJson?['status'] != null || json['is_completed'] == true,
+      submittedAnswer: progressJson?['submitted_answer'] as Map<String, dynamic>?,
+      isCorrect: progressJson?['is_correct'] as bool?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'material_id': materialId,
+      'order_index': orderIndex,
+      'node_type': nodeType,
+      'title': title,
+      'body': body,
+      'image_url': imageUrl,
+      'game_type': gameType,
+      'payload': payload,
+      'is_completed': isCompleted,
+    };
+  }
+}
+
+class NodeCompleteResult {
+  final int nodeId;
+  final bool isCorrect;
+  final int boardProgressPercent;
+
+  const NodeCompleteResult({
+    required this.nodeId,
+    required this.isCorrect,
+    required this.boardProgressPercent,
+  });
+
+  factory NodeCompleteResult.fromJson(Map<String, dynamic> json) {
+    return NodeCompleteResult(
+      nodeId: json['node_id'] as int? ?? 0,
+      isCorrect: json['is_correct'] as bool? ?? false,
+      boardProgressPercent: json['board_progress_percent'] as int? ?? 0,
+    );
   }
 }
 

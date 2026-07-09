@@ -255,6 +255,8 @@ class StudentHomeScreen extends ConsumerWidget {
                     final classService = ref.read(classServiceProvider);
                     await classService.joinClass(code);
                     ref.invalidate(studentClassesProvider);
+                    ref.invalidate(materialsProvider);
+                    ref.invalidate(activitiesProvider);
                     if (context.mounted) {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(

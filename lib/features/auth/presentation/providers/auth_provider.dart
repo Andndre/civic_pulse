@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/data.dart';
 import '../../../../core/network/network.dart';
+import '../../../../shared/services/services.dart' hide User;
 
 // Auth Repository Provider
 final authRepositoryProvider = Provider<AuthRepositoryInterface>((ref) {
@@ -56,9 +57,19 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       final user = await _repository.getCurrentUser();
       if (user != null) {
+        bool needsSetup = false;
+        if (user.isStudent) {
+          try {
+            final classes = await ref.read(classServiceProvider).getStudentClasses(user.id);
+            needsSetup = classes.isEmpty;
+          } catch (_) {
+            needsSetup = false;
+          }
+        }
         state = state.copyWith(
           status: AuthStatus.authenticated,
           user: user,
+          needsClassSetup: needsSetup,
         );
       } else {
         state = state.copyWith(status: AuthStatus.unauthenticated);
@@ -78,13 +89,21 @@ class AuthNotifier extends Notifier<AuthState> {
 
       await ApiClient.instance.setToken(response.token);
 
-      // After login, go to home page directly - class setup will be handled separately
-      // when teacher chooses to create a class from home page
+      bool needsSetup = false;
+      if (response.user.isStudent) {
+        try {
+          final classes = await ref.read(classServiceProvider).getStudentClasses(response.user.id);
+          needsSetup = classes.isEmpty;
+        } catch (_) {
+          needsSetup = response.classCode == null;
+        }
+      }
+
       state = state.copyWith(
         status: AuthStatus.authenticated,
         user: response.user,
         fieldErrors: const {},
-        needsClassSetup: false,
+        needsClassSetup: needsSetup,
       );
     } catch (e) {
       Map<String, String> fieldErrors = {};

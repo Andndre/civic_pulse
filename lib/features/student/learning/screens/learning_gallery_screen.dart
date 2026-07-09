@@ -92,15 +92,10 @@ class LearningGalleryScreen extends ConsumerWidget {
                         );
                       }
 
-                      return GridView.builder(
+                      return ListView.separated(
                         padding: AppSpacing.screenPadding,
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.68,
-                          crossAxisSpacing: AppSpacing.md,
-                          mainAxisSpacing: AppSpacing.md,
-                        ),
                         itemCount: materials.length,
+                        separatorBuilder: (context, index) => AppSpacing.vGapMd,
                         itemBuilder: (context, index) {
                           final material = materials[index];
                           return MaterialCard(
@@ -117,15 +112,10 @@ class LearningGalleryScreen extends ConsumerWidget {
                         },
                       );
                     },
-                    loading: () => GridView.builder(
+                    loading: () => ListView.separated(
                       padding: AppSpacing.screenPadding,
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.68,
-                        crossAxisSpacing: AppSpacing.md,
-                        mainAxisSpacing: AppSpacing.md,
-                      ),
                       itemCount: 4,
+                      separatorBuilder: (context, index) => AppSpacing.vGapMd,
                       itemBuilder: (context, index) => const ShimmerCard(),
                     ),
                     error: (error, _) => EmptyState(

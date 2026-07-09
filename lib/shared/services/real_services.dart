@@ -156,6 +156,374 @@ class RealMaterialService implements MaterialServiceInterface {
       throw ApiException.fromDioException(e);
     }
   }
+
+  @override
+  Future<List<LearningNode>> getLearningBoard(int materialId) async {
+    try {
+      final response = await _client.get(
+        '${ApiConstants.materials}/$materialId/learning-board',
+      );
+      final data = response.data;
+      final boardData = (data is Map && data.containsKey('data')) ? data['data'] : data;
+      final List<dynamic> nodes = (boardData is Map && boardData.containsKey('nodes'))
+          ? boardData['nodes'] as List<dynamic>
+          : (boardData is List ? boardData : []);
+      return nodes
+          .map((n) => LearningNode.fromJson(n as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<NodeCompleteResult> completeNode({
+    required int materialId,
+    required int nodeId,
+    required Map<String, dynamic> submittedAnswer,
+  }) async {
+    try {
+      final response = await _client.post(
+        '${ApiConstants.materials}/$materialId/learning-board/nodes/$nodeId/complete',
+        data: {'submitted_answer': submittedAnswer},
+      );
+      final data = response.data;
+      final resultData = (data is Map && data.containsKey('data')) ? data['data'] : data;
+      return NodeCompleteResult.fromJson(resultData as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> submitSocialTask({
+    required int materialId,
+    required int nodeId,
+    required String caption,
+    String? photoPath,
+  }) async {
+    try {
+      final formData = <String, dynamic>{'caption': caption};
+      if (photoPath != null) {
+        formData['photo'] = await MultipartFile.fromFile(photoPath);
+      }
+      final response = await _client.post(
+        '${ApiConstants.materials}/$materialId/learning-board/nodes/$nodeId/social-task',
+        data: FormData.fromMap(formData),
+      );
+      final data = response.data;
+      return (data is Map && data.containsKey('data')) ? data['data'] : data;
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<void> completeMedia(int materialId) async {
+    try {
+      await _client.post(
+        '${ApiConstants.materials}/$materialId/complete-media',
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<List<LearningMaterial>> getClassMaterials(int classId) async {
+    try {
+      final response = await _client.get('/classes/$classId/materials');
+      final data = response.data;
+      final List<dynamic> list;
+      if (data is Map && data.containsKey('data')) {
+        list = data['data'] as List<dynamic>;
+      } else if (data is List) {
+        list = data;
+      } else {
+        list = [];
+      }
+      return list
+          .map((m) => LearningMaterial.fromJson(m as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<LearningMaterial> addClassMaterial({
+    required int classId,
+    required String title,
+    String? description,
+    String? filePath,
+    String? audioPath,
+    int? templateId,
+  }) async {
+    try {
+      final Map<String, dynamic> fields = {
+        'title': title,
+        'description': description ?? '',
+        'activity_type': 'learning_board',
+      };
+      if (templateId != null) {
+        fields['template_id'] = templateId;
+      }
+
+      if (filePath != null) {
+        fields['file'] = await MultipartFile.fromFile(filePath);
+      }
+      if (audioPath != null) {
+        fields['audio'] = await MultipartFile.fromFile(audioPath);
+      }
+
+      final formData = FormData.fromMap(fields);
+
+      final response = await _client.post(
+        '/classes/$classId/materials',
+        data: formData,
+      );
+      final data = response.data;
+      final resultData = (data is Map && data.containsKey('data')) ? data['data'] : data;
+      return LearningMaterial.fromJson(resultData as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<LearningMaterial> updateClassMaterial(
+    int materialId, {
+    required String title,
+    String? description,
+    String? filePath,
+    String? audioPath,
+  }) async {
+    try {
+      final Map<String, dynamic> fields = {
+        'title': title,
+        'description': description ?? '',
+        '_method': 'PATCH',
+      };
+
+      if (filePath != null) {
+        fields['file'] = await MultipartFile.fromFile(filePath);
+      }
+      if (audioPath != null) {
+        fields['audio'] = await MultipartFile.fromFile(audioPath);
+      }
+
+      final formData = FormData.fromMap(fields);
+
+      // We use POST with _method=PATCH because PHP doesn't parse multipart form data natively in PUT/PATCH requests
+      final response = await _client.post(
+        '${ApiConstants.materials}/$materialId',
+        data: formData,
+      );
+      final data = response.data;
+      final resultData = (data is Map && data.containsKey('data')) ? data['data'] : data;
+      return LearningMaterial.fromJson(resultData as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<void> deleteClassMaterial(int materialId) async {
+    try {
+      await _client.delete('${ApiConstants.materials}/$materialId');
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<Question> createQuestion({
+    required int materialId,
+    required String type,
+    required String questionText,
+    required List<String> options,
+    required String correctAnswer,
+  }) async {
+    try {
+      final response = await _client.post(
+        '/questions',
+        data: {
+          'learning_material_id': materialId,
+          'type': type,
+          'question_text': questionText,
+          'options': options,
+          'correct_answer': correctAnswer,
+        },
+      );
+      final data = response.data;
+      final resultData = (data is Map && data.containsKey('data')) ? data['data'] : data;
+      return Question.fromJson(resultData as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<Question> updateQuestion(
+    int questionId, {
+    String? questionText,
+    List<String>? options,
+    String? correctAnswer,
+  }) async {
+    try {
+      final Map<String, dynamic> dataPayload = {};
+      if (questionText != null) dataPayload['question_text'] = questionText;
+      if (options != null) dataPayload['options'] = options;
+      if (correctAnswer != null) dataPayload['correct_answer'] = correctAnswer;
+
+      final response = await _client.patch(
+        '/questions/$questionId',
+        data: dataPayload,
+      );
+      final data = response.data;
+      final resultData = (data is Map && data.containsKey('data')) ? data['data'] : data;
+      return Question.fromJson(resultData as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<void> deleteQuestion(int questionId) async {
+    try {
+      await _client.delete('/questions/$questionId');
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<LearningNode> createLearningNode({
+    required int materialId,
+    required String nodeType,
+    required String title,
+    required String body,
+    String? gameType,
+    Map<String, dynamic>? payload,
+    int? orderIndex,
+  }) async {
+    try {
+      final response = await _client.post(
+        '/learning-nodes',
+        data: {
+          'learning_material_id': materialId,
+          'node_type': nodeType,
+          'title': title,
+          'body': body,
+          'game_type': gameType,
+          'payload': payload,
+          'order_index': orderIndex ?? 0,
+        },
+      );
+      final data = response.data;
+      final resultData = (data is Map && data.containsKey('data')) ? data['data'] : data;
+      return LearningNode.fromJson(resultData as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<LearningNode> updateLearningNode(
+    int nodeId, {
+    String? title,
+    String? body,
+    String? gameType,
+    Map<String, dynamic>? payload,
+    int? orderIndex,
+  }) async {
+    try {
+      final Map<String, dynamic> dataPayload = {};
+      if (title != null) dataPayload['title'] = title;
+      if (body != null) dataPayload['body'] = body;
+      if (gameType != null) dataPayload['game_type'] = gameType;
+      if (payload != null) dataPayload['payload'] = payload;
+      if (orderIndex != null) dataPayload['order_index'] = orderIndex;
+
+      final response = await _client.patch(
+        '/learning-nodes/$nodeId',
+        data: dataPayload,
+      );
+      final data = response.data;
+      final resultData = (data is Map && data.containsKey('data')) ? data['data'] : data;
+      return LearningNode.fromJson(resultData as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<void> deleteLearningNode(int nodeId) async {
+    try {
+      await _client.delete('/learning-nodes/$nodeId');
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getMaterialTemplates() async {
+    try {
+      final response = await _client.get('/material-templates');
+      final data = response.data;
+      final List<dynamic> list;
+      if (data is Map && data.containsKey('data')) {
+        list = data['data'] as List<dynamic>;
+      } else if (data is List) {
+        list = data;
+      } else {
+        list = [];
+      }
+      return list.map((t) => Map<String, dynamic>.from(t as Map)).toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<LearningMaterial> importMaterialTemplate({
+    required int classId,
+    required int templateId,
+  }) async {
+    try {
+      final response = await _client.post(
+        '/classes/$classId/materials/import-template',
+        data: {
+          'template_id': templateId,
+        },
+      );
+      final data = response.data;
+      final resultData = (data is Map && data.containsKey('data')) ? data['data'] : data;
+      return LearningMaterial.fromJson(resultData as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<LearningMaterial> duplicateMaterial({
+    required int materialId,
+    required int targetClassId,
+  }) async {
+    try {
+      final response = await _client.post(
+        '${ApiConstants.materials}/$materialId/duplicate',
+        data: {
+          'class_id': targetClassId,
+        },
+      );
+      final data = response.data;
+      final resultData = (data is Map && data.containsKey('data')) ? data['data'] : data;
+      return LearningMaterial.fromJson(resultData as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
 }
 
 class RealClassService implements ClassServiceInterface {
@@ -764,6 +1132,55 @@ class RealTeacherService implements TeacherServiceInterface {
           'anecdotal_notes_count': 0,
         };
       }
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<List<ActivityLog>> getPendingSocialChallenges() async {
+    try {
+      final response = await _client.get(
+        '/teacher/social-challenges',
+        queryParameters: {'status': 'pending'},
+      );
+      final data = response.data;
+      final List<dynamic> list;
+      if (data is Map && data.containsKey('data')) {
+        list = data['data'] as List<dynamic>;
+      } else if (data is List) {
+        list = data;
+      } else {
+        list = [];
+      }
+      return list
+          .map((item) => ActivityLog.fromJson(item as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> reviewSocialChallenge({
+    required int activityId,
+    required String status,
+    required int score,
+    String? note,
+  }) async {
+    try {
+      final response = await _client.post(
+        '/activities/$activityId/review',
+        data: {
+          'review_status': status,
+          'teacher_score': score,
+          if (note != null) 'note': note,
+        },
+      );
+      final data = response.data;
+      return (data is Map && data.containsKey('data'))
+          ? data['data'] as Map<String, dynamic>
+          : data as Map<String, dynamic>;
+    } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }

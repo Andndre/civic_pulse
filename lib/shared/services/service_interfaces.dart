@@ -18,6 +18,82 @@ abstract class MaterialServiceInterface {
     required int materialId,
     required List<Map<String, dynamic>> responses,
   });
+  // Learning Board (Fase 3)
+  Future<List<LearningNode>> getLearningBoard(int materialId);
+  Future<NodeCompleteResult> completeNode({
+    required int materialId,
+    required int nodeId,
+    required Map<String, dynamic> submittedAnswer,
+  });
+  Future<Map<String, dynamic>> submitSocialTask({
+    required int materialId,
+    required int nodeId,
+    required String caption,
+    String? photoPath,
+  });
+  Future<void> completeMedia(int materialId);
+  Future<List<LearningMaterial>> getClassMaterials(int classId);
+  Future<LearningMaterial> addClassMaterial({
+    required int classId,
+    required String title,
+    String? description,
+    String? filePath,
+    String? audioPath,
+    int? templateId,
+  });
+  Future<LearningMaterial> updateClassMaterial(
+    int materialId, {
+    required String title,
+    String? description,
+    String? filePath,
+    String? audioPath,
+  });
+  Future<void> deleteClassMaterial(int materialId);
+  Future<List<Map<String, dynamic>>> getMaterialTemplates();
+  Future<LearningMaterial> importMaterialTemplate({
+    required int classId,
+    required int templateId,
+  });
+  Future<LearningMaterial> duplicateMaterial({
+    required int materialId,
+    required int targetClassId,
+  });
+
+  // Question CRUD for Teacher
+  Future<Question> createQuestion({
+    required int materialId,
+    required String type,
+    required String questionText,
+    required List<String> options,
+    required String correctAnswer,
+  });
+  Future<Question> updateQuestion(
+    int questionId, {
+    String? questionText,
+    List<String>? options,
+    String? correctAnswer,
+  });
+  Future<void> deleteQuestion(int questionId);
+
+  // Learning Node CRUD for Teacher
+  Future<LearningNode> createLearningNode({
+    required int materialId,
+    required String nodeType,
+    required String title,
+    required String body,
+    String? gameType,
+    Map<String, dynamic>? payload,
+    int? orderIndex,
+  });
+  Future<LearningNode> updateLearningNode(
+    int nodeId, {
+    String? title,
+    String? body,
+    String? gameType,
+    Map<String, dynamic>? payload,
+    int? orderIndex,
+  });
+  Future<void> deleteLearningNode(int nodeId);
 }
 
 abstract class ClassServiceInterface {
@@ -74,4 +150,13 @@ abstract class TeacherServiceInterface {
   Future<Map<String, dynamic>> getStudentPulseScores(int studentId);
   /// Ambil statistik kelas, siswa, dan catatan anekdot untuk guru saat ini
   Future<Map<String, dynamic>> getTeacherStats();
+  // Tantangan Sosial Review (Fase 4)
+  Future<List<ActivityLog>> getPendingSocialChallenges();
+  Future<Map<String, dynamic>> reviewSocialChallenge({
+    required int activityId,
+    required String status, // 'approved' | 'rejected'
+    required int score, // 1-5
+    String? note,
+  });
 }
+

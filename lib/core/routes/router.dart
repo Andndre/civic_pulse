@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
+import '../../features/auth/presentation/screens/landing_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/class_setup_screen.dart';
@@ -17,6 +18,9 @@ import '../../features/student/scores/screens/scores_feedback_screen.dart';
 import '../../features/student/profile/screens/student_profile_screen.dart';
 import '../../features/student/profile/screens/edit_profile_screen.dart';
 import '../../features/teacher/home/screens/teacher_home_screen.dart';
+import '../../features/teacher/home/screens/manage_materials_screen.dart';
+import '../../features/teacher/home/screens/social_challenges_review_screen.dart';
+import '../../features/teacher/home/screens/teacher_material_editor_screen.dart';
 import '../../features/teacher/class_detail/screens/class_detail_screen.dart';
 import '../../features/teacher/student_profile/screens/student_profile_screen.dart';
 import '../../features/teacher/profile/screens/teacher_profile_screen.dart';
@@ -62,6 +66,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Auth routes
       final isAuthRoute = location == '/splash' ||
+          location == '/landing' ||
           location == '/login' ||
           location == '/register';
 
@@ -95,6 +100,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => NoTransitionPage<void>(
           key: state.pageKey,
           child: const SplashScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/landing',
+        pageBuilder: (context, state) => NoTransitionPage<void>(
+          key: state.pageKey,
+          child: const LandingScreen(),
         ),
       ),
       GoRoute(
@@ -219,12 +231,43 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
+            path: '/teacher/social-challenges/review',
+            pageBuilder: (context, state) => NoTransitionPage<void>(
+              key: state.pageKey,
+              child: const SocialChallengesReviewScreen(),
+            ),
+          ),
+          GoRoute(
             path: '/teacher/class/:id',
             pageBuilder: (context, state) {
               final classId = state.pathParameters['id']!;
               return NoTransitionPage<void>(
                 key: state.pageKey,
                 child: ClassDetailScreen(classId: classId),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/teacher/class/:classId/materials',
+            pageBuilder: (context, state) {
+              final classId = int.tryParse(state.pathParameters['classId'] ?? '0') ?? 0;
+              return NoTransitionPage<void>(
+                key: state.pageKey,
+                child: ManageMaterialsScreen(classId: classId),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/teacher/class/:classId/materials/:materialId/edit',
+            pageBuilder: (context, state) {
+              final classId = int.tryParse(state.pathParameters['classId'] ?? '0') ?? 0;
+              final materialId = int.tryParse(state.pathParameters['materialId'] ?? '0') ?? 0;
+              return NoTransitionPage<void>(
+                key: state.pageKey,
+                child: TeacherMaterialEditorScreen(
+                  classId: classId,
+                  materialId: materialId,
+                ),
               );
             },
           ),
