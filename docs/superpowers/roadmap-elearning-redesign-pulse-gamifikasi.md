@@ -50,21 +50,26 @@ Prinsip desain: **satu mesin konten yang dikonfigurasi lewat data** (mirip cara 
 
 **Keputusan dosen: angket Likert PULSE dihapus total** — tidak ada lagi tahap terpisah "Refleksi PULSE". Konsekuensinya, keempat dimensi PULSE harus terukur dari apa yang terjadi **di antara Pre-Test dan Post-Test** (yaitu di dalam Papan Aktivitas itu sendiri), otomatis kalau memungkinkan — dan kalau satu dimensi memang tidak mungkin dinilai otomatis (Social Engagement), skornya **ditunda** dan difinalisasi belakangan lewat penilaian manual guru. Lihat 3.4 untuk detail prinsip ini.
 
-Alur belajar baru yang diusulkan:
+**Update (masukan dosen, putaran review berikutnya): sebelum masuk ke aktivitas/game, siswa tetap harus diberi kesempatan membaca materi lengkap dalam bentuk e-book.** Papan Aktivitas tidak menggantikan bacaan lengkap — perannya adalah lapisan *reinforcement* interaktif setelah siswa membaca materi utuh, bukan pengganti satu-satunya sumber bacaan. Langkah E-Book yang sebelumnya dihapus, **dikembalikan sebagai tahap tersendiri sebelum Papan Aktivitas**.
+
+Alur belajar yang diusulkan (revisi):
 
 ```
-Pre-Test  →  Papan Aktivitas (ganti E-Book + Refleksi PULSE, berisi Kartu Materi, Kartu Tantangan, dan Kartu Tantangan Sosial)  →  Post-Test
+Pre-Test  →  Baca E-Book (materi lengkap, tidak berubah dari alur lama)  →  Papan Aktivitas (Kartu Materi ringkas, Kartu Tantangan, dan Kartu Tantangan Sosial)  →  Post-Test
 ```
 
-Tidak ada lagi tahap ke-4. Tantangan Sosial (dulunya "Refleksi PULSE") sekarang jadi salah satu kotak **di dalam** Papan Aktivitas, bukan langkah terpisah setelah Post-Test — supaya sesuai arahan dosen bahwa penilaian PULSE harus terjadi di antara pre-test dan post-test.
+Ini bukan kembali ke desain lama yang dikritik dosen (bagian 1) — bedanya:
+- Bacaan e-book sekarang **diikuti** oleh aktivitas interaktif nyata (Papan Aktivitas), bukan langsung lompat ke Post-Test seperti alur lama.
+- Refleksi PULSE (angket Likert) **tetap dihapus total** — statusnya tidak dikembalikan. Yang dikembalikan hanya kesempatan membaca materi lengkap, bukan angket self-report-nya.
+- Kartu Materi ringkas di dalam Papan Aktivitas tetap ada, berfungsi sebagai pengingat konteks singkat tepat sebelum tiap mini-game — bukan pengganti bacaan lengkap, melainkan pelengkapnya.
 
 ### 3.1 Papan Aktivitas (Learning Board)
 
-Materi dipecah menjadi rangkaian "kotak" berurutan (mirip ular tangga/board game), bukan satu dokumen panjang. Tiap kotak adalah salah satu dari tiga jenis node:
+Papan Aktivitas dibuka **setelah** siswa menyelesaikan tahap Baca E-Book. Materi di dalam papan dipecah menjadi rangkaian "kotak" berurutan (mirip ular tangga/board game), bukan satu dokumen panjang. Tiap kotak adalah salah satu dari tiga jenis node:
 
 | Jenis Node | Isi | Contoh |
 |---|---|---|
-| **Kartu Materi** | Potongan materi singkat (2-4 kalimat + gambar/ilustrasi opsional) | "Toleransi beragama berarti menghormati praktik ibadah orang lain meski berbeda keyakinan." |
+| **Kartu Materi** | Potongan materi singkat (2-4 kalimat + gambar/ilustrasi opsional) — recap konteks, bukan pengganti Baca E-Book | "Toleransi beragama berarti menghormati praktik ibadah orang lain meski berbeda keyakinan." |
 | **Kartu Tantangan** | Salah satu dari beberapa jenis mini-game (lihat 3.1.1), terkait kartu materi sebelumnya | "Cocokkan istilah dengan definisinya", "Seret ke keranjang Toleran/Intoleran", dsb. |
 | **Kartu Tantangan Sosial** | Minimal satu per materi — instruksi aksi nyata terkait topik, siswa unggah bukti (lihat 3.2) | "Dokumentasikan satu momen kamu bersikap toleran minggu ini." |
 
@@ -72,7 +77,9 @@ Siswa harus menyelesaikan kotak secara berurutan (tidak bisa lompat/skip), sehin
 
 #### 3.1.1 Jenis Mini-Game Kartu Tantangan
 
-Supaya papan aktivitas terasa variatif (bukan kuis pilihan ganda berulang-ulang), Kartu Tantangan punya beberapa jenis mekanik. Semua jenis memakai **satu skema data generik** (`game_type` + `payload` json — lihat bagian 4), bukan tabel terpisah per jenis, supaya menambah jenis baru nanti tidak perlu migrasi ulang.
+Supaya papan aktivitas terasa variatif (bukan kuis pilihan ganda berulang-ulang), Kartu Tantangan punya beberapa jenis mekanik. Semua jenis memakai **satu skema data generik** (`game_type` + `payload` json — lihat bagian 5), bukan tabel terpisah per jenis, supaya menambah jenis baru nanti tidak perlu migrasi ulang.
+
+Mockup tampilan tiap jenis game (termasuk Kartu Materi & Kartu Tantangan Sosial) sudah dibuat di [`docs/superpowers/mockups-minigame/`](./mockups-minigame/) dan sudah disisipkan ke dokumen `.docx` yang dikirim ke dosen.
 
 | # | Nama | Mekanik | Contoh (materi Toleransi) | PULSE Terukur | Implementasi Flutter |
 |---|---|---|---|---|---|
@@ -126,7 +133,9 @@ Supaya tidak abstrak, berikut contoh isi lengkap satu materi sebagai bahan demo:
 
 **Pre-Test** (5 soal pilihan ganda dasar tentang konsep toleransi — format sama seperti sekarang, tidak berubah).
 
-**Papan Aktivitas** (9 kotak, memakai 3 jenis mini-game fase pertama + 1 Tantangan Sosial):
+**Baca E-Book** — materi lengkap "Toleransi Antar Umat Beragama" dalam bentuk PDF/e-book (alur baca sama seperti `_EBookStep` yang sudah ada sekarang), harus diselesaikan (scroll/buka penuh) sebelum tombol lanjut ke Papan Aktivitas aktif.
+
+**Papan Aktivitas** (9 kotak, memakai 3 jenis mini-game fase pertama + 1 Tantangan Sosial — dibuka setelah Baca E-Book selesai):
 1. Kartu Materi — "Apa itu toleransi beragama?"
 2. Kartu Tantangan (**Sortir Kategori**) — seret 6 contoh sikap ke keranjang "Toleran" vs "Intoleran"
 3. Kartu Materi — "Toleransi dalam UUD 1945 & Pancasila sila 1"
@@ -194,7 +203,7 @@ Table learning_nodes {
 
   // Kolom di bawah hanya untuk node_type = challenge:
   game_type enum('multiple_choice', 'matching', 'sorting', 'true_false_swipe', 'ordering', 'picture_quiz', 'fill_blank', 'memory_flip') [null]
-  payload json [null]         // bentuk bebas sesuai game_type, lihat contoh di bagian 5
+  payload json [null]         // bentuk bebas sesuai game_type, lihat contoh di bagian 6
 
   created_at timestamp [not null]
   updated_at timestamp [not null]
@@ -239,11 +248,14 @@ Table activity_logs {
   reviewed_at timestamp [null]
 }
 
-// UBAH: tracking status per materi — ganti ebook_status & pulse_status (Likert, dihapus)
-// dengan status Papan Aktivitas + status finalisasi Social Engagement
+// UBAH: tracking status per materi — ebook_status DIPERTAHANKAN (masukan dosen: siswa tetap
+// harus diberi kesempatan baca materi lengkap sebelum aktivitas/game), tambah board_status
+// untuk Papan Aktivitas, dan ganti pulse_status (Likert, dihapus) dengan status finalisasi
+// Social Engagement
 Table student_material_progress {
   ...kolom lama tetap (student_id, material_id, pre_test_status, pre_test_score, post_test_status, post_test_score)...
-  board_status enum('not_started', 'in_progress', 'completed') [not null, default: 'not_started']  // ganti ebook_status
+  ebook_status enum('not_started', 'in_progress', 'completed') [not null, default: 'not_started']  // TETAP ADA, tidak jadi dihapus
+  board_status enum('not_started', 'in_progress', 'completed') [not null, default: 'not_started']  // status Papan Aktivitas (baru), hanya bisa mulai setelah ebook_status = completed
   social_engagement_status enum('not_submitted', 'pending_review', 'finalized') [not null, default: 'not_submitted']  // ganti pulse_status
 }
 ```
@@ -312,7 +324,7 @@ POST /classes/{classId}/materials/import-template
 }
 ```
 
-### 5.x Get Learning Board (ganti `GET /materials/{id}/ebook`)
+### 5.x Get Learning Board (endpoint baru — `GET /materials/{id}/ebook` yang lama TETAP ADA dan tetap dipanggil lebih dulu, tidak diganti)
 
 ```
 GET /materials/{id}/learning-board
@@ -427,7 +439,7 @@ POST /activities/{id}/review
 | File | Perubahan |
 |---|---|
 | `lib/shared/services/data_models.dart` | Tambah model `LearningNode` (dengan `gameType` + `payload` dinamis); tambah `classId` pada `LearningMaterial`; extend `ActivityLog` dengan `materialId`, `reviewStatus`, `teacherScore` |
-| `lib/features/student/learning/screens/learning_path_screen.dart` | Alur jadi 3 langkah: ganti `_EBookStep` → `_LearningBoardStep` (render kartu materi/tantangan/sosial berurutan); **hapus** `_PulseStep` sepenuhnya (angket Likert dihapus total) |
+| `lib/features/student/learning/screens/learning_path_screen.dart` | Alur jadi 4 langkah: `_EBookStep` **dipertahankan** (masukan dosen — siswa tetap harus baca materi lengkap dulu), lalu tambah `_LearningBoardStep` baru sesudahnya (render kartu materi ringkas/tantangan/sosial berurutan); **hapus** `_PulseStep` sepenuhnya (angket Likert dihapus total, tidak dikembalikan) |
 | `lib/features/student/learning/widgets/challenge_games/` (baru) | Satu widget per `game_type`: `MatchingGameCard`, `SortingGameCard`, `TrueFalseSwipeCard` (fase 1); `OrderingGameCard`, `PictureQuizCard`, `FillBlankCard`, `MemoryFlipCard` (fase lanjutan) — dipilih lewat `switch (node.gameType)`. Plus `SocialTaskCard` khusus untuk `node_type: social_task` (form upload foto/video + caption, submit lalu langsung lanjut) — semua dirender berurutan di dalam `_LearningBoardStep` |
 | `lib/features/teacher/class_detail/screens/manage_materials_screen.dart` (baru) | Layar guru untuk CRUD materi kelasnya sendiri: susun Papan Aktivitas, tombol "Duplikat ke Kelas Lain", tombol "Impor dari Template Admin". Dioptimalkan untuk **Flutter Web** (layar lebar, drag-reorder kartu), tapi tetap satu codebase dengan app mobile |
 | `lib/features/teacher/` | Screen baru: antrean review Tantangan Sosial (list pending + form approve/reject/skor) |
@@ -435,7 +447,7 @@ POST /activities/{id}/review
 
 Semua widget game di atas dibangun dari widget bawaan Flutter (`Draggable`, `DragTarget`, `Dismissible`, `ReorderableListView`, `AnimatedSwitcher`) — tidak menambah dependency baru di `pubspec.yaml`.
 
-Materi lama yang masih `activity_type = classic_pdf` tetap dirender dengan `_EBookStep` versi sekarang — tidak ada migrasi paksa, jadi tidak ada risiko materi lama rusak.
+`_EBookStep` dipakai oleh **semua** materi (baik `activity_type = classic_pdf` maupun `learning_board`) sebagai tahap baca lengkap sebelum lanjut. Untuk materi `classic_pdf` (belum sempat digamifikasi), alur berhenti seperti sekarang (E-Book → Post-Test langsung, tanpa Papan Aktivitas) — tidak ada migrasi paksa, jadi tidak ada risiko materi lama rusak.
 
 ---
 
@@ -484,7 +496,7 @@ Centang tiap item saat selesai. Ini yang jadi sumber kebenaran progres — updat
 
 **Fase 3 — Frontend: Learning Board**
 - [ ] Model `LearningNode` di `data_models.dart`
-- [ ] `_LearningBoardStep` (ganti `_EBookStep`)
+- [ ] `_LearningBoardStep` baru, ditambahkan **setelah** `_EBookStep` (`_EBookStep` dipertahankan, tidak diganti)
 - [ ] `MatchingGameCard`
 - [ ] `SortingGameCard`
 - [ ] `TrueFalseSwipeCard`
@@ -518,6 +530,7 @@ Centang tiap item saat selesai. Ini yang jadi sumber kebenaran progres — updat
 - **Angket Likert PULSE dihapus total.** Sebagai gantinya: Participation/Understanding/Learning dinilai otomatis dari Papan Aktivitas + Pre/Post-Test; Social Engagement (yang tidak mungkin otomatis) skornya **ditunda** dan difinalisasi lewat penilaian manual guru — lihat prinsip di bagian 3.4.
 - **Demo tanggal 10 cukup 1 materi contoh** (Toleransi Antar Umat Beragama, bagian 4) — tidak perlu materi tambahan.
 - **Waktu dianggap cukup untuk semua fase** — Fase 5 (redesain landing page) dan bagian lanjutan Fase 2b (duplikasi, import template) **tidak** perlu ditunda, dikerjakan bersamaan sesuai roadmap di bagian 8.
+- **(Update) Baca E-Book dikembalikan sebagai tahap tersendiri sebelum Papan Aktivitas** — masukan dosen di putaran review berikutnya: siswa tetap harus diberi kesempatan membaca materi lengkap sebelum masuk ke aktivitas/game. Ini bukan pembatalan penghapusan angket Likert (itu tetap dihapus total) — yang dikembalikan hanya kesempatan baca materi, lihat bagian 3.
 
 ### Masih perlu dilengkapi (usulan draft, mohon dikonfirmasi/direvisi dosen)
 
