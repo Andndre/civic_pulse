@@ -32,11 +32,19 @@ class _MatchingGameCardState extends State<MatchingGameCard> {
   List<Map<String, dynamic>> get _pairs {
     final payload = widget.node.payload ?? {};
     final raw = payload['pairs'];
-    if (raw is List) return raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    if (raw is List) {
+      return raw
+          .where((e) => e is Map)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+    }
     return [];
   }
 
-  List<String> get _leftItems => _pairs.map((p) => p['left'] as String).toList();
+  List<String> get _leftItems => _pairs
+      .map((p) => (p['left'] ?? '').toString())
+      .where((s) => s.isNotEmpty)
+      .toList();
 
   // Stable shuffled rights (computed once)
   late final List<String> _shuffledRights;
@@ -45,9 +53,17 @@ class _MatchingGameCardState extends State<MatchingGameCard> {
   @override
   void initState() {
     super.initState();
-    final rights = _pairs.map((p) => p['right'] as String).toList()..shuffle();
+    final rights = _pairs
+        .map((p) => (p['right'] ?? '').toString())
+        .where((s) => s.isNotEmpty)
+        .toList()
+      ..shuffle();
     _shuffledRights = rights;
-    _correctMap = {for (final p in _pairs) p['left'] as String: p['right'] as String};
+    _correctMap = {
+      for (final p in _pairs)
+        if (p['left'] != null && p['right'] != null)
+          p['left'].toString(): p['right'].toString()
+    };
   }
 
   void _onLeftTap(String left) {

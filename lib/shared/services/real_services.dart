@@ -181,11 +181,22 @@ class RealMaterialService implements MaterialServiceInterface {
     required int materialId,
     required int nodeId,
     required Map<String, dynamic> submittedAnswer,
+    bool? isCorrect,
+    int? score,
   }) async {
     try {
+      final requestData = <String, dynamic>{
+        'submitted_answer': submittedAnswer,
+      };
+      if (isCorrect != null) {
+        requestData['is_correct'] = isCorrect;
+      }
+      if (score != null) {
+        requestData['score'] = score;
+      }
       final response = await _client.post(
         '${ApiConstants.materials}/$materialId/learning-board/nodes/$nodeId/complete',
-        data: {'submitted_answer': submittedAnswer},
+        data: requestData,
       );
       final data = response.data;
       final resultData = (data is Map && data.containsKey('data')) ? data['data'] : data;
@@ -431,6 +442,7 @@ class RealMaterialService implements MaterialServiceInterface {
   @override
   Future<LearningNode> updateLearningNode(
     int nodeId, {
+    String? nodeType,
     String? title,
     String? body,
     String? gameType,
@@ -439,6 +451,7 @@ class RealMaterialService implements MaterialServiceInterface {
   }) async {
     try {
       final Map<String, dynamic> dataPayload = {};
+      if (nodeType != null) dataPayload['node_type'] = nodeType;
       if (title != null) dataPayload['title'] = title;
       if (body != null) dataPayload['body'] = body;
       if (gameType != null) dataPayload['game_type'] = gameType;

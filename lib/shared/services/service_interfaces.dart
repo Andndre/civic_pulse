@@ -24,6 +24,8 @@ abstract class MaterialServiceInterface {
     required int materialId,
     required int nodeId,
     required Map<String, dynamic> submittedAnswer,
+    bool? isCorrect,
+    int? score,
   });
   Future<Map<String, dynamic>> submitSocialTask({
     required int materialId,
@@ -87,6 +89,7 @@ abstract class MaterialServiceInterface {
   });
   Future<LearningNode> updateLearningNode(
     int nodeId, {
+    String? nodeType,
     String? title,
     String? body,
     String? gameType,

@@ -45,10 +45,12 @@ class MockMaterialService implements MaterialServiceInterface {
     required int materialId,
     required int nodeId,
     required Map<String, dynamic> submittedAnswer,
+    bool? isCorrect,
+    int? score,
   }) async {
     return NodeCompleteResult(
       nodeId: nodeId,
-      isCorrect: true,
+      isCorrect: isCorrect ?? true,
       boardProgressPercent: 50,
     );
   }
@@ -232,6 +234,7 @@ class MockMaterialService implements MaterialServiceInterface {
   @override
   Future<LearningNode> updateLearningNode(
     int nodeId, {
+    String? nodeType,
     String? title,
     String? body,
     String? gameType,
@@ -241,7 +244,7 @@ class MockMaterialService implements MaterialServiceInterface {
     return LearningNode(
       id: nodeId,
       materialId: 1,
-      nodeType: 'content',
+      nodeType: nodeType ?? 'content',
       title: title,
       body: body,
       gameType: gameType,

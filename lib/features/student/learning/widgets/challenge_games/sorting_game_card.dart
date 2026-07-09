@@ -39,21 +39,27 @@ class _SortingGameCardState extends State<SortingGameCard> {
   List<Map<String, dynamic>> get _items {
     final payload = widget.node.payload ?? {};
     final raw = payload['items'];
-    if (raw is List) return raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    if (raw is List) {
+      return raw
+          .where((e) => e is Map)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .where((e) => e['id'] != null && e['category'] != null)
+          .toList();
+    }
     return [];
   }
 
   List<Map<String, dynamic>> get _unsortedItems =>
-      _items.where((item) => !_sorted.containsKey(item['id'])).toList();
+      _items.where((item) => !_sorted.containsKey(item['id'].toString())).toList();
 
   List<Map<String, dynamic>> _itemsInCategory(String category) =>
-      _items.where((item) => _sorted[item['id']] == category).toList();
+      _items.where((item) => _sorted[item['id'].toString()] == category).toList();
 
   void _submit() {
     int correct = 0;
     for (final item in _items) {
-      final id = item['id'] as String;
-      final expected = item['category'] as String;
+      final id = item['id']?.toString() ?? '';
+      final expected = item['category']?.toString() ?? '';
       if (_sorted[id] == expected) correct++;
     }
     setState(() {
@@ -170,7 +176,7 @@ class _SortingGameCardState extends State<SortingGameCard> {
                                 spacing: 8,
                                 runSpacing: 8,
                                 children: catItems.map((item) {
-                                  final id = item['id'] as String;
+                                  final id = item['id'].toString();
                                   final label = item['label'] as String? ?? '';
                                   final isCorrect = _submitted && item['category'] == cat;
                                   return GestureDetector(

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class User {
   final int id;
   final String name;
@@ -731,6 +733,37 @@ class LearningNode {
 
   factory LearningNode.fromJson(Map<String, dynamic> json) {
     final progressJson = json['progress'] as Map<String, dynamic>?;
+    
+    Map<String, dynamic>? parsedPayload;
+    if (json['payload'] != null) {
+      if (json['payload'] is String) {
+        try {
+          parsedPayload = jsonDecode(json['payload'] as String) as Map<String, dynamic>?;
+        } catch (_) {}
+      } else if (json['payload'] is Map) {
+        parsedPayload = Map<String, dynamic>.from(json['payload'] as Map);
+      }
+    }
+
+    Map<String, dynamic>? parsedSubmittedAnswer;
+    if (progressJson?['submitted_answer'] != null) {
+      if (progressJson!['submitted_answer'] is String) {
+        try {
+          parsedSubmittedAnswer = jsonDecode(progressJson['submitted_answer'] as String) as Map<String, dynamic>?;
+        } catch (_) {}
+      } else if (progressJson['submitted_answer'] is Map) {
+        parsedSubmittedAnswer = Map<String, dynamic>.from(progressJson['submitted_answer'] as Map);
+      }
+    } else if (json['submitted_answer'] != null) {
+      if (json['submitted_answer'] is String) {
+        try {
+          parsedSubmittedAnswer = jsonDecode(json['submitted_answer'] as String) as Map<String, dynamic>?;
+        } catch (_) {}
+      } else if (json['submitted_answer'] is Map) {
+        parsedSubmittedAnswer = Map<String, dynamic>.from(json['submitted_answer'] as Map);
+      }
+    }
+
     return LearningNode(
       id: json['id'] as int? ?? 0,
       materialId: json['material_id'] as int? ?? 0,
@@ -740,10 +773,10 @@ class LearningNode {
       body: json['body'] as String?,
       imageUrl: _resolvePhotoUrl(json['image_url'] as String?),
       gameType: json['game_type'] as String?,
-      payload: json['payload'] as Map<String, dynamic>?,
+      payload: parsedPayload,
       isCompleted: progressJson?['status'] != null || json['is_completed'] == true,
-      submittedAnswer: progressJson?['submitted_answer'] as Map<String, dynamic>?,
-      isCorrect: progressJson?['is_correct'] as bool?,
+      submittedAnswer: parsedSubmittedAnswer,
+      isCorrect: progressJson?['is_correct'] as bool? ?? json['is_correct'] as bool?,
     );
   }
 
@@ -805,7 +838,15 @@ String? _resolvePhotoUrl(String? url) {
   if (url.startsWith('/')) {
     return 'http://192.168.2.93:8000$url';
   }
-  return url
+  // Replace localhost/127.0.0.1 variants (with or without port) to the WiFi IP
+  var resolved = url
       .replaceAll('localhost:8000', '192.168.2.93:8000')
       .replaceAll('127.0.0.1:8000', '192.168.2.93:8000');
+  // Handle case where APP_URL=http://localhost (no port) — asset() generates
+  // URLs like http://localhost/storage/... which are unreachable from Android.
+  // Use regex to replace 'localhost' only when NOT already followed by ':8000'.
+  resolved = resolved
+      .replaceAll(RegExp(r'localhost(?!:\d)'), '192.168.2.93:8000')
+      .replaceAll(RegExp(r'127\.0\.0\.1(?!:\d)'), '192.168.2.93:8000');
+  return resolved;
 }

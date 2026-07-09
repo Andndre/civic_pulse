@@ -77,9 +77,9 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
         }
 
         // Load pre-test questions
-        final preQuestions = await materialService.getQuestions(widget.materialId, 'pre_test');
+        final preQuestions = await materialService.getQuestions(widget.materialId, 'pre');
         // Load post-test questions
-        final postQuestions = await materialService.getQuestions(widget.materialId, 'post_test');
+        final postQuestions = await materialService.getQuestions(widget.materialId, 'post');
         _questions = [...preQuestions, ...postQuestions];
 
         // Load learning nodes
@@ -99,6 +99,8 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
         allowedExtensions: isPdf ? ['pdf'] : null,
       );
 
+      if (!mounted) return;
+
       if (result != null && result.files.single.path != null) {
         setState(() {
           if (isPdf) {
@@ -109,9 +111,11 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal memilih file: $e'), backgroundColor: AppColors.danger),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memilih file: $e'), backgroundColor: AppColors.danger),
+        );
+      }
     }
   }
 
@@ -133,16 +137,14 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
           templateId: _selectedTemplateId,
         );
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Materi kelas berhasil dibuat!'),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-
-        // Seamlessly switch to Edit Mode for the newly created material
         if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Materi kelas berhasil dibuat!'),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
           context.pushReplacement('/teacher/class/${widget.classId}/materials/${newMaterial.id}/edit');
         }
       } else {
@@ -155,39 +157,43 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
           audioPath: _audioPath,
         );
 
-        setState(() {
-          _material = updatedMaterial;
-          _pdfPath = null;
-          _audioPath = null;
-        });
+        if (mounted) {
+          setState(() {
+            _material = updatedMaterial;
+            _pdfPath = null;
+            _audioPath = null;
+          });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Detail materi berhasil diperbarui!'),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        _loadData();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Detail materi berhasil diperbarui!'),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          _loadData();
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal menyimpan: $e'), backgroundColor: AppColors.danger),
-      );
-      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menyimpan: $e'), backgroundColor: AppColors.danger),
+        );
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   Future<void> _handleDeleteMaterial() async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Hapus Materi'),
         content: const Text('Apakah Anda yakin ingin menghapus materi ini dari kelas? Semua progres siswa terkait materi ini akan ikut terhapus.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Batal')),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(dialogContext, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.danger),
             child: const Text('Hapus'),
           ),
@@ -202,19 +208,23 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
       final materialService = ref.read(materialServiceProvider);
       await materialService.deleteClassMaterial(widget.materialId);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Materi berhasil dihapus dari kelas!'),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      context.pop(true);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Materi berhasil dihapus dari kelas!'),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        context.pop(true);
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal menghapus materi: $e'), backgroundColor: AppColors.danger),
-      );
-      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menghapus materi: $e'), backgroundColor: AppColors.danger),
+        );
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -231,149 +241,125 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
     String selectedType = question?.type ?? 'pre_test';
     String selectedAnswer = question?.correctAnswer ?? 'A';
 
-    final allTemplateQuestions = <Map<String, dynamic>>[];
-    for (var temp in _templates) {
-      final qPayload = temp['questions_payload'];
-      if (qPayload is List) {
-        for (var q in qPayload) {
-          if (q is Map) {
-            allTemplateQuestions.add(Map<String, dynamic>.from(q));
-          }
-        }
-      }
-    }
-
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
+        bool isSaving = false;
         return StatefulBuilder(
-          builder: (context, setDialogState) {
+          builder: (builderContext, setDialogState) {
             return AlertDialog(
               title: Text(isEdit ? 'Ubah Soal' : 'Tambah Soal Baru'),
-              content: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 500),
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (!isEdit && allTemplateQuestions.isNotEmpty) ...[
-                        DropdownButtonFormField<Map<String, dynamic>>(
-                          decoration: const InputDecoration(
-                            labelText: 'Pilih dari Soal Template (Opsional)',
-                            hintText: 'Pilih soal yang sudah ada...',
-                          ),
-                          isExpanded: true,
-                          items: allTemplateQuestions.map((q) {
-                            final qText = q['question_text']?.toString() ?? '';
-                            final type = q['type'] == 'pre_test' ? 'Pre' : 'Post';
-                            final shortText = qText.length > 35 ? '${qText.substring(0, 35)}...' : qText;
-                            return DropdownMenuItem<Map<String, dynamic>>(
-                              value: q,
-                              child: Text('[$type] $shortText'),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            if (val != null) {
-                              setDialogState(() {
-                                qTextController.text = val['question_text']?.toString() ?? '';
-                                selectedType = val['type']?.toString() ?? 'pre_test';
-                                selectedAnswer = val['correct_answer']?.toString() ?? 'A';
-                                final opts = val['options'];
-                                if (opts is List && opts.length >= 4) {
-                                  optAController.text = opts[0].toString();
-                                  optBController.text = opts[1].toString();
-                                  optCController.text = opts[2].toString();
-                                  optDController.text = opts[3].toString();
-                                } else if (opts is Map) {
-                                  optAController.text = opts['A']?.toString() ?? '';
-                                  optBController.text = opts['B']?.toString() ?? '';
-                                  optCController.text = opts['C']?.toString() ?? '';
-                                  optDController.text = opts['D']?.toString() ?? '';
-                                }
-                              });
-                            }
-                          },
+              content: isSaving
+                  ? const SizedBox(
+                      height: 150,
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  : ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 500),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            DropdownButtonFormField<String>(
+                              value: selectedType,
+                              decoration: const InputDecoration(labelText: 'Tipe Kuis'),
+                              items: const [
+                                DropdownMenuItem(value: 'pre_test', child: Text('Pre-Test')),
+                                DropdownMenuItem(value: 'post_test', child: Text('Post-Test')),
+                              ],
+                              onChanged: (val) => setDialogState(() => selectedType = val!),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: qTextController,
+                              maxLines: 2,
+                              decoration: const InputDecoration(labelText: 'Pertanyaan', hintText: 'Ketik isi soal...'),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(controller: optAController, decoration: const InputDecoration(labelText: 'Opsi A')),
+                            TextField(controller: optBController, decoration: const InputDecoration(labelText: 'Opsi B')),
+                            TextField(controller: optCController, decoration: const InputDecoration(labelText: 'Opsi C')),
+                            TextField(controller: optDController, decoration: const InputDecoration(labelText: 'Opsi D')),
+                            const SizedBox(height: 12),
+                            DropdownButtonFormField<String>(
+                              value: selectedAnswer,
+                              decoration: const InputDecoration(labelText: 'Jawaban Benar'),
+                              items: const [
+                                DropdownMenuItem(value: 'A', child: Text('Opsi A')),
+                                DropdownMenuItem(value: 'B', child: Text('Opsi B')),
+                                DropdownMenuItem(value: 'C', child: Text('Opsi C')),
+                                DropdownMenuItem(value: 'D', child: Text('Opsi D')),
+                              ],
+                              onChanged: (val) => setDialogState(() => selectedAnswer = val!),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 12),
-                      ],
-                      DropdownButtonFormField<String>(
-                        value: selectedType,
-                        decoration: const InputDecoration(labelText: 'Tipe Kuis'),
-                        items: const [
-                          DropdownMenuItem(value: 'pre_test', child: Text('Pre-Test')),
-                          DropdownMenuItem(value: 'post_test', child: Text('Post-Test')),
-                        ],
-                        onChanged: (val) => setDialogState(() => selectedType = val!),
                       ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: qTextController,
-                        maxLines: 2,
-                        decoration: const InputDecoration(labelText: 'Pertanyaan', hintText: 'Ketik isi soal...'),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(controller: optAController, decoration: const InputDecoration(labelText: 'Opsi A')),
-                      TextField(controller: optBController, decoration: const InputDecoration(labelText: 'Opsi B')),
-                      TextField(controller: optCController, decoration: const InputDecoration(labelText: 'Opsi C')),
-                      TextField(controller: optDController, decoration: const InputDecoration(labelText: 'Opsi D')),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        value: selectedAnswer,
-                        decoration: const InputDecoration(labelText: 'Jawaban Benar'),
-                        items: const [
-                          DropdownMenuItem(value: 'A', child: Text('Opsi A')),
-                          DropdownMenuItem(value: 'B', child: Text('Opsi B')),
-                          DropdownMenuItem(value: 'C', child: Text('Opsi C')),
-                          DropdownMenuItem(value: 'D', child: Text('Opsi D')),
-                        ],
-                        onChanged: (val) => setDialogState(() => selectedAnswer = val!),
+                    ),
+              actions: isSaving
+                  ? null
+                  : [
+                      TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Batal')),
+                      ElevatedButton(
+                        onPressed: () async {
+                          if (qTextController.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(builderContext).showSnackBar(
+                              const SnackBar(content: Text('Pertanyaan tidak boleh kosong!'), backgroundColor: AppColors.danger),
+                            );
+                            return;
+                          }
+                          if (optAController.text.trim().isEmpty ||
+                              optBController.text.trim().isEmpty ||
+                              optCController.text.trim().isEmpty ||
+                              optDController.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(builderContext).showSnackBar(
+                              const SnackBar(content: Text('Semua Opsi (A, B, C, D) harus diisi!'), backgroundColor: AppColors.danger),
+                            );
+                            return;
+                          }
+
+                          setDialogState(() => isSaving = true);
+                          try {
+                            final materialService = ref.read(materialServiceProvider);
+                            final options = [
+                              optAController.text,
+                              optBController.text,
+                              optCController.text,
+                              optDController.text
+                            ];
+
+                            if (isEdit) {
+                              await materialService.updateQuestion(
+                                question.id,
+                                questionText: qTextController.text,
+                                options: options,
+                                correctAnswer: selectedAnswer,
+                              );
+                            } else {
+                              await materialService.createQuestion(
+                                materialId: widget.materialId,
+                                type: selectedType,
+                                questionText: qTextController.text,
+                                options: options,
+                                correctAnswer: selectedAnswer,
+                              );
+                            }
+                            if (builderContext.mounted) {
+                              Navigator.pop(dialogContext);
+                            }
+                            _loadData();
+                          } catch (e) {
+                            setDialogState(() => isSaving = false);
+                            if (builderContext.mounted) {
+                              ScaffoldMessenger.of(builderContext).showSnackBar(
+                                SnackBar(content: Text('Gagal menyimpan soal: $e'), backgroundColor: AppColors.danger),
+                              );
+                            }
+                          }
+                        },
+                        child: const Text('Simpan'),
                       ),
                     ],
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
-                ElevatedButton(
-                  onPressed: () async {
-                    Navigator.pop(context);
-                    setState(() => _isLoading = true);
-                    try {
-                      final materialService = ref.read(materialServiceProvider);
-                      final options = [
-                        optAController.text,
-                        optBController.text,
-                        optCController.text,
-                        optDController.text
-                      ];
-
-                      if (isEdit) {
-                        await materialService.updateQuestion(
-                          question.id,
-                          questionText: qTextController.text,
-                          options: options,
-                          correctAnswer: selectedAnswer,
-                        );
-                      } else {
-                        await materialService.createQuestion(
-                          materialId: widget.materialId,
-                          type: selectedType,
-                          questionText: qTextController.text,
-                          options: options,
-                          correctAnswer: selectedAnswer,
-                        );
-                      }
-                      _loadData();
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Gagal menyimpan soal: $e'), backgroundColor: AppColors.danger),
-                      );
-                      setState(() => _isLoading = false);
-                    }
-                  },
-                  child: const Text('Simpan'),
-                ),
-              ],
             );
           },
         );
@@ -384,13 +370,13 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
   Future<void> _handleDeleteQuestion(int questionId) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Hapus Soal'),
         content: const Text('Apakah Anda yakin ingin menghapus butir soal kuis ini?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Batal')),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(dialogContext, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.danger),
             child: const Text('Hapus'),
           ),
@@ -404,18 +390,106 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
     try {
       final materialService = ref.read(materialServiceProvider);
       await materialService.deleteQuestion(questionId);
-      _loadData();
+      if (mounted) {
+        _loadData();
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal menghapus soal: $e'), backgroundColor: AppColors.danger),
-      );
-      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menghapus soal: $e'), backgroundColor: AppColors.danger),
+        );
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   // ===========================================================================
   // LEARNING NODE FORM & ACTIONS
   // ===========================================================================
+  String _getDefaultPayload(String gameType) {
+    switch (gameType) {
+      case 'sorting':
+        return '''{
+  "categories": ["Toleran", "Intoleran"],
+  "items": [
+    {"id": "t1", "label": "Mengucapkan selamat hari raya keagamaan kepada teman.", "category": "Toleran"},
+    {"id": "i1", "label": "Mengganggu teman yang sedang beribadah.", "category": "Intoleran"}
+  ]
+}''';
+      case 'matching':
+        return '''{
+  "pairs": [
+    {"id": "p1", "left": "Toleransi", "right": "Sikap menghargai perbedaan keyakinan"},
+    {"id": "p2", "left": "Ekstremisme", "right": "Sikap fanatik yang memaksakan kehendak"}
+  ]
+}''';
+      case 'true_false_swipe':
+        return '''{
+  "statements": [
+    {"id": "s1", "text": "Negara Indonesia menjamin kebebasan beragama", "answer": true},
+    {"id": "s2", "text": "Toleransi beragama berarti ikut ritual ibadah agama lain", "answer": false}
+  ]
+}''';
+      case 'multiple_choice':
+        return '''{
+  "question": "Apa peran pecalang di Bali saat salat Idul Fitri?",
+  "options": [
+    {"id": "a", "label": "Melarang ibadah"},
+    {"id": "b", "label": "Menjaga keamanan sekitar masjid"},
+    {"id": "c", "label": "Ikut salat bersama"},
+    {"id": "d", "label": "Mengabaikan kegiatan"}
+  ],
+  "correct": "b"
+}''';
+      default:
+        return '';
+    }
+  }
+
+  void _showGamePayloadEditor({
+    required BuildContext context,
+    required String gameType,
+    required Map<String, dynamic> initialPayload,
+    required Function(Map<String, dynamic> updatedPayload) onSave,
+  }) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return GamePayloadEditorDialog(
+          gameType: gameType,
+          initialPayload: initialPayload,
+          onSave: onSave,
+        );
+      },
+    );
+  }
+
+  void _openVisualGameEditor(
+    BuildContext context,
+    String gameType,
+    TextEditingController payloadController,
+    StateSetter setDialogState,
+  ) {
+    Map<String, dynamic> initialPayload = {};
+    try {
+      if (payloadController.text.trim().isNotEmpty) {
+        initialPayload = jsonDecode(payloadController.text) as Map<String, dynamic>;
+      }
+    } catch (_) {}
+
+    _showGamePayloadEditor(
+      context: context,
+      gameType: gameType,
+      initialPayload: initialPayload,
+      onSave: (updatedPayload) {
+        setDialogState(() {
+          payloadController.text = const JsonEncoder.withIndent('  ').convert(updatedPayload);
+        });
+      },
+    );
+  }
+
   void _showNodeForm([LearningNode? node]) {
     final isEdit = node != null;
     final titleController = TextEditingController(text: node?.title ?? '');
@@ -440,158 +514,232 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
 
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
+        bool isSaving = false;
         return StatefulBuilder(
-          builder: (context, setDialogState) {
+          builder: (builderContext, setDialogState) {
             return AlertDialog(
               title: Text(isEdit ? 'Ubah Node Aktivitas' : 'Tambah Node Baru'),
-              content: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 550),
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (!isEdit && allTemplateNodes.isNotEmpty) ...[
-                        DropdownButtonFormField<Map<String, dynamic>>(
-                          decoration: const InputDecoration(
-                            labelText: 'Pilih dari Node Template (Opsional)',
-                            hintText: 'Pilih langkah yang sudah ada...',
-                          ),
-                          isExpanded: true,
-                          items: allTemplateNodes.map((n) {
-                            final nTitle = n['title']?.toString() ?? '';
-                            final type = n['node_type'] ?? 'content';
-                            final typeStr = type == 'challenge' ? 'Game: ${n['game_type']}' : (type == 'social_task' ? 'Aksi Sosial' : 'Konten');
-                            final shortTitle = nTitle.length > 35 ? '${nTitle.substring(0, 35)}...' : nTitle;
-                            return DropdownMenuItem<Map<String, dynamic>>(
-                              value: n,
-                              child: Text('[$typeStr] $shortTitle'),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            if (val != null) {
-                              setDialogState(() {
-                                titleController.text = val['title']?.toString() ?? '';
-                                bodyController.text = val['description']?.toString() ?? val['body']?.toString() ?? '';
-                                nodeType = val['node_type']?.toString() ?? 'content';
-                                gameType = val['game_type']?.toString();
-                                final pl = val['payload'];
-                                if (pl != null) {
-                                  payloadController.text = const JsonEncoder.withIndent('  ').convert(pl);
-                                } else {
-                                  payloadController.text = '';
-                                }
-                              });
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      DropdownButtonFormField<String>(
-                        value: nodeType,
-                        decoration: const InputDecoration(labelText: 'Tipe Node'),
-                        items: const [
-                          DropdownMenuItem(value: 'content', child: Text('Konten (E-Book/Penjelasan)')),
-                          DropdownMenuItem(value: 'challenge', child: Text('Tantangan (Mini-Game)')),
-                          DropdownMenuItem(value: 'social_task', child: Text('Tantangan Sosial (Aksi Real)')),
-                        ],
-                        onChanged: (val) {
-                          setDialogState(() {
-                            nodeType = val!;
-                            if (nodeType != 'challenge') gameType = null;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: titleController,
-                        decoration: const InputDecoration(labelText: 'Judul Aktivitas'),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: bodyController,
-                        maxLines: 3,
-                        decoration: const InputDecoration(labelText: 'Isi/Deskripsi Teks'),
-                      ),
-                      if (nodeType == 'challenge') ...[
-                        const SizedBox(height: 12),
-                        DropdownButtonFormField<String>(
-                          value: gameType,
-                          decoration: const InputDecoration(labelText: 'Jenis Game'),
-                          items: const [
-                            DropdownMenuItem(value: 'sorting', child: Text('Sorting Game')),
-                            DropdownMenuItem(value: 'matching', child: Text('Matching Game')),
-                            DropdownMenuItem(value: 'true_false_swipe', child: Text('True/False Swipe')),
-                            DropdownMenuItem(value: 'multiple_choice', child: Text('Multiple Choice')),
+              content: isSaving
+                  ? const SizedBox(
+                      height: 150,
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  : ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 550),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (!isEdit && allTemplateNodes.isNotEmpty) ...[
+                              DropdownButtonFormField<Map<String, dynamic>>(
+                                decoration: const InputDecoration(
+                                  labelText: 'Pilih dari Node Template (Opsional)',
+                                  hintText: 'Pilih langkah yang sudah ada...',
+                                ),
+                                isExpanded: true,
+                                items: allTemplateNodes.map((n) {
+                                  final nTitle = n['title']?.toString() ?? '';
+                                  final type = n['node_type'] ?? 'content';
+                                  final typeStr = type == 'challenge' ? 'Game: ${n['game_type']}' : (type == 'social_task' ? 'Aksi Sosial' : 'Konten');
+                                  final shortTitle = nTitle.length > 35 ? '${nTitle.substring(0, 35)}...' : nTitle;
+                                  return DropdownMenuItem<Map<String, dynamic>>(
+                                    value: n,
+                                    child: Text('[$typeStr] $shortTitle'),
+                                  );
+                                }).toList(),
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    setDialogState(() {
+                                      titleController.text = val['title']?.toString() ?? '';
+                                      bodyController.text = val['description']?.toString() ?? val['body']?.toString() ?? '';
+                                      nodeType = val['node_type']?.toString() ?? 'content';
+                                      gameType = val['game_type']?.toString();
+                                      final pl = val['payload'];
+                                      if (pl != null) {
+                                        payloadController.text = const JsonEncoder.withIndent('  ').convert(pl);
+                                      } else {
+                                        payloadController.text = '';
+                                      }
+                                    });
+                                  }
+                                },
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                            DropdownButtonFormField<String>(
+                              value: nodeType,
+                              decoration: const InputDecoration(labelText: 'Tipe Node'),
+                              items: const [
+                                DropdownMenuItem(value: 'content', child: Text('Konten (E-Book/Penjelasan)')),
+                                DropdownMenuItem(value: 'challenge', child: Text('Tantangan (Mini-Game)')),
+                                DropdownMenuItem(value: 'social_task', child: Text('Tantangan Sosial (Aksi Real)')),
+                              ],
+                              onChanged: (val) {
+                                setDialogState(() {
+                                  nodeType = val!;
+                                  if (nodeType != 'challenge') {
+                                    gameType = null;
+                                  } else {
+                                    if (gameType == null) {
+                                      gameType = 'multiple_choice';
+                                      if (payloadController.text.trim().isEmpty) {
+                                        payloadController.text = _getDefaultPayload('multiple_choice');
+                                      }
+                                    }
+                                    Future.delayed(Duration.zero, () {
+                                      if (builderContext.mounted) {
+                                        _openVisualGameEditor(builderContext, gameType!, payloadController, setDialogState);
+                                      }
+                                    });
+                                  }
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: titleController,
+                              decoration: const InputDecoration(labelText: 'Judul Aktivitas'),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: bodyController,
+                              maxLines: 3,
+                              decoration: const InputDecoration(labelText: 'Isi/Deskripsi Teks'),
+                            ),
+                            if (nodeType == 'challenge') ...[
+                              const SizedBox(height: 12),
+                              DropdownButtonFormField<String>(
+                                value: gameType,
+                                decoration: const InputDecoration(labelText: 'Jenis Game'),
+                                items: const [
+                                  DropdownMenuItem(value: 'sorting', child: Text('Sorting Game')),
+                                  DropdownMenuItem(value: 'matching', child: Text('Matching Game')),
+                                  DropdownMenuItem(value: 'true_false_swipe', child: Text('True/False Swipe')),
+                                  DropdownMenuItem(value: 'multiple_choice', child: Text('Multiple Choice')),
+                                ],
+                                onChanged: (val) {
+                                  setDialogState(() {
+                                    final isTypeChanged = gameType != val;
+                                    gameType = val;
+                                    if (val != null) {
+                                      if (isTypeChanged) {
+                                        payloadController.text = _getDefaultPayload(val);
+                                      }
+                                      Future.delayed(Duration.zero, () {
+                                        if (builderContext.mounted) {
+                                          _openVisualGameEditor(builderContext, val, payloadController, setDialogState);
+                                        }
+                                      });
+                                    }
+                                  });
+                                },
+                              ),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: () => _openVisualGameEditor(builderContext, gameType!, payloadController, setDialogState),
+                                  icon: const Icon(Icons.edit_note),
+                                  label: const Text('Edit Konten & Soal Game (Visual)'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.orange.shade800,
+                                    foregroundColor: Colors.white,
+                                    minimumSize: const Size(0, 48),
+                                  ),
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 12),
+                            ExpansionTile(
+                              title: const Text('Lanjutan: Edit JSON Langsung (Optional)', style: TextStyle(fontSize: 12)),
+                              children: [
+                                TextField(
+                                  controller: payloadController,
+                                  maxLines: 5,
+                                  style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                                  decoration: const InputDecoration(
+                                    labelText: 'Payload Data (JSON Format)',
+                                    hintText: '{\n  "items": [...]\n}',
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
-                          onChanged: (val) => setDialogState(() => gameType = val),
                         ),
-                      ],
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: payloadController,
-                        maxLines: 5,
-                        style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-                        decoration: const InputDecoration(
-                          labelText: 'Payload Data (JSON Format)',
-                          hintText: '{\n  "items": [...]\n}',
-                        ),
+                      ),
+                    ),
+              actions: isSaving
+                  ? null
+                  : [
+                      TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Batal')),
+                      ElevatedButton(
+                        onPressed: () async {
+                          if (titleController.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(builderContext).showSnackBar(
+                              const SnackBar(content: Text('Judul Aktivitas tidak boleh kosong!'), backgroundColor: AppColors.danger),
+                            );
+                            return;
+                          }
+                          if (nodeType == 'challenge' && gameType == null) {
+                            ScaffoldMessenger.of(builderContext).showSnackBar(
+                              const SnackBar(content: Text('Pilih Jenis Game terlebih dahulu!'), backgroundColor: AppColors.danger),
+                            );
+                            return;
+                          }
+
+                          Map<String, dynamic>? jsonPayload;
+                          if (payloadController.text.trim().isNotEmpty) {
+                            try {
+                              jsonPayload = jsonDecode(payloadController.text) as Map<String, dynamic>;
+                            } catch (e) {
+                              ScaffoldMessenger.of(builderContext).showSnackBar(
+                                const SnackBar(content: Text('Format Payload JSON tidak valid!'), backgroundColor: AppColors.danger),
+                              );
+                              return;
+                            }
+                          }
+
+                          setDialogState(() => isSaving = true);
+                          try {
+                            final materialService = ref.read(materialServiceProvider);
+
+                            if (isEdit) {
+                              await materialService.updateLearningNode(
+                                node.id,
+                                nodeType: nodeType,
+                                title: titleController.text,
+                                body: bodyController.text,
+                                gameType: gameType,
+                                payload: jsonPayload,
+                              );
+                            } else {
+                              await materialService.createLearningNode(
+                                materialId: widget.materialId,
+                                nodeType: nodeType,
+                                title: titleController.text,
+                                body: bodyController.text,
+                                gameType: gameType,
+                                payload: jsonPayload,
+                                orderIndex: _nodes.length + 1,
+                              );
+                            }
+                            if (builderContext.mounted) {
+                              Navigator.pop(dialogContext);
+                            }
+                            _loadData();
+                          } catch (e) {
+                            setDialogState(() => isSaving = false);
+                            if (builderContext.mounted) {
+                              ScaffoldMessenger.of(builderContext).showSnackBar(
+                                SnackBar(content: Text('Gagal menyimpan node: $e'), backgroundColor: AppColors.danger),
+                              );
+                            }
+                          }
+                        },
+                        child: const Text('Simpan'),
                       ),
                     ],
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
-                ElevatedButton(
-                  onPressed: () async {
-                    Map<String, dynamic>? jsonPayload;
-                    if (payloadController.text.trim().isNotEmpty) {
-                      try {
-                        jsonPayload = jsonDecode(payloadController.text) as Map<String, dynamic>;
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Format Payload JSON tidak valid!'), backgroundColor: AppColors.danger),
-                        );
-                        return;
-                      }
-                    }
-
-                    Navigator.pop(context);
-                    setState(() => _isLoading = true);
-                    try {
-                      final materialService = ref.read(materialServiceProvider);
-
-                      if (isEdit) {
-                        await materialService.updateLearningNode(
-                          node.id,
-                          title: titleController.text,
-                          body: bodyController.text,
-                          gameType: gameType,
-                          payload: jsonPayload,
-                        );
-                      } else {
-                        await materialService.createLearningNode(
-                          materialId: widget.materialId,
-                          nodeType: nodeType,
-                          title: titleController.text,
-                          body: bodyController.text,
-                          gameType: gameType,
-                          payload: jsonPayload,
-                          orderIndex: _nodes.length + 1,
-                        );
-                      }
-                      _loadData();
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Gagal menyimpan node: $e'), backgroundColor: AppColors.danger),
-                      );
-                      setState(() => _isLoading = false);
-                    }
-                  },
-                  child: const Text('Simpan'),
-                ),
-              ],
             );
           },
         );
@@ -602,13 +750,13 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
   Future<void> _handleDeleteNode(int nodeId) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Hapus Node'),
         content: const Text('Apakah Anda yakin ingin menghapus kotak langkah aktivitas ini?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Batal')),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(dialogContext, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.danger),
             child: const Text('Hapus'),
           ),
@@ -622,12 +770,16 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
     try {
       final materialService = ref.read(materialServiceProvider);
       await materialService.deleteLearningNode(nodeId);
-      _loadData();
+      if (mounted) {
+        _loadData();
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal menghapus node: $e'), backgroundColor: AppColors.danger),
-      );
-      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menghapus node: $e'), backgroundColor: AppColors.danger),
+        );
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -808,7 +960,11 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
                   onPressed: () => _pickFile(true),
                   icon: const Icon(Icons.picture_as_pdf),
                   label: const Text('Pilih PDF'),
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.surfaceVariant, foregroundColor: AppColors.textPrimary),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.surfaceVariant,
+                    foregroundColor: AppColors.textPrimary,
+                    minimumSize: const Size(0, 48),
+                  ),
                 ),
               ],
             ),
@@ -827,7 +983,11 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
                   onPressed: () => _pickFile(false),
                   icon: const Icon(Icons.audiotrack),
                   label: const Text('Pilih Audio'),
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.surfaceVariant, foregroundColor: AppColors.textPrimary),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.surfaceVariant,
+                    foregroundColor: AppColors.textPrimary,
+                    minimumSize: const Size(0, 48),
+                  ),
                 ),
               ],
             ),
@@ -847,8 +1007,8 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
   }
 
   Widget _buildQuestionsTab() {
-    final preTestQs = _questions.where((q) => q.type == 'pre_test').toList();
-    final postTestQs = _questions.where((q) => q.type == 'post_test').toList();
+    final preTestQs = _questions.where((q) => q.type == 'pre_test' || q.type == 'pre').toList();
+    final postTestQs = _questions.where((q) => q.type == 'post_test' || q.type == 'post').toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -863,6 +1023,7 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
                 onPressed: () => _showQuestionForm(),
                 icon: const Icon(Icons.add),
                 label: const Text('Tambah Soal'),
+                style: ElevatedButton.styleFrom(minimumSize: const Size(0, 48)),
               ),
             ],
           ),
@@ -956,6 +1117,7 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
                 onPressed: () => _showNodeForm(),
                 icon: const Icon(Icons.add),
                 label: const Text('Tambah Langkah'),
+                style: ElevatedButton.styleFrom(minimumSize: const Size(0, 48)),
               ),
             ],
           ),
@@ -1040,6 +1202,564 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
           ],
         ),
       ),
+    );
+  }
+}
+
+class GamePayloadEditorDialog extends StatefulWidget {
+  final String gameType;
+  final Map<String, dynamic> initialPayload;
+  final Function(Map<String, dynamic> updatedPayload) onSave;
+
+  const GamePayloadEditorDialog({
+    super.key,
+    required this.gameType,
+    required this.initialPayload,
+    required this.onSave,
+  });
+
+  @override
+  State<GamePayloadEditorDialog> createState() => _GamePayloadEditorDialogState();
+}
+
+class _GamePayloadEditorDialogState extends State<GamePayloadEditorDialog> {
+  final _formKey = GlobalKey<FormState>();
+
+  // MCQ controllers
+  late final TextEditingController _mcqQuestionController;
+  late final TextEditingController _mcqOptAController;
+  late final TextEditingController _mcqOptBController;
+  late final TextEditingController _mcqOptCController;
+  late final TextEditingController _mcqOptDController;
+  late String _mcqCorrect;
+
+  // Sorting controllers
+  late final TextEditingController _sortCat1Controller;
+  late final TextEditingController _sortCat2Controller;
+  final List<Map<String, dynamic>> _sortItems = [];
+
+  // Matching controllers
+  final List<Map<String, dynamic>> _matchPairs = [];
+
+  // True/False controllers
+  final List<Map<String, dynamic>> _tfStatements = [];
+
+  @override
+  void initState() {
+    super.initState();
+
+    _mcqQuestionController = TextEditingController();
+    _mcqOptAController = TextEditingController();
+    _mcqOptBController = TextEditingController();
+    _mcqOptCController = TextEditingController();
+    _mcqOptDController = TextEditingController();
+    _mcqCorrect = 'a';
+
+    _sortCat1Controller = TextEditingController(text: 'Toleran');
+    _sortCat2Controller = TextEditingController(text: 'Intoleran');
+
+    _populateData();
+  }
+
+  void _populateData() {
+    final gameType = widget.gameType;
+    final initialPayload = widget.initialPayload;
+
+    if (gameType == 'multiple_choice') {
+      _mcqQuestionController.text = initialPayload['question']?.toString() ?? '';
+      final opts = initialPayload['options'] as List?;
+      if (opts != null) {
+        for (var o in opts) {
+          if (o is Map) {
+            final id = o['id']?.toString().toLowerCase();
+            final label = o['label']?.toString() ?? '';
+            if (id == 'a') _mcqOptAController.text = label;
+            if (id == 'b') _mcqOptBController.text = label;
+            if (id == 'c') _mcqOptCController.text = label;
+            if (id == 'd') _mcqOptDController.text = label;
+          }
+        }
+      }
+      _mcqCorrect = initialPayload['correct']?.toString().toLowerCase() ?? 'a';
+      if (!['a', 'b', 'c', 'd'].contains(_mcqCorrect)) {
+        _mcqCorrect = 'a';
+      }
+    } else if (gameType == 'sorting') {
+      final cats = initialPayload['categories'] as List?;
+      if (cats != null && cats.length >= 2) {
+        _sortCat1Controller.text = cats[0].toString();
+        _sortCat2Controller.text = cats[1].toString();
+      }
+      final items = initialPayload['items'] as List?;
+      if (items != null) {
+        for (var it in items) {
+          if (it is Map) {
+            _sortItems.add({
+              'controller': TextEditingController(text: it['label']?.toString() ?? ''),
+              'category': it['category']?.toString() ?? _sortCat1Controller.text,
+            });
+          }
+        }
+      }
+      if (_sortItems.isEmpty) {
+        _sortItems.add({
+          'controller': TextEditingController(),
+          'category': _sortCat1Controller.text,
+        });
+      }
+    } else if (gameType == 'matching') {
+      final pairs = initialPayload['pairs'] as List?;
+      if (pairs != null) {
+        for (var p in pairs) {
+          if (p is Map) {
+            _matchPairs.add({
+              'left': TextEditingController(text: p['left']?.toString() ?? ''),
+              'right': TextEditingController(text: p['right']?.toString() ?? ''),
+            });
+          }
+        }
+      }
+      if (_matchPairs.isEmpty) {
+        _matchPairs.add({
+          'left': TextEditingController(),
+          'right': TextEditingController(),
+        });
+      }
+    } else if (gameType == 'true_false_swipe') {
+      final stmts = initialPayload['statements'] as List?;
+      if (stmts != null) {
+        for (var s in stmts) {
+          if (s is Map) {
+            _tfStatements.add({
+              'text': TextEditingController(text: s['text']?.toString() ?? ''),
+              'answer': s['answer'] is bool ? s['answer'] as bool : true,
+            });
+          }
+        }
+      }
+      if (_tfStatements.isEmpty) {
+        _tfStatements.add({
+          'text': TextEditingController(),
+          'answer': true,
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _mcqQuestionController.dispose();
+    _mcqOptAController.dispose();
+    _mcqOptBController.dispose();
+    _mcqOptCController.dispose();
+    _mcqOptDController.dispose();
+
+    _sortCat1Controller.dispose();
+    _sortCat2Controller.dispose();
+
+    for (var it in _sortItems) {
+      (it['controller'] as TextEditingController).dispose();
+    }
+    for (var p in _matchPairs) {
+      (p['left'] as TextEditingController).dispose();
+      (p['right'] as TextEditingController).dispose();
+    }
+    for (var s in _tfStatements) {
+      (s['text'] as TextEditingController).dispose();
+    }
+
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final gameType = widget.gameType;
+    String gameTypeTitle = 'Edit Game';
+    if (gameType == 'multiple_choice') gameTypeTitle = 'Multiple Choice';
+    if (gameType == 'sorting') gameTypeTitle = 'Sorting Game';
+    if (gameType == 'matching') gameTypeTitle = 'Matching Game';
+    if (gameType == 'true_false_swipe') gameTypeTitle = 'True/False Swipe';
+
+    Widget editorWidget = Container();
+
+    if (gameType == 'multiple_choice') {
+      editorWidget = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextFormField(
+            controller: _mcqQuestionController,
+            decoration: const InputDecoration(labelText: 'Teks Pertanyaan', hintText: 'Masukkan pertanyaan game...'),
+            validator: (v) => v == null || v.trim().isEmpty ? 'Pertanyaan tidak boleh kosong' : null,
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _mcqOptAController,
+            decoration: const InputDecoration(labelText: 'Pilihan A'),
+            validator: (v) => v == null || v.trim().isEmpty ? 'Pilihan A tidak boleh kosong' : null,
+          ),
+          TextFormField(
+            controller: _mcqOptBController,
+            decoration: const InputDecoration(labelText: 'Pilihan B'),
+            validator: (v) => v == null || v.trim().isEmpty ? 'Pilihan B tidak boleh kosong' : null,
+          ),
+          TextFormField(
+            controller: _mcqOptCController,
+            decoration: const InputDecoration(labelText: 'Pilihan C'),
+            validator: (v) => v == null || v.trim().isEmpty ? 'Pilihan C tidak boleh kosong' : null,
+          ),
+          TextFormField(
+            controller: _mcqOptDController,
+            decoration: const InputDecoration(labelText: 'Pilihan D'),
+            validator: (v) => v == null || v.trim().isEmpty ? 'Pilihan D tidak boleh kosong' : null,
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            value: _mcqCorrect,
+            decoration: const InputDecoration(labelText: 'Jawaban Benar'),
+            items: const [
+              DropdownMenuItem(value: 'a', child: Text('Opsi A')),
+              DropdownMenuItem(value: 'b', child: Text('Opsi B')),
+              DropdownMenuItem(value: 'c', child: Text('Opsi C')),
+              DropdownMenuItem(value: 'd', child: Text('Opsi D')),
+            ],
+            onChanged: (val) {
+              if (val != null) {
+                setState(() => _mcqCorrect = val);
+              }
+            },
+          ),
+        ],
+      );
+    } else if (gameType == 'sorting') {
+      editorWidget = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _sortCat1Controller,
+                  decoration: const InputDecoration(labelText: 'Kategori 1'),
+                  validator: (v) => v == null || v.trim().isEmpty ? 'Kategori wajib diisi' : null,
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextFormField(
+                  controller: _sortCat2Controller,
+                  decoration: const InputDecoration(labelText: 'Kategori 2'),
+                  validator: (v) => v == null || v.trim().isEmpty ? 'Kategori wajib diisi' : null,
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Text('Daftar Item & Kategori yang Benar:', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          ..._sortItems.asMap().entries.map((entry) {
+            final idx = entry.key;
+            final item = entry.value;
+            final controller = item['controller'] as TextEditingController;
+            String selectedCategory = item['category'] as String;
+
+            final cat1Text = _sortCat1Controller.text.trim();
+            final cat2Text = _sortCat2Controller.text.trim();
+
+            final catOptions = [
+              if (cat1Text.isNotEmpty) cat1Text else 'Kategori 1',
+              if (cat2Text.isNotEmpty) cat2Text else 'Kategori 2',
+            ];
+
+            if (!catOptions.contains(selectedCategory) && catOptions.isNotEmpty) {
+              selectedCategory = catOptions.first;
+              item['category'] = selectedCategory;
+            }
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: TextFormField(
+                      controller: controller,
+                      decoration: InputDecoration(
+                        labelText: 'Item #${idx + 1}',
+                        hintText: 'Teks tindakan/perilaku...',
+                      ),
+                      validator: (v) => v == null || v.trim().isEmpty ? 'Item wajib diisi' : null,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: DropdownButtonFormField<String>(
+                      value: selectedCategory,
+                      isExpanded: true,
+                      items: catOptions.map((c) => DropdownMenuItem(value: c, child: Text(c, overflow: TextOverflow.ellipsis))).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() {
+                            item['category'] = val;
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+                    onPressed: () {
+                      setState(() {
+                        final it = _sortItems.removeAt(idx);
+                        (it['controller'] as TextEditingController).dispose();
+                      });
+                    },
+                  ),
+                ],
+              ),
+            );
+          }),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _sortItems.add({
+                    'controller': TextEditingController(),
+                    'category': _sortCat1Controller.text,
+                  });
+                });
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Tambah Item Baru'),
+            ),
+          ),
+        ],
+      );
+    } else if (gameType == 'matching') {
+      editorWidget = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Daftar Pasangan yang Benar:', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          ..._matchPairs.asMap().entries.map((entry) {
+            final idx = entry.key;
+            final pair = entry.value;
+            final leftController = pair['left'] as TextEditingController;
+            final rightController = pair['right'] as TextEditingController;
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: leftController,
+                      decoration: InputDecoration(
+                        labelText: 'Kiri #${idx + 1}',
+                        hintText: 'Contoh: Toleransi',
+                      ),
+                      validator: (v) => v == null || v.trim().isEmpty ? 'Sisi kiri wajib diisi' : null,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextFormField(
+                      controller: rightController,
+                      decoration: InputDecoration(
+                        labelText: 'Kanan #${idx + 1}',
+                        hintText: 'Contoh: Saling menghormati',
+                      ),
+                      validator: (v) => v == null || v.trim().isEmpty ? 'Sisi kanan wajib diisi' : null,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+                    onPressed: () {
+                      setState(() {
+                        final p = _matchPairs.removeAt(idx);
+                        (p['left'] as TextEditingController).dispose();
+                        (p['right'] as TextEditingController).dispose();
+                      });
+                    },
+                  ),
+                ],
+              ),
+            );
+          }),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _matchPairs.add({
+                    'left': TextEditingController(),
+                    'right': TextEditingController(),
+                  });
+                });
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Tambah Pasangan Baru'),
+            ),
+          ),
+        ],
+      );
+    } else if (gameType == 'true_false_swipe') {
+      editorWidget = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Daftar Pernyataan & Kebenaran:', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          ..._tfStatements.asMap().entries.map((entry) {
+            final idx = entry.key;
+            final stmt = entry.value;
+            final textController = stmt['text'] as TextEditingController;
+            final answer = stmt['answer'] as bool;
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: TextFormField(
+                      controller: textController,
+                      decoration: InputDecoration(
+                        labelText: 'Pernyataan #${idx + 1}',
+                        hintText: 'Ketik pernyataan...',
+                      ),
+                      validator: (v) => v == null || v.trim().isEmpty ? 'Pernyataan wajib diisi' : null,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Row(
+                    children: [
+                      Text(answer ? 'Benar' : 'Salah', style: TextStyle(color: answer ? AppColors.success : AppColors.danger, fontWeight: FontWeight.bold, fontSize: 13)),
+                      Switch(
+                        value: answer,
+                        activeColor: AppColors.success,
+                        inactiveThumbColor: AppColors.danger,
+                        onChanged: (val) {
+                          setState(() {
+                            stmt['answer'] = val;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+                    onPressed: () {
+                      setState(() {
+                        final s = _tfStatements.removeAt(idx);
+                        (s['text'] as TextEditingController).dispose();
+                      });
+                    },
+                  ),
+                ],
+              ),
+            );
+          }),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _tfStatements.add({
+                    'text': TextEditingController(),
+                    'answer': true,
+                  });
+                });
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Tambah Pernyataan Baru'),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return AlertDialog(
+      title: Text('Edit Isi Game: $gameTypeTitle'),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 600),
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: editorWidget,
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            if (!_formKey.currentState!.validate()) return;
+
+            final updatedPayload = <String, dynamic>{};
+
+            if (gameType == 'multiple_choice') {
+              updatedPayload['question'] = _mcqQuestionController.text.trim();
+              updatedPayload['options'] = [
+                {'id': 'a', 'label': _mcqOptAController.text.trim()},
+                {'id': 'b', 'label': _mcqOptBController.text.trim()},
+                {'id': 'c', 'label': _mcqOptCController.text.trim()},
+                {'id': 'd', 'label': _mcqOptDController.text.trim()},
+              ];
+              updatedPayload['correct'] = _mcqCorrect;
+            } else if (gameType == 'sorting') {
+              updatedPayload['categories'] = [
+                _sortCat1Controller.text.trim(),
+                _sortCat2Controller.text.trim(),
+              ];
+              updatedPayload['items'] = _sortItems.asMap().entries.map((entry) {
+                final idx = entry.key;
+                final item = entry.value;
+                final controller = item['controller'] as TextEditingController;
+                final cat = item['category'] as String;
+                return {
+                  'id': 'item_$idx',
+                  'label': controller.text.trim(),
+                  'category': cat,
+                };
+              }).toList();
+            } else if (gameType == 'matching') {
+              updatedPayload['pairs'] = _matchPairs.asMap().entries.map((entry) {
+                final idx = entry.key;
+                final pair = entry.value;
+                final left = (pair['left'] as TextEditingController).text.trim();
+                final right = (pair['right'] as TextEditingController).text.trim();
+                return {
+                  'id': 'pair_$idx',
+                  'left': left,
+                  'right': right,
+                };
+              }).toList();
+            } else if (gameType == 'true_false_swipe') {
+              updatedPayload['statements'] = _tfStatements.asMap().entries.map((entry) {
+                final idx = entry.key;
+                final stmt = entry.value;
+                final text = (stmt['text'] as TextEditingController).text.trim();
+                final ans = stmt['answer'] as bool;
+                return {
+                  'id': 'stmt_$idx',
+                  'text': text,
+                  'answer': ans,
+                };
+              }).toList();
+            }
+
+            widget.onSave(updatedPayload);
+            Navigator.pop(context);
+          },
+          child: const Text('Simpan'),
+        ),
+      ],
     );
   }
 }

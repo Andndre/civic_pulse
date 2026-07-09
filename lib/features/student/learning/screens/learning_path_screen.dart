@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/constants.dart';
+import '../../../../core/network/network.dart';
 import '../../../../shared/services/services.dart';
 import '../providers/material_provider.dart';
 import '../widgets/challenge_games/content_card.dart';
@@ -709,30 +710,77 @@ class _LearningBoardStepState extends ConsumerState<_LearningBoardStep> {
     if (!node.isSocialTask) {
       setState(() => _isSubmitting = true);
       try {
+        bool? isCorrect;
+        if (node.nodeType == 'challenge') {
+          isCorrect = false; // default
+          if (node.gameType == 'multiple_choice') {
+            final correctAnswer = node.payload?['correct']?.toString();
+            final selectedAnswer = answer['selected']?.toString();
+            isCorrect = selectedAnswer != null && selectedAnswer == correctAnswer;
+          } else if (node.gameType == 'true_false_swipe') {
+            final payload = node.payload ?? {};
+            final rawStatements = payload['statements'];
+            final totalStatements = rawStatements is List ? rawStatements.length : 0;
+            final correctCount = answer['correct'] as int? ?? 0;
+            isCorrect = totalStatements > 0 && correctCount == totalStatements;
+          } else if (node.gameType == 'sorting') {
+            final payload = node.payload ?? {};
+            final rawItems = payload['items'];
+            final totalItems = rawItems is List ? rawItems.length : 0;
+            final correctCount = answer['correct'] as int? ?? 0;
+            isCorrect = totalItems > 0 && correctCount == totalItems;
+          } else if (node.gameType == 'matching') {
+            final payload = node.payload ?? {};
+            final rawPairs = payload['pairs'];
+            if (rawPairs is List) {
+              final correctMap = {
+                for (final p in rawPairs)
+                  if (p is Map && p['left'] != null && p['right'] != null)
+                    p['left'].toString(): p['right'].toString()
+              };
+              final userMatches = answer['matches'];
+              if (userMatches is Map) {
+                isCorrect = correctMap.isNotEmpty &&
+                    correctMap.entries.every((e) => userMatches[e.key]?.toString() == e.value);
+              }
+            }
+          }
+        }
+
         await ref.read(completeNodeProvider.notifier).complete(
           materialId: widget.material.id,
           nodeId: node.id,
           submittedAnswer: answer,
+          isCorrect: isCorrect,
         );
+
+        if (!mounted) return;
+
+        // Only advance if successfully completed
+        if (index < nodes.length - 1) {
+          setState(() => _currentNodeIndex = index + 1);
+        } else {
+          // All nodes done → go to Post-Test
+          widget.onComplete();
+        }
       } catch (e) {
         if (mounted) {
+          final errorMessage = e is ApiException ? e.message : e.toString();
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Gagal menyimpan: $e'),
+            content: Text('Gagal menyimpan: $errorMessage'),
             backgroundColor: AppColors.danger,
           ));
         }
       } finally {
         if (mounted) setState(() => _isSubmitting = false);
       }
-    }
-
-    if (!mounted) return;
-
-    if (index < nodes.length - 1) {
-      setState(() => _currentNodeIndex = index + 1);
     } else {
-      // All nodes done → go to Post-Test
-      widget.onComplete();
+      // For social task fallback or other nodes
+      if (index < nodes.length - 1) {
+        setState(() => _currentNodeIndex = index + 1);
+      } else {
+        widget.onComplete();
+      }
     }
   }
 }
@@ -784,9 +832,19 @@ class _SocialTaskCardState extends ConsumerState<_SocialTaskCard> {
   }
 
   Future<void> _submit() async {
-    if (_captionController.text.trim().isEmpty) {
+    final captionText = _captionController.text.trim();
+    if (captionText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tulis cerita singkat terlebih dahulu')),
+      );
+      return;
+    }
+    if (captionText.length < 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tulis cerita singkat minimal 10 karakter'),
+          backgroundColor: AppColors.danger,
+        ),
       );
       return;
     }
@@ -795,7 +853,7 @@ class _SocialTaskCardState extends ConsumerState<_SocialTaskCard> {
       await ref.read(materialServiceProvider).submitSocialTask(
         materialId: widget.material.id,
         nodeId: widget.node.id,
-        caption: _captionController.text.trim(),
+        caption: captionText,
         photoPath: _photoPath,
       );
       setState(() {
@@ -805,8 +863,9 @@ class _SocialTaskCardState extends ConsumerState<_SocialTaskCard> {
     } catch (e) {
       setState(() => _isSubmitting = false);
       if (mounted) {
+        final errorMessage = e is ApiException ? e.message : e.toString();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal mengirim: $e'), backgroundColor: AppColors.danger),
+          SnackBar(content: Text('Gagal mengirim: $errorMessage'), backgroundColor: AppColors.danger),
         );
       }
     }

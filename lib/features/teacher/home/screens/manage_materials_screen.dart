@@ -370,6 +370,7 @@ class _ManageMaterialsScreenState extends ConsumerState<ManageMaterialsScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.surfaceVariant,
                     foregroundColor: AppColors.textPrimary,
+                    minimumSize: const Size(0, 48),
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: AppRadius.radiusMd),
                   ),
@@ -385,6 +386,7 @@ class _ManageMaterialsScreenState extends ConsumerState<ManageMaterialsScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: AppColors.textOnPrimary,
+                    minimumSize: const Size(0, 48),
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: AppRadius.radiusMd),
                   ),
@@ -529,6 +531,7 @@ class _ManageMaterialsScreenState extends ConsumerState<ManageMaterialsScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.surfaceVariant,
                     foregroundColor: AppColors.textPrimary,
+                    minimumSize: const Size(0, 48),
                     shape: RoundedRectangleBorder(borderRadius: AppRadius.radiusMd),
                   ),
                   child: const Text('Ubah / Detail'),

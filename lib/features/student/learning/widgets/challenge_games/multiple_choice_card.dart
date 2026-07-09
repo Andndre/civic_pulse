@@ -27,12 +27,16 @@ class _MultipleChoiceCardState extends State<MultipleChoiceCard> {
     final payload = widget.node.payload ?? {};
     final raw = payload['options'];
     if (raw is List) {
-      return raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      return raw
+          .where((e) => e is Map)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .where((e) => e['id'] != null && e['label'] != null)
+          .toList();
     }
     return [];
   }
 
-  String? get _correct => widget.node.payload?['correct'] as String?;
+  String? get _correct => widget.node.payload?['correct']?.toString();
 
   @override
   Widget build(BuildContext context) {
@@ -98,8 +102,8 @@ class _MultipleChoiceCardState extends State<MultipleChoiceCard> {
   }
 
   Widget _buildOption(Map<String, dynamic> opt) {
-    final id = opt['id'] as String? ?? '';
-    final label = opt['label'] as String? ?? '';
+    final id = opt['id']?.toString() ?? '';
+    final label = opt['label']?.toString() ?? '';
     final isSelected = _selected == id;
     final isCorrect = _correct == id;
 

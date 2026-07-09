@@ -33,7 +33,13 @@ class _TrueFalseSwipeCardState extends State<TrueFalseSwipeCard> {
   List<Map<String, dynamic>> get _statements {
     final payload = widget.node.payload ?? {};
     final raw = payload['statements'];
-    if (raw is List) return raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    if (raw is List) {
+      return raw
+          .where((e) => e is Map)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .where((e) => e['id'] != null)
+          .toList();
+    }
     return [];
   }
 
@@ -42,7 +48,7 @@ class _TrueFalseSwipeCardState extends State<TrueFalseSwipeCard> {
     if (_currentIndex >= statements.length) return;
 
     final stmt = statements[_currentIndex];
-    final id = stmt['id'] as String;
+    final id = stmt['id']?.toString() ?? '';
     final correct = stmt['answer'] as bool? ?? false;
     final isCorrect = userAnswer == correct;
 
@@ -70,7 +76,7 @@ class _TrueFalseSwipeCardState extends State<TrueFalseSwipeCard> {
     final stmts = _statements;
     int count = 0;
     for (final s in stmts) {
-      final id = s['id'] as String;
+      final id = s['id']?.toString() ?? '';
       final correct = s['answer'] as bool? ?? false;
       if (_answers[id] == correct) count++;
     }

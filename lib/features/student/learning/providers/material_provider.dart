@@ -76,6 +76,8 @@ class CompleteNodeNotifier extends AsyncNotifier<NodeCompleteResult?> {
     required int materialId,
     required int nodeId,
     required Map<String, dynamic> submittedAnswer,
+    bool? isCorrect,
+    int? score,
   }) async {
     state = const AsyncLoading();
     try {
@@ -84,6 +86,8 @@ class CompleteNodeNotifier extends AsyncNotifier<NodeCompleteResult?> {
         materialId: materialId,
         nodeId: nodeId,
         submittedAnswer: submittedAnswer,
+        isCorrect: isCorrect,
+        score: score,
       );
       state = AsyncData(result);
       // Invalidate board so it re-fetches updated progress

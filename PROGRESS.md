@@ -10,6 +10,85 @@ Read this before starting any session (see `GEMINI.md`). If this file didn't exi
 
 (Entri terbaru di paling atas. Satu entri per sesi kerja — tambahkan, jangan menimpa entri lama.)
 
+### 2026-07-09 (malam-7) — Perbaikan Error SQL games_status enum in_progress
+
+**Yang diselesaikan:**
+- **Sinkronisasi Schema games_status di Database**: Menyelesaikan error warning SQL 1265 "Data truncated for column 'games_status'" yang muncul saat siswa mengerjakan game di Papan Aktivitas. Masalah terjadi karena kolom `games_status` di database MySQL lokal masih menggunakan tipe ENUM versi lama (`'locked'`, `'available'`, `'completed'`), sedangkan di kode backend dan migrasi terbaru, enum tersebut telah diperluas untuk menerima status `'in_progress'`.
+- **Perbaikan Schema**: Menjalankan perintah database ALTER TABLE di MySQL WSL untuk memperbarui kolom `games_status` agar mendukung opsi `'in_progress'` secara langsung tanpa menghapus data pengujian yang ada.
+
+**Next:** Siap untuk pengujian E2E lanjutan oleh siswa dan guru.
+
+### 2026-07-09 (malam-6) — Perbaikan Pengiriman Tantangan Sosial & Penyimpanan Jawaban Game Siswa
+
+**Yang diselesaikan:**
+- **Opsionalisasi Bukti (Foto/Video) di Backend**: Memperbarui validasi endpoint `submitSocialTask` di `LearningMaterialController.php` backend agar tidak memaksa parameter bukti file (`photo`/`video`) menjadi `required` jika tidak dikirimkan. Ini menyelaraskan backend dengan rancangan visual frontend yang melabeli unggah foto/bukti sebagai "opsional".
+- **Validasi Panjang Caption di Frontend**: Menambahkan pengecekan minimal 10 karakter untuk input cerita/deskripsi tantangan sosial di `learning_path_screen.dart` sebelum mengirim data ke server. Hal ini mencegah error 422 dari database akibat isian yang terlalu pendek.
+- **Penyimpanan Jawaban & Skor Pemahaman (Understanding)**:
+  - Mengubah daur hidup `_onNodeDone` di `learning_path_screen.dart` agar mengalkulasi parameter `isCorrect` secara dinamis di tingkat klien berdasarkan jawaban mini-game (*Multiple Choice*, *True/False Swipe*, *Sorting*, dan *Matching*).
+  - Memperbarui interface `MaterialServiceInterface`, implementasi `RealMaterialService`, notifier `CompleteNodeNotifier`, serta kelas unit test mock `learning_board_test.dart` untuk meneruskan field `isCorrect` dan `score` dalam payload request API `completeNode`.
+  - Menghalangi transisi otomatis ke node berikutnya apabila API penyimpanan jawaban gagal/mengembalikan error. Halaman kini menahan indeks node aktif dan memicu SnackBar error terperinci dari `ApiException`.
+  - Hal ini berhasil memulihkan perhitungan metrik objektif "Pemahaman" (*Understanding*) pada skor PULSE siswa di database yang bernilai nol akibat `is_correct` selalu terisi `null` sebelumnya.
+- **Unit Testing**: Menambahkan unit test `test_submit_social_task_without_photo` di `StudentFeaturesTest.php`. Seluruh 59 test Laravel backend dan 5 unit test Flutter sukses 100%.
+
+### 2026-07-09 (malam-5) — Perbaikan Crash Context & Validasi Node/Kuis Guru
+
+**Yang diselesaikan:**
+- **Perbaikan Crash Context & Lifecycle**: Mengubah daur hidup dialog tambah/edit kuis dan langkah belajar (node) di `teacher_material_editor_screen.dart`. Dialog kini tetap terbuka selama API diproses secara asinkron dengan loading indicator lokal, dan hanya ditutup setelah sukses. Ini memecahkan crash `Unhandled Exception: Looking up a deactivated widget's ancestor is unsafe` jika terjadi error API.
+- **Validasi Input Frontend**: Menambahkan validasi wajib isi pada kolom Judul Aktivitas (node) dan butir soal/jawaban (kuis) di frontend. Ini mencegah error backend `422 Unprocessable Content (title field is required)` saat guru mencoba menyimpan game dengan judul kosong.
+- **Mounted Guards**: Menambahkan guard `mounted` pada seluruh handler asinkron di file editor (seperti pick files, save general, delete material/soal/node) untuk mencegah crash asinkron lainnya.
+
+**Next:** Siap untuk pengujian E2E penuh dan validasi pada UI mobile/web.
+
+### 2026-07-09 (malam-4) — Penambahan Editor Game Visual & Perbaikan Popup Jenis Game di Panel Guru
+
+**Yang diselesaikan:**
+- **Perbaikan Popup & Pemilihan Game**: Dropdown pemilihan Jenis Game di dialog tambah/edit node Papan Aktivitas guru kini langsung memicu (pop up) visual game editor dialog secara otomatis begitu jenis game dipilih. Tombol "Edit Konten & Soal Game (Visual)" juga disediakan di form agar guru bisa memicu kembali editor visual kapan saja secara manual.
+- **Implementasi Visual Game Editor & Fix Lifecycle**:
+  - Membuat modal editor visual (`GamePayloadEditorDialog` berupa `StatefulWidget` terpisah) untuk masing-masing tipe game (*Multiple Choice*, *Sorting*, *Matching*, dan *True/False Swipe*).
+  - Mengelola instansiasi dan `.dispose()` controller melalui daur hidup widget `StatefulWidget` untuk menyelesaikan masalah exception *TextEditingController was used after being disposed* saat dialog ditutup.
+- **Membungkus Field JSON**: Field input raw JSON disembunyikan di dalam `ExpansionTile` untuk menjaga kebersihan visual antarmuka namun tetap dapat diakses oleh user tingkat lanjut.
+
+**Next:** Lakukan uji coba E2E lengkap dan validasi di perangkat riil.
+
+### 2026-07-09 (malam-3) — Fix Game Tidak Muncul di Siswa & Guru serta Bug Duplikasi Node
+
+**Yang diselesaikan:**
+- **Bug 1 — Game tidak muncul di papan aktivitas siswa**: Akar masalah: Parsing JSON `payload` dan `submittedAnswer` pada `LearningNode` melempar subtype cast exception jika tipe datanya tidak cocok atau double-serialized. Juga, widget-widget game (`matching_game_card.dart`, `sorting_game_card.dart`, `true_false_swipe_card.dart`, `multiple_choice_card.dart`) mengalami crash jika item ID atau key nilainya berupa integer (akibat cast `as String` yang tidak aman). Diperbaiki dengan safe conversion menggunakan `.toString()` dan parsing Map/String yang adaptif.
+- **Bug 2 — Guru tidak bisa mengubah tipe node & edit payload game**:
+  - `updateLearningNode` di frontend tidak mengirim parameter `node_type`, sehingga perubahan jenis node dari Konten ke Game di dialog guru tidak tersimpan di server. Diperbaiki dengan menambahkan parameter `nodeType` ke interface & implementasi service.
+  - Saat guru menambah game baru, payload JSON kosong dan tidak ada panduan visual untuk mengedit konten game. Diperbaiki dengan meng-auto-populate skeleton JSON template (MCQ, Sorting, Matching, Swipe) secara dinamis begitu guru memilih Jenis Game di editor.
+- **Bug 3 — Duplikasi materi di backend menghilangkan deskripsi & urutan node**: Akar masalah di `duplicate()` di `LearningMaterialController.php`: menyalin `$node->description` (seharusnya `$node->body`) dan mengabaikan `$node->order_index`. Diperbaiki dengan menyelaraskan nama field database yang benar.
+
+**Next:** Siap untuk verifikasi E2E lebih lanjut. Seluruh 59 test Laravel backend dan 5 unit test Flutter sukses 100%.
+
+### 2026-07-09 (malam-2) — Fix Bug Soal Kuis Tidak Muncul, Hapus Template Auto-Fill, & Fix EBook Tidak Tampil
+
+**Yang diselesaikan:**
+- **Bug 1 — Template auto-fill dihapus dari form tambah soal:** Menghapus dropdown "Pilih dari Soal Template (Opsional)" dari `_showQuestionForm()` di `teacher_material_editor_screen.dart`. Saat guru menambah butir soal baru, form kini selalu kosong tanpa konten template.
+- **Bug 2 — Soal tidak muncul di daftar Pre-Test / Post-Test:** Akar masalah: `LearningMaterialController.getQuestions()` di backend mengembalikan `type: 'pre'` / `type: 'post'`, namun filter di `_buildQuestionsTab()` frontend mencari `type == 'pre_test'` / `type == 'post_test'` — sehingga tidak pernah cocok dan soal tidak tampil. Diperbaiki dengan menambahkan pencocokan ganda: `q.type == 'pre_test' || q.type == 'pre'`.
+- **Bug 3 — EBook/PDF tidak muncul di siswa setelah update materi:** Akar masalah: Backend `.env` mempunyai `APP_URL=http://localhost` (tanpa port). Fungsi `asset()` Laravel menghasilkan URL `http://localhost/storage/materials/file.pdf` tanpa port `:8000`. Fungsi `_resolvePhotoUrl` di frontend hanya mengganti `localhost:8000` → `192.168.2.93:8000` sehingga URL tanpa port tidak terkonversi dan tidak bisa diakses dari Android.
+  - Fix 1 (backend): Mengubah `APP_URL=http://localhost:8000` di `.env`.
+  - Fix 2 (frontend): Memperbarui `_resolvePhotoUrl` di `data_models.dart` agar juga menangani `localhost` dan `127.0.0.1` tanpa port, menggunakan regex negative lookahead.
+
+**Next:** Siap untuk verifikasi lanjutan. Restart Laravel dev server agar `.env` baru berlaku (`php artisan serve`).
+
+### 2026-07-09 (malam) — Perbaikan Crash Layout ElevatedButton di Row & Fix API Parameter Kuis
+
+**Yang diselesaikan:**
+- **Perbaikan Crash Infinite Width pada ElevatedButton di dalam Row:**
+  - **Akar masalah ditemukan:** Tema global `ElevatedButton` di `app_theme.dart` (line 68) mengatur `minimumSize: Size(double.infinity, 48)`. Saat tombol berada di dalam `Row` (yang memberikan constraint width tak terbatas ke child non-flex), ini menghasilkan `BoxConstraints(w=Infinity)` → crash.
+  - **`manage_materials_screen.dart`:** Menambahkan `minimumSize: const Size(0, 48)` pada 3 `ElevatedButton` yang berada di dalam `Row` (tombol Impor Template, Input Materi Baru, dan Ubah/Detail di kartu materi).
+  - **`teacher_material_editor_screen.dart`:** Menambahkan `minimumSize: const Size(0, 48)` pada 4 `ElevatedButton.icon` yang berada di dalam `Row` (Pilih PDF, Pilih Audio, Tambah Soal, Tambah Langkah). Ini menyelesaikan masalah tab "Informasi Utama" yang tampil kosong/blank saat membuat materi baru.
+- **Perbaikan Error "Invalid question type must be pre or post":**
+  - Frontend mengirim `?type=pre_test` dan `?type=post_test` ke backend API, tetapi backend (`LearningMaterialController.php` line 166) hanya menerima `?type=pre` atau `?type=post`.
+  - Mengubah parameter di `_loadData()` editor dari `'pre_test'`/`'post_test'` menjadi `'pre'`/`'post'`.
+
+**Catatan:**
+- Akar masalah utama layout crash ada di tema global (`app_theme.dart` line 68: `minimumSize: Size(double.infinity, 48)`). Ini akan menyebabkan crash pada **semua** `ElevatedButton` yang diletakkan di dalam `Row` tanpa `Expanded`/`Flexible` wrapper, kecuali di-override secara lokal. Pertimbangkan untuk mengubah default tema ini di masa depan jika crash serupa terus muncul di layar lain.
+
+**Next:** Siap untuk verifikasi lanjutan atau deploy.
+
+
 ### 2026-07-09 — Perbaikan Crash Blank Screen & Layout Exception pada Pengelolaan Materi Guru Selesai
 
 **Yang diselesaikan:**
