@@ -2,11 +2,44 @@
 
 ## Status Saat Ini
 
-**Seluruh Fase Redesain PULSE & Gamifikasi beserta detail pengelolaan materi per-kelas telah selesai dikerjakan penuh dan disempurnakan.** Pembatasan akses materi agar bersifat privat per kelas (bukan global per jenjang) telah diimplementasikan pada frontend dan backend. Seluruh fungsionalitas utama telah diuji dan diverifikasi lulus unit test 100%.
+**Seluruh Fase Redesain PULSE & Gamifikasi beserta detail pengelolaan materi per-kelas telah selesai dikerjakan penuh dan disempurnakan.** Selain itu, halaman beranda siswa telah didesain ulang agar modern dan elegan sesuai desain referensi, serta menu navigasi bawah telah diperbarui. Papan Aktivitas, mini-games, dan tantangan sosial terverifikasi lulus unit test 100% dan analisis kode bersih.
 
 ## Session Log
 
 (Entri terbaru di paling atas. Satu entri per sesi kerja — tambahkan, jangan menimpa entri lama.)
+
+### 2026-07-10 (sesi-8) — Redesain Beranda & Navigasi Bawah Siswa
+
+**Yang diselesaikan:**
+- **Redesain & Perapian Beranda Siswa**: Mengubah total tampilan halaman `StudentHomeScreen` agar persis seperti gambar referensi. Menghapus tombol bergabung kelas dari header dan memindahkan informasi kelas aktif menjadi badge kapsul di dalam header untuk membebaskan ruang kontainer putih. Grid menu 3x2 kini tampil lebih luas dan terorganisir dengan batas kartu tipis yang rapi dan ikon pastel yang lebih besar.
+- **Perbaikan Navigasi Bawah (Fix Layout Overflow)**: Membungkus setiap menu navigasi bawah dalam widget `Expanded` dan mengurangi padding horizontal agar label panjang seperti "Informasi Pengembang" dapat melipat menjadi dua baris secara vertikal tanpa memicu overflow 19px pada perangkat seluler.
+- **Aksi Mandiri Join Kelas**: Menghubungkan klik kartu warning "Belum Bergabung Kelas" di beranda untuk memicu bottom sheet bergabung kelas secara langsung.
+- **Halaman Panduan & Info Pengembang**: Membuat halaman `GuideScreen` dan `DeveloperInfoScreen` serta mendaftarkannya di router.
+- **Analisis & Pengujian**: `flutter analyze` 100% bersih tanpa warning baru dan pengujian unit `learning_board_test.dart` lulus 100% (5/5).
+
+**Next:** Siap untuk penyesuaian fungsional atau visual lainnya sesuai instruksi user.
+
+### 2026-07-10 (sesi-7) — Perbaikan Pembungkusan Teks & Tata Letak Bidang Input Game & Kuis
+
+**Yang diselesaikan:**
+- **Perbaikan Pembungkusan Teks (Wrapping)**: Menambahkan konfigurasi `maxLines: null` dan `keyboardType: TextInputType.multiline` pada semua bidang input teks (`TextFormField`/`TextField`) di dalam dialog visual game editor (`GamePayloadEditorDialog`) dan pembuat soal kuis (`_showQuestionForm`).
+- **Tata Letak Vertikal (Stacking)**: Mengubah penempatan bidang input yang sebelumnya bersampingan (`Row`) menjadi bertumpuk atas-bawah (`Column`) pada dialog game editor (Pilihan A-D pada MCQ, Kategori 1 & 2 serta Pernyataan/Kategori pada Sorting, Kunci Kiri & Kanan pada Matching, serta Pernyataan/Switch Kebenaran pada True-False). Hal ini mencegah pemotongan/penyempitan bidang input dan memaksimalkan ruang lebar dialog agar lebih rapi serta tidak menghalangi elemen lain.
+- **Perbaikan Overflow Dialog**: 
+  - Menambahkan properti `insetPadding` pada `AlertDialog` di `GamePayloadEditorDialog` agar dialog memanfaatkan ruang lebar layar secara maksimal di perangkat seluler (sebagaimana `_showNodeForm` di sesi-6).
+  - Membungkus label teks `'Jawaban Kebenaran:'` di True/False Swipe editor dengan widget `Expanded` guna mencegah kegagalan tata letak (*layout overflow*) di sebelah kanan Switch.
+
+**Next:** Siap untuk penyesuaian fungsional atau visual lainnya sesuai instruksi user.
+
+### 2026-07-10 (sesi-6) — Perbaikan Tampilan Editor Game Visual & Alur Dialog Guru
+
+**Yang diselesaikan:**
+- **Peningkatan Visual Editor Game**: Mendesain ulang layout modal/dialog pembuatan dan penyuntingan konten game (`GamePayloadEditorDialog`) untuk seluruh tipe game (*Multiple Choice*, *Sorting*, *Matching*, dan *True/False Swipe*).
+- **Pencegahan Tampilan Bertumpuk (Overlapping)**: Menghapus properti `labelText` dalam `InputDecoration` yang memicu tumpang tindih teks pada isian formulir. Menggantinya dengan label teks (`Text`) terpisah di atas text field untuk keterbacaan yang maksimal.
+- **Desain Kartu Terstruktur**: Membungkus setiap butir item data (seperti item kategori, pasangan mencocokkan, dan pernyataan benar/salah) ke dalam widget `Card` berbatas garis abu-abu tipis yang rapi dan terorganisir dengan saksama.
+- **Penyelarasan Input**: Menyejajarkan bidang Dropdown input kategori dan Switch kebenaran dengan isian teks di sebelahnya agar simetris dan memiliki tinggi yang seragam.
+- **Pencegahan Dialog Bertumpuk (Stacked Dialogs)**: Memperbarui alur pemanggilan visual game editor dari dialog tambah/edit node (`_showNodeForm`). Dialog input node sekarang ditutup terlebih dahulu sebelum dialog edit isi game dibuka. Setelah dialog edit isi game disimpan atau dibatalkan, dialog input node otomatis dibuka kembali dengan mempertahankan seluruh data isian sementara (seperti Judul, Deskripsi, Tipe Node, dan Tipe Game) menggunakan objek `LearningNode` temporer.
+
+**Next:** Siap untuk penyesuaian fungsional atau visual lainnya sesuai instruksi user.
 
 ### 2026-07-10 (sesi-5) — Perbaikan Tampilan Konten & Alur Tambah Mini-Game Papan Aktivitas
 

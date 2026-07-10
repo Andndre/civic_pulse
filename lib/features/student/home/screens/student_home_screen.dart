@@ -15,8 +15,6 @@ class StudentHomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final classesAsync = ref.watch(studentClassesProvider);
-    final materialsAsync = ref.watch(materialsProvider);
-    final progressAsync = ref.watch(studentProgressProvider);
 
     return PopScope(
       canPop: false,
@@ -25,155 +23,400 @@ class StudentHomeScreen extends ConsumerWidget {
         await SystemNavigator.pop();
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showJoinClassBottomSheet(context, ref),
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.textOnPrimary,
-        icon: const Icon(Icons.add),
-        label: const Text('Bergabung Kelas'),
-      ),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(studentClassesProvider);
-            ref.invalidate(materialsProvider);
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: AppSpacing.screenPadding,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                _buildHeader(context, user?.name ?? 'Siswa'),
-                AppSpacing.vGapLg,
-
-                // Class Card
-                classesAsync.when(
-                  data: (classes) => classes.isEmpty
-                      ? _buildEmptyClassCard(context)
-                      : _buildClassCard(classes.first),
-                  loading: () => const ShimmerBox(height: 100),
-                  error: (e, _) => _buildErrorCard(e.toString()),
-                ),
-                AppSpacing.vGapLg,
-
-                // Progress Section
-                Text(
-                  'Progress Belajar',
-                  style: AppTypography.titleMedium.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                AppSpacing.vGapMd,
-                progressAsync.when(
-                  data: (progress) {
-                    final completed = progress.where((p) => p.pulseStatus == 'completed').length;
-                    return ProgressCard(
-                      title: 'Materi Diselesaikan',
-                      current: completed,
-                      total: progress.length,
-                      subtitle: completed == progress.length
-                          ? 'Semua materi sudah diselesaikan!'
-                          : '${progress.length - completed} materi belum diselesaikan',
-                    );
-                  },
-                  loading: () => const ShimmerBox(height: 120),
-                  error: (e, _) => const SizedBox.shrink(),
-                ),
-                AppSpacing.vGapLg,
-
-                // Recent Materials
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        backgroundColor: const Color(0xFF1976D2), // Deeper blue to blend with gradient
+        body: DecoratedBox(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0xFF2196F3), // Bright blue
+                Color(0xFF1976D2), // Deep blue
+              ],
+              stops: [0.0, 0.45],
+            ),
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(studentClassesProvider);
+                ref.invalidate(materialsProvider);
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Materi Terbaru',
-                      style: AppTypography.titleMedium.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w600,
+                    // Header Section
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 28.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Logo & Avatar Row
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Image.asset(
+                                'assets/Logo_civicpulse.png',
+                                height: 32,
+                                color: Colors.white,
+                                colorBlendMode: BlendMode.srcIn,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Text(
+                                    'CIVIC PULSE',
+                                    style: AppTypography.titleLarge.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  );
+                                },
+                              ),
+                              AvatarWidget(
+                                imageUrl: user?.avatarUrl,
+                                name: user?.name ?? 'Siswa',
+                                size: 44,
+                                onTap: () => context.go('/student/profile'),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 28),
+                          // Dynamic Greeting
+                          Text(
+                            _getTimeGreeting(),
+                            style: AppTypography.bodyLarge.copyWith(
+                              color: Colors.white.withValues(alpha: 0.8),
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            user?.name ?? 'Siswa',
+                            style: AppTypography.headlineMedium.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 26,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          // Class Info Badge inside Header
+                          classesAsync.when(
+                            data: (classes) {
+                              if (classes.isEmpty) return const SizedBox.shrink();
+                              final activeClass = classes.first;
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.school_rounded,
+                                        color: Colors.white,
+                                        size: 14,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Kelas ${activeClass.name}',
+                                        style: AppTypography.labelSmall.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                            loading: () => const SizedBox.shrink(),
+                            error: (e, _) => const SizedBox.shrink(),
+                          ),
+                        ],
                       ),
                     ),
-                    TextButton(
-                      onPressed: () => context.go('/student/learning'),
-                      child: Text(
-                        'Lihat Semua',
-                        style: AppTypography.labelMedium.copyWith(
-                          color: AppColors.primary,
+                    // White Curved Container
+                    Container(
+                      width: double.infinity,
+                      constraints: BoxConstraints(
+                        minHeight: MediaQuery.of(context).size.height - 210,
+                      ),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(32),
                         ),
+                      ),
+                      padding: const EdgeInsets.fromLTRB(24.0, 36.0, 24.0, 24.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // If no class, show empty class warning card
+                          classesAsync.when(
+                            data: (classes) {
+                              if (classes.isEmpty) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 24.0),
+                                  child: _buildEmptyClassCard(context, ref),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
+                            loading: () => const SizedBox.shrink(),
+                            error: (e, _) => const SizedBox.shrink(),
+                          ),
+                          // 6 Main Menu Grid
+                          GridView.count(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            crossAxisCount: 3,
+                            mainAxisSpacing: 20,
+                            crossAxisSpacing: 16,
+                            childAspectRatio: 0.82,
+                            children: [
+                              _buildMenuCard(
+                                context: context,
+                                title: 'E-Learning',
+                                icon: Icons.menu_book_rounded,
+                                color: const Color(0xFF2196F3),
+                                onTap: () => context.go('/student/learning'),
+                              ),
+                              _buildMenuCard(
+                                context: context,
+                                title: 'Asesmen & Refleksi',
+                                icon: Icons.assignment_turned_in_rounded,
+                                color: const Color(0xFF4CAF50),
+                                onTap: () => context.go('/student/learning'),
+                              ),
+                              _buildMenuCard(
+                                context: context,
+                                title: 'Ringkasan Asesmen',
+                                icon: Icons.pie_chart_rounded,
+                                color: const Color(0xFFFF9800),
+                                onTap: () => context.go('/student/scores'),
+                              ),
+                              _buildMenuCard(
+                                context: context,
+                                title: 'Aktivitas Kewargaan',
+                                icon: Icons.people_alt_rounded,
+                                color: const Color(0xFF9C27B0),
+                                onTap: () => context.go('/student/activities'),
+                              ),
+                              _buildMenuCard(
+                                context: context,
+                                title: 'Feedback',
+                                icon: Icons.feedback_rounded,
+                                color: const Color(0xFF00BCD4),
+                                onTap: () => context.go('/student/scores'),
+                              ),
+                              _buildMenuCard(
+                                context: context,
+                                title: 'Tanya AI',
+                                icon: Icons.smart_toy_rounded,
+                                color: const Color(0xFF607D8B),
+                                isLocked: true,
+                                onTap: () => _showLockedAIInfo(context),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-                AppSpacing.vGapSm,
-                materialsAsync.when(
-                  data: (materials) {
-                    if (materials.isEmpty) {
-                      return Container(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: AppRadius.card,
-                          border: Border.all(color: AppColors.divider),
-                        ),
-                        child: Column(
-                          children: [
-                            Icon(Icons.menu_book_outlined, size: 40, color: AppColors.textSecondary),
-                            AppSpacing.vGapSm,
-                            Text(
-                              'Belum Ada Materi',
-                              style: AppTypography.titleSmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
-                            ),
-                            AppSpacing.vGapXs,
-                            Text(
-                              'Silakan bergabung ke kelas terlebih dahulu untuk melihat materi belajar Anda.',
-                              style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-                    return Column(
-                      children: materials.take(3).map((m) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                          child: _MaterialListTile(
-                            title: m.title,
-                            subtitle: '${m.gradeCategory} Kelas ${m.gradeLevel}',
-                            duration: m.estimatedDuration,
-                            onTap: () => context.go('/student/learning/${m.id}'),
-                          ),
-                        );
-                      }).toList(),
-                    );
-                  },
-                  loading: () => const Column(
-                    children: [
-                      ShimmerListTile(),
-                      ShimmerListTile(),
-                    ],
-                  ),
-                  error: (e, _) => Center(
-                    child: Text(
-                      'Gagal memuat materi',
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.danger,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getTimeGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 11) {
+      return 'Selamat pagi,';
+    } else if (hour >= 11 && hour < 15) {
+      return 'Selamat siang,';
+    } else if (hour >= 15 && hour < 18) {
+      return 'Selamat sore,';
+    } else {
+      return 'Selamat malam,';
+    }
+  }
+
+  Widget _buildMenuCard({
+    required BuildContext context,
+    required String title,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+    bool isLocked = false,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFF0F2F5), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 58,
+                      height: 58,
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.08),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        icon,
+                        size: 30,
+                        color: color,
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                          height: 1.2,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isLocked)
+              Positioned(
+                bottom: 8,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFD54F),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  child: const Icon(
+                    Icons.lock,
+                    size: 9,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyClassCard(BuildContext context, WidgetRef ref) {
+    return AppCard(
+      onTap: () => _showJoinClassBottomSheet(context, ref),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: const BoxDecoration(
+              color: AppColors.warningLight,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.school_outlined,
+              color: AppColors.warning,
+            ),
+          ),
+          AppSpacing.hGapMd,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Belum Bergabung Kelas',
+                  style: AppTypography.titleSmall.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'Tap untuk bergabung dengan kelas',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],
             ),
           ),
-        ),
+          const Icon(
+            Icons.arrow_forward_ios,
+            size: 14,
+            color: AppColors.textSecondary,
+          ),
+        ],
       ),
-    ),
-  );
-}
+    );
+  }
+
+  void _showLockedAIInfo(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.lock_clock, color: Colors.amber),
+            SizedBox(width: 8),
+            Text('Tanya AI Terkunci'),
+          ],
+        ),
+        content: const Text(
+          'Fitur Tanya AI saat ini belum tersedia atau sedang dinonaktifkan oleh Guru Anda.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Mengerti'),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _showJoinClassBottomSheet(BuildContext context, WidgetRef ref) {
     final codeController = TextEditingController();
@@ -260,7 +503,7 @@ class StudentHomeScreen extends ConsumerWidget {
                     if (context.mounted) {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
+                        const SnackBar(
                           content: Text('Berhasil bergabung dengan kelas!'),
                           backgroundColor: AppColors.success,
                           behavior: SnackBarBehavior.floating,
@@ -281,246 +524,6 @@ class StudentHomeScreen extends ConsumerWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, String name) {
-    const greeting = 'Selamat Datang';
-
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                greeting,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              Text(
-                name,
-                style: AppTypography.headlineMedium.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
-        AvatarWidget(
-          name: name,
-          size: 48,
-          onTap: () => context.go('/student/profile'),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEmptyClassCard(BuildContext context) {
-    return AppCard(
-      onTap: () => context.go('/register/setup-class'),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.warningLight,
-              borderRadius: AppRadius.radiusMd,
-            ),
-            child: const Icon(
-              Icons.school_outlined,
-              color: AppColors.warning,
-            ),
-          ),
-          AppSpacing.hGapMd,
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Belum Bergabung Kelas',
-                  style: AppTypography.titleSmall.copyWith(
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                Text(
-                  'Tap untuk bergabung dengan kelas',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Icon(
-            Icons.arrow_forward_ios,
-            size: 16,
-            color: AppColors.textSecondary,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildClassCard(StudentClass studentClass) {
-    return AppCard(
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.primaryLight.withValues(alpha: 0.2),
-              borderRadius: AppRadius.radiusMd,
-            ),
-            child: const Icon(
-              Icons.class_,
-              color: AppColors.primary,
-            ),
-          ),
-          AppSpacing.hGapMd,
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Kelas Anda',
-                  style: AppTypography.labelMedium.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                Text(
-                  studentClass.name,
-                  style: AppTypography.titleMedium.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  studentClass.teacherName,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm,
-              vertical: AppSpacing.xxs,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.successLight,
-              borderRadius: AppRadius.radiusSm,
-            ),
-            child: Text(
-              'Aktif',
-              style: AppTypography.labelSmall.copyWith(
-                color: AppColors.success,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErrorCard(String error) {
-    return AppCard(
-      child: Row(
-        children: [
-          const Icon(Icons.error_outline, color: AppColors.danger),
-          AppSpacing.hGapMd,
-          Expanded(
-            child: Text(
-              error,
-              style: AppTypography.bodySmall.copyWith(
-                color: AppColors.danger,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MaterialListTile extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final int? duration;
-  final VoidCallback onTap;
-
-  const _MaterialListTile({
-    required this.title,
-    required this.subtitle,
-    this.duration,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      onTap: onTap,
-      padding: AppSpacing.cardPaddingCompact,
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppColors.primaryLight.withValues(alpha: 0.2),
-              borderRadius: AppRadius.radiusSm,
-            ),
-            child: const Icon(
-              Icons.menu_book,
-              color: AppColors.primary,
-              size: 20,
-            ),
-          ),
-          AppSpacing.hGapMd,
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  subtitle,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (duration != null)
-            Text(
-              '$duration min',
-              style: AppTypography.labelSmall.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-          AppSpacing.hGapSm,
-          const Icon(
-            Icons.arrow_forward_ios,
-            size: 14,
-            color: AppColors.textSecondary,
-          ),
-        ],
       ),
     );
   }

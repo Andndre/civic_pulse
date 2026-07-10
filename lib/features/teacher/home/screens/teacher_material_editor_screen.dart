@@ -31,13 +31,11 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
   final _descController = TextEditingController();
   String? _pdfPath;
   String? _audioPath;
-  int? _selectedTemplateId;
 
   // Edit Mode loaded data
   LearningMaterial? _material;
   List<Question> _questions = [];
   List<LearningNode> _nodes = [];
-  List<Map<String, dynamic>> _templates = [];
 
   @override
   void initState() {
@@ -64,9 +62,6 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
 
     try {
       final materialService = ref.read(materialServiceProvider);
-
-      // Load templates for creation or reference
-      _templates = await materialService.getMaterialTemplates();
 
       if (!_isCreateMode) {
         // Load existing material
@@ -134,7 +129,6 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
           description: _descController.text,
           filePath: _pdfPath,
           audioPath: _audioPath,
-          templateId: _selectedTemplateId,
         );
 
         if (mounted) {
@@ -276,10 +270,30 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
                               decoration: const InputDecoration(labelText: 'Pertanyaan', hintText: 'Ketik isi soal...'),
                             ),
                             const SizedBox(height: 12),
-                            TextField(controller: optAController, decoration: const InputDecoration(labelText: 'Opsi A')),
-                            TextField(controller: optBController, decoration: const InputDecoration(labelText: 'Opsi B')),
-                            TextField(controller: optCController, decoration: const InputDecoration(labelText: 'Opsi C')),
-                            TextField(controller: optDController, decoration: const InputDecoration(labelText: 'Opsi D')),
+                            TextField(
+                              controller: optAController,
+                              maxLines: null,
+                              keyboardType: TextInputType.multiline,
+                              decoration: const InputDecoration(labelText: 'Opsi A'),
+                            ),
+                            TextField(
+                              controller: optBController,
+                              maxLines: null,
+                              keyboardType: TextInputType.multiline,
+                              decoration: const InputDecoration(labelText: 'Opsi B'),
+                            ),
+                            TextField(
+                              controller: optCController,
+                              maxLines: null,
+                              keyboardType: TextInputType.multiline,
+                              decoration: const InputDecoration(labelText: 'Opsi C'),
+                            ),
+                            TextField(
+                              controller: optDController,
+                              maxLines: null,
+                              keyboardType: TextInputType.multiline,
+                              decoration: const InputDecoration(labelText: 'Opsi D'),
+                            ),
                             const SizedBox(height: 12),
                             DropdownButtonFormField<String>(
                               value: selectedAnswer,
@@ -451,6 +465,7 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
     required String gameType,
     required Map<String, dynamic> initialPayload,
     required Function(Map<String, dynamic> updatedPayload) onSave,
+    VoidCallback? onCancel,
   }) {
     showDialog(
       context: context,
@@ -460,17 +475,22 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
           gameType: gameType,
           initialPayload: initialPayload,
           onSave: onSave,
+          onCancel: onCancel,
         );
       },
     );
   }
 
-  void _openVisualGameEditor(
-    BuildContext context,
-    String gameType,
-    TextEditingController payloadController,
-    StateSetter setDialogState,
-  ) {
+  void _openVisualGameEditor({
+    required BuildContext screenContext,
+    required BuildContext dialogContext,
+    required String gameType,
+    required TextEditingController titleController,
+    required TextEditingController bodyController,
+    required String nodeType,
+    required LearningNode? originalNode,
+    required TextEditingController payloadController,
+  }) {
     Map<String, dynamic> initialPayload = {};
     try {
       if (payloadController.text.trim().isNotEmpty) {
@@ -478,14 +498,39 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
       }
     } catch (_) {}
 
+    final currentTempNode = LearningNode(
+      id: originalNode?.id ?? 0,
+      materialId: originalNode?.materialId ?? widget.materialId,
+      nodeType: nodeType,
+      title: titleController.text,
+      body: bodyController.text,
+      gameType: gameType,
+      payload: initialPayload,
+      orderIndex: originalNode?.orderIndex ?? (_nodes.length + 1),
+    );
+
+    // Close the node form dialog first to avoid stacking
+    Navigator.pop(dialogContext);
+
     _showGamePayloadEditor(
-      context: context,
+      context: screenContext,
       gameType: gameType,
       initialPayload: initialPayload,
       onSave: (updatedPayload) {
-        setDialogState(() {
-          payloadController.text = const JsonEncoder.withIndent('  ').convert(updatedPayload);
-        });
+        final updatedNode = LearningNode(
+          id: currentTempNode.id,
+          materialId: currentTempNode.materialId,
+          nodeType: currentTempNode.nodeType,
+          title: currentTempNode.title,
+          body: currentTempNode.body,
+          gameType: currentTempNode.gameType,
+          payload: updatedPayload,
+          orderIndex: currentTempNode.orderIndex,
+        );
+        _showNodeForm(updatedNode);
+      },
+      onCancel: () {
+        _showNodeForm(currentTempNode);
       },
     );
   }
@@ -583,7 +628,16 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton.icon(
-                                  onPressed: () => _openVisualGameEditor(builderContext, gameType!, payloadController, setDialogState),
+                                  onPressed: () => _openVisualGameEditor(
+                                    screenContext: context,
+                                    dialogContext: dialogContext,
+                                    gameType: gameType!,
+                                    titleController: titleController,
+                                    bodyController: bodyController,
+                                    nodeType: nodeType,
+                                    originalNode: node,
+                                    payloadController: payloadController,
+                                  ),
                                   icon: const Icon(Icons.edit_note),
                                   label: const Text('Edit Konten & Soal Game (Visual)'),
                                   style: ElevatedButton.styleFrom(
@@ -812,66 +866,6 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
               decoration: const InputDecoration(labelText: 'Deskripsi Singkat', hintText: 'Deskripsi materi untuk panduan siswa...'),
               validator: (v) => v == null || v.trim().isEmpty ? 'Deskripsi wajib diisi' : null,
             ),
-            if (_isCreateMode) ...[
-              const SizedBox(height: 16),
-              Card(
-                margin: EdgeInsets.zero,
-                color: AppColors.surface,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: AppRadius.radiusMd,
-                  side: const BorderSide(color: AppColors.divider),
-                ),
-                child: ListTile(
-                  title: const Text('Template Pembelajaran (Opsional)', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                  subtitle: Text(
-                    _selectedTemplateId == null
-                        ? 'Mulai dari Kosong (Tanpa Game/Soal)'
-                        : (_templates.firstWhere((t) => t['id'] == _selectedTemplateId, orElse: () => {'title': ''})['title'] ?? ''),
-                    style: const TextStyle(fontSize: 15, color: AppColors.textPrimary, fontWeight: FontWeight.bold),
-                  ),
-                  trailing: const Icon(Icons.arrow_drop_down, color: AppColors.textSecondary),
-                  onTap: () async {
-                    final selected = await showDialog<int?>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Pilih Template Pembelajaran'),
-                        content: Container(
-                          width: 400,
-                          constraints: const BoxConstraints(maxHeight: 400),
-                          child: ListView(
-                            shrinkWrap: true,
-                            children: [
-                              ListTile(
-                                title: const Text('Mulai dari Kosong (Tanpa Game/Soal)'),
-                                onTap: () => Navigator.pop(context, null),
-                              ),
-                              const Divider(),
-                              ..._templates.map(
-                                (t) => ListTile(
-                                  title: Text(t['title'] as String),
-                                  subtitle: Text(t['description'] as String? ?? ''),
-                                  onTap: () => Navigator.pop(context, t['id'] as int),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                    setState(() => _selectedTemplateId = selected);
-                  },
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12.0),
-                child: Text(
-                  'Pilih template untuk menyalin game & soal kuis bawaan secara otomatis.',
-                  style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                ),
-              ),
-            ],
             const SizedBox(height: 24),
             Text('Berkas & Lampiran Media', style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
@@ -1139,12 +1133,14 @@ class GamePayloadEditorDialog extends StatefulWidget {
   final String gameType;
   final Map<String, dynamic> initialPayload;
   final Function(Map<String, dynamic> updatedPayload) onSave;
+  final VoidCallback? onCancel;
 
   const GamePayloadEditorDialog({
     super.key,
     required this.gameType,
     required this.initialPayload,
     required this.onSave,
+    this.onCancel,
   });
 
   @override
@@ -1315,36 +1311,68 @@ class _GamePayloadEditorDialogState extends State<GamePayloadEditorDialog> {
       editorWidget = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const Text(
+            'Teks Pertanyaan',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary),
+          ),
+          const SizedBox(height: 6),
           TextFormField(
             controller: _mcqQuestionController,
-            decoration: const InputDecoration(labelText: 'Teks Pertanyaan', hintText: 'Masukkan pertanyaan game...'),
+            decoration: const InputDecoration(hintText: 'Masukkan pertanyaan game...'),
+            maxLines: null,
+            keyboardType: TextInputType.multiline,
             validator: (v) => v == null || v.trim().isEmpty ? 'Pertanyaan tidak boleh kosong' : null,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
+          
+          const Text('Pilihan A', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.textSecondary)),
+          const SizedBox(height: 6),
           TextFormField(
             controller: _mcqOptAController,
-            decoration: const InputDecoration(labelText: 'Pilihan A'),
+            decoration: const InputDecoration(hintText: 'Masukkan opsi A...'),
+            maxLines: null,
+            keyboardType: TextInputType.multiline,
             validator: (v) => v == null || v.trim().isEmpty ? 'Pilihan A tidak boleh kosong' : null,
           ),
+          const SizedBox(height: 12),
+          const Text('Pilihan B', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.textSecondary)),
+          const SizedBox(height: 6),
           TextFormField(
             controller: _mcqOptBController,
-            decoration: const InputDecoration(labelText: 'Pilihan B'),
+            decoration: const InputDecoration(hintText: 'Masukkan opsi B...'),
+            maxLines: null,
+            keyboardType: TextInputType.multiline,
             validator: (v) => v == null || v.trim().isEmpty ? 'Pilihan B tidak boleh kosong' : null,
           ),
+          const SizedBox(height: 12),
+          const Text('Pilihan C', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.textSecondary)),
+          const SizedBox(height: 6),
           TextFormField(
             controller: _mcqOptCController,
-            decoration: const InputDecoration(labelText: 'Pilihan C'),
+            decoration: const InputDecoration(hintText: 'Masukkan opsi C...'),
+            maxLines: null,
+            keyboardType: TextInputType.multiline,
             validator: (v) => v == null || v.trim().isEmpty ? 'Pilihan C tidak boleh kosong' : null,
           ),
+          const SizedBox(height: 12),
+          const Text('Pilihan D', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.textSecondary)),
+          const SizedBox(height: 6),
           TextFormField(
             controller: _mcqOptDController,
-            decoration: const InputDecoration(labelText: 'Pilihan D'),
+            decoration: const InputDecoration(hintText: 'Masukkan opsi D...'),
+            maxLines: null,
+            keyboardType: TextInputType.multiline,
             validator: (v) => v == null || v.trim().isEmpty ? 'Pilihan D tidak boleh kosong' : null,
           ),
           const SizedBox(height: 16),
+          
+          const Text('Jawaban Benar', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary)),
+          const SizedBox(height: 6),
           DropdownButtonFormField<String>(
             value: _mcqCorrect,
-            decoration: const InputDecoration(labelText: 'Jawaban Benar'),
+            decoration: const InputDecoration(
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
             items: const [
               DropdownMenuItem(value: 'a', child: Text('Opsi A')),
               DropdownMenuItem(value: 'b', child: Text('Opsi B')),
@@ -1363,30 +1391,32 @@ class _GamePayloadEditorDialogState extends State<GamePayloadEditorDialog> {
       editorWidget = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _sortCat1Controller,
-                  decoration: const InputDecoration(labelText: 'Kategori 1'),
-                  validator: (v) => v == null || v.trim().isEmpty ? 'Kategori wajib diisi' : null,
-                  onChanged: (_) => setState(() {}),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextFormField(
-                  controller: _sortCat2Controller,
-                  decoration: const InputDecoration(labelText: 'Kategori 2'),
-                  validator: (v) => v == null || v.trim().isEmpty ? 'Kategori wajib diisi' : null,
-                  onChanged: (_) => setState(() {}),
-                ),
-              ),
-            ],
+          const Text(
+            'Kategori 1',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.textSecondary),
           ),
-          const SizedBox(height: 16),
-          const Text('Daftar Item & Kategori yang Benar:', style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: _sortCat1Controller,
+            decoration: const InputDecoration(hintText: 'Contoh: Toleran'),
+            validator: (v) => v == null || v.trim().isEmpty ? 'Kategori wajib diisi' : null,
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Kategori 2',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: _sortCat2Controller,
+            decoration: const InputDecoration(hintText: 'Contoh: Intoleran'),
+            validator: (v) => v == null || v.trim().isEmpty ? 'Kategori wajib diisi' : null,
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 20),
+          const Text('Daftar Item & Kategori yang Benar:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary)),
+          const SizedBox(height: 10),
           ..._sortItems.asMap().entries.map((entry) {
             final idx = entry.key;
             final item = entry.value;
@@ -1406,47 +1436,81 @@ class _GamePayloadEditorDialogState extends State<GamePayloadEditorDialog> {
               item['category'] = selectedCategory;
             }
 
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: TextFormField(
-                      controller: controller,
-                      decoration: InputDecoration(
-                        labelText: 'Item #${idx + 1}',
-                        hintText: 'Teks tindakan/perilaku...',
-                      ),
-                      validator: (v) => v == null || v.trim().isEmpty ? 'Item wajib diisi' : null,
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12.0),
+              color: AppColors.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: Colors.grey.shade300, width: 1),
+              ),
+              elevation: 0,
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Item #${idx + 1}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () {
+                            setState(() {
+                              final it = _sortItems.removeAt(idx);
+                              (it['controller'] as TextEditingController).dispose();
+                            });
+                          },
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 2,
-                    child: DropdownButtonFormField<String>(
-                      value: selectedCategory,
-                      isExpanded: true,
-                      items: catOptions.map((c) => DropdownMenuItem(value: c, child: Text(c, overflow: TextOverflow.ellipsis))).toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() {
-                            item['category'] = val;
-                          });
-                        }
-                      },
+                    const SizedBox(height: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Pernyataan / Tindakan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.textSecondary)),
+                        const SizedBox(height: 4),
+                        TextFormField(
+                          controller: controller,
+                          decoration: const InputDecoration(
+                            hintText: 'Teks tindakan/perilaku...',
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          ),
+                          maxLines: null,
+                          keyboardType: TextInputType.multiline,
+                          validator: (v) => v == null || v.trim().isEmpty ? 'Item wajib diisi' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text('Kategori Jawaban', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.textSecondary)),
+                        const SizedBox(height: 4),
+                        DropdownButtonFormField<String>(
+                          value: selectedCategory,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          ),
+                          items: catOptions.map((c) => DropdownMenuItem(value: c, child: Text(c, overflow: TextOverflow.ellipsis))).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() {
+                                item['category'] = val;
+                              });
+                            }
+                          },
+                        ),
+                      ],
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, color: AppColors.danger),
-                    onPressed: () {
-                      setState(() {
-                        final it = _sortItems.removeAt(idx);
-                        (it['controller'] as TextEditingController).dispose();
-                      });
-                    },
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           }),
@@ -1471,50 +1535,85 @@ class _GamePayloadEditorDialogState extends State<GamePayloadEditorDialog> {
       editorWidget = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Daftar Pasangan yang Benar:', style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
+          const Text('Daftar Pasangan yang Benar:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary)),
+          const SizedBox(height: 10),
           ..._matchPairs.asMap().entries.map((entry) {
             final idx = entry.key;
             final pair = entry.value;
             final leftController = pair['left'] as TextEditingController;
             final rightController = pair['right'] as TextEditingController;
 
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: leftController,
-                      decoration: InputDecoration(
-                        labelText: 'Kiri #${idx + 1}',
-                        hintText: 'Contoh: Toleransi',
-                      ),
-                      validator: (v) => v == null || v.trim().isEmpty ? 'Sisi kiri wajib diisi' : null,
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12.0),
+              color: AppColors.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: Colors.grey.shade300, width: 1),
+              ),
+              elevation: 0,
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Pasangan #${idx + 1}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () {
+                            setState(() {
+                              final p = _matchPairs.removeAt(idx);
+                              (p['left'] as TextEditingController).dispose();
+                              (p['right'] as TextEditingController).dispose();
+                            });
+                          },
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: rightController,
-                      decoration: InputDecoration(
-                        labelText: 'Kanan #${idx + 1}',
-                        hintText: 'Contoh: Saling menghormati',
-                      ),
-                      validator: (v) => v == null || v.trim().isEmpty ? 'Sisi kanan wajib diisi' : null,
+                    const SizedBox(height: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Kunci Kiri', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.textSecondary)),
+                        const SizedBox(height: 4),
+                        TextFormField(
+                          controller: leftController,
+                          decoration: const InputDecoration(
+                            hintText: 'Contoh: Toleransi',
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          ),
+                          maxLines: null,
+                          keyboardType: TextInputType.multiline,
+                          validator: (v) => v == null || v.trim().isEmpty ? 'Sisi kiri wajib diisi' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text('Pasangan Kanan (Jawaban)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.textSecondary)),
+                        const SizedBox(height: 4),
+                        TextFormField(
+                          controller: rightController,
+                          decoration: const InputDecoration(
+                            hintText: 'Contoh: Saling menghormati',
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          ),
+                          maxLines: null,
+                          keyboardType: TextInputType.multiline,
+                          validator: (v) => v == null || v.trim().isEmpty ? 'Sisi kanan wajib diisi' : null,
+                        ),
+                      ],
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, color: AppColors.danger),
-                    onPressed: () {
-                      setState(() {
-                        final p = _matchPairs.removeAt(idx);
-                        (p['left'] as TextEditingController).dispose();
-                        (p['right'] as TextEditingController).dispose();
-                      });
-                    },
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           }),
@@ -1539,55 +1638,107 @@ class _GamePayloadEditorDialogState extends State<GamePayloadEditorDialog> {
       editorWidget = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Daftar Pernyataan & Kebenaran:', style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
+          const Text('Daftar Pernyataan & Kebenaran:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary)),
+          const SizedBox(height: 10),
           ..._tfStatements.asMap().entries.map((entry) {
             final idx = entry.key;
             final stmt = entry.value;
             final textController = stmt['text'] as TextEditingController;
             final answer = stmt['answer'] as bool;
 
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: TextFormField(
-                      controller: textController,
-                      decoration: InputDecoration(
-                        labelText: 'Pernyataan #${idx + 1}',
-                        hintText: 'Ketik pernyataan...',
-                      ),
-                      validator: (v) => v == null || v.trim().isEmpty ? 'Pernyataan wajib diisi' : null,
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12.0),
+              color: AppColors.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: Colors.grey.shade300, width: 1),
+              ),
+              elevation: 0,
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Pernyataan #${idx + 1}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () {
+                            setState(() {
+                              final s = _tfStatements.removeAt(idx);
+                              (s['text'] as TextEditingController).dispose();
+                            });
+                          },
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Row(
-                    children: [
-                      Text(answer ? 'Benar' : 'Salah', style: TextStyle(color: answer ? AppColors.success : AppColors.danger, fontWeight: FontWeight.bold, fontSize: 13)),
-                      Switch(
-                        value: answer,
-                        activeColor: AppColors.success,
-                        inactiveThumbColor: AppColors.danger,
-                        onChanged: (val) {
-                          setState(() {
-                            stmt['answer'] = val;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, color: AppColors.danger),
-                    onPressed: () {
-                      setState(() {
-                        final s = _tfStatements.removeAt(idx);
-                        (s['text'] as TextEditingController).dispose();
-                      });
-                    },
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Pernyataan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.textSecondary)),
+                        const SizedBox(height: 4),
+                        TextFormField(
+                          controller: textController,
+                          decoration: const InputDecoration(
+                            hintText: 'Ketik pernyataan...',
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          ),
+                          maxLines: null,
+                          keyboardType: TextInputType.multiline,
+                          validator: (v) => v == null || v.trim().isEmpty ? 'Pernyataan wajib diisi' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                'Jawaban Kebenaran:',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.textSecondary),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Row(
+                              children: [
+                                Text(
+                                  answer ? 'Benar' : 'Salah',
+                                  style: TextStyle(
+                                    color: answer ? AppColors.success : AppColors.danger,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Switch(
+                                  value: answer,
+                                  activeColor: AppColors.success,
+                                  inactiveThumbColor: AppColors.danger,
+                                  onChanged: (val) {
+                                    setState(() {
+                                      stmt['answer'] = val;
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             );
           }),
@@ -1612,6 +1763,7 @@ class _GamePayloadEditorDialogState extends State<GamePayloadEditorDialog> {
 
     return AlertDialog(
       title: Text('Edit Isi Game: $gameTypeTitle'),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 600),
         child: Form(
@@ -1623,7 +1775,10 @@ class _GamePayloadEditorDialogState extends State<GamePayloadEditorDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Navigator.pop(context);
+            if (widget.onCancel != null) widget.onCancel!();
+          },
           child: const Text('Batal'),
         ),
         ElevatedButton(

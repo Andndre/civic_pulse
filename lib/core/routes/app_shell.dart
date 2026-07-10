@@ -27,27 +27,21 @@ const studentNavItems = [
     route: '/student/home',
   ),
   NavItem(
-    label: 'Belajar',
-    icon: Icons.menu_book_outlined,
-    activeIcon: Icons.menu_book,
-    route: '/student/learning',
+    label: 'Panduan',
+    icon: Icons.article_outlined,
+    activeIcon: Icons.article,
+    route: '/student/guide',
   ),
   NavItem(
-    label: 'Aktivitas',
-    icon: Icons.assignment_outlined,
-    activeIcon: Icons.assignment,
-    route: '/student/activities',
+    label: 'Informasi Pengembang',
+    icon: Icons.info_outline,
+    activeIcon: Icons.info,
+    route: '/student/developer-info',
   ),
   NavItem(
-    label: 'Skor',
-    icon: Icons.bar_chart_outlined,
-    activeIcon: Icons.bar_chart,
-    route: '/student/scores',
-  ),
-  NavItem(
-    label: 'Profil',
-    icon: Icons.person_outline,
-    activeIcon: Icons.person,
+    label: 'Pengaturan',
+    icon: Icons.settings_outlined,
+    activeIcon: Icons.settings,
     route: '/student/profile',
   ),
 ];
@@ -113,12 +107,14 @@ class _AppShellState extends ConsumerState<AppShell> {
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(
               _navItems.length,
-              (index) => _buildNavItem(index),
+              (index) => Expanded(
+                child: _buildNavItem(index),
+              ),
             ),
           ),
         ),
@@ -135,23 +131,29 @@ class _AppShellState extends ConsumerState<AppShell> {
       borderRadius: AppRadius.radiusMd,
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
+          vertical: AppSpacing.xs,
+          horizontal: 2.0,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(
               isActive ? item.activeIcon : item.icon,
               color: isActive ? AppColors.primary : AppColors.textSecondary,
-              size: 24,
+              size: 22,
             ),
-            const SizedBox(height: AppSpacing.xxs),
+            const SizedBox(height: 4),
             Text(
               item.label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: AppTypography.labelSmall.copyWith(
                 color: isActive ? AppColors.primary : AppColors.textSecondary,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                fontSize: 10,
+                height: 1.1,
               ),
             ),
           ],

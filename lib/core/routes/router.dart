@@ -8,6 +8,8 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/class_setup_screen.dart';
 import '../../features/student/home/screens/student_home_screen.dart';
+import '../../features/student/home/screens/guide_screen.dart';
+import '../../features/student/home/screens/developer_info_screen.dart';
 import '../../features/student/learning/screens/learning_gallery_screen.dart';
 import '../../features/student/learning/screens/learning_path_screen.dart';
 import '../../features/student/activities/screens/activity_log_screen.dart';
@@ -141,6 +143,20 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => NoTransitionPage<void>(
               key: state.pageKey,
               child: const StudentHomeScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/student/guide',
+            pageBuilder: (context, state) => NoTransitionPage<void>(
+              key: state.pageKey,
+              child: const GuideScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/student/developer-info',
+            pageBuilder: (context, state) => NoTransitionPage<void>(
+              key: state.pageKey,
+              child: const DeveloperInfoScreen(),
             ),
           ),
           GoRoute(

@@ -22,7 +22,6 @@ class _ManageMaterialsScreenState extends ConsumerState<ManageMaterialsScreen> {
   List<LearningMaterial> _materials = [];
   TeacherClass? _classDetail;
   List<TeacherClass> _myClasses = [];
-  List<Map<String, dynamic>> _templates = [];
   String? _errorMessage;
 
   @override
@@ -52,40 +51,9 @@ class _ManageMaterialsScreenState extends ConsumerState<ManageMaterialsScreen> {
       if (user != null) {
         _myClasses = await teacherService.getTeacherClasses(user.id);
       }
-
-      // Load templates
-      _templates = await materialService.getMaterialTemplates();
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
     } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _handleImportTemplate(int templateId) async {
-    setState(() => _isLoading = true);
-    try {
-      final materialService = ref.read(materialServiceProvider);
-      await materialService.importMaterialTemplate(
-        classId: widget.classId,
-        templateId: templateId,
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Materi berhasil diimpor dari template!'),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      await _loadData();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Gagal mengimpor template: $e'),
-          backgroundColor: AppColors.danger,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
       setState(() => _isLoading = false);
     }
   }
@@ -98,6 +66,7 @@ class _ManageMaterialsScreenState extends ConsumerState<ManageMaterialsScreen> {
         materialId: materialId,
         targetClassId: targetClassId,
       );
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Materi berhasil diduplikasi ke kelas tujuan!'),
@@ -107,6 +76,7 @@ class _ManageMaterialsScreenState extends ConsumerState<ManageMaterialsScreen> {
       );
       await _loadData();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal menduplikasi materi: $e'),
@@ -116,82 +86,6 @@ class _ManageMaterialsScreenState extends ConsumerState<ManageMaterialsScreen> {
       );
       setState(() => _isLoading = false);
     }
-  }
-
-  void _showTemplatesDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Pilih Template Admin'),
-          content: _templates.isEmpty
-              ? const Text('Tidak ada template materi yang tersedia.')
-              : Container(
-                  width: 500,
-                  constraints: const BoxConstraints(maxHeight: 400),
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: _templates.length,
-                    separatorBuilder: (_, __) => const Divider(),
-                    itemBuilder: (context, index) {
-                      final t = _templates[index];
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    t['title'] ?? '',
-                                    style: AppTypography.titleSmall.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    t['description'] ?? '',
-                                    style: AppTypography.bodySmall.copyWith(
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            SizedBox(
-                              width: 72,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  _handleImportTemplate(t['id']);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                ),
-                                child: const Text('Impor'),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Tutup'),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   void _showDuplicateDialog(LearningMaterial material) {
@@ -353,7 +247,7 @@ class _ManageMaterialsScreenState extends ConsumerState<ManageMaterialsScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Kelola Papan Aktivitas E-Learning, pre/post-test, dan kuis gamifikasi untuk kelas ini. Anda dapat menambahkan materi custom, mengimpor template dari admin, atau menyalin materi ke kelas lainnya.',
+                  'Kelola Papan Aktivitas E-Learning, pre/post-test, dan kuis gamifikasi untuk kelas ini. Anda dapat menambahkan materi custom atau menyalin materi ke kelas lainnya.',
                   style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
                 ),
               ],
@@ -361,37 +255,20 @@ class _ManageMaterialsScreenState extends ConsumerState<ManageMaterialsScreen> {
           ),
           if (isWide) const SizedBox(width: 40),
           if (isWide)
-            Row(
-              children: [
-                ElevatedButton.icon(
-                  onPressed: _showTemplatesDialog,
-                  icon: const Icon(Icons.file_download_outlined),
-                  label: const Text('Impor Template'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.surfaceVariant,
-                    foregroundColor: AppColors.textPrimary,
-                    minimumSize: const Size(0, 48),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: AppRadius.radiusMd),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    final refresh = await context.push<bool>('/teacher/class/${widget.classId}/materials/0/edit');
-                    if (refresh == true) _loadData();
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Input Materi Baru'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.textOnPrimary,
-                    minimumSize: const Size(0, 48),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: AppRadius.radiusMd),
-                  ),
-                ),
-              ],
+            ElevatedButton.icon(
+              onPressed: () async {
+                final refresh = await context.push<bool>('/teacher/class/${widget.classId}/materials/0/edit');
+                if (refresh == true) _loadData();
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Input Materi Baru'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.textOnPrimary,
+                minimumSize: const Size(0, 48),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: AppRadius.radiusMd),
+              ),
             ),
         ],
       ),
@@ -410,22 +287,13 @@ class _ManageMaterialsScreenState extends ConsumerState<ManageMaterialsScreen> {
               style: AppTypography.titleLarge.copyWith(fontWeight: FontWeight.bold),
             ),
             if (!isWide)
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.file_download_outlined, color: AppColors.primary),
-                    onPressed: _showTemplatesDialog,
-                    tooltip: 'Impor dari Template',
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.add, color: AppColors.primary),
-                    onPressed: () async {
-                      final refresh = await context.push<bool>('/teacher/class/${widget.classId}/materials/0/edit');
-                      if (refresh == true) _loadData();
-                    },
-                    tooltip: 'Input Materi Baru',
-                  ),
-                ],
+              IconButton(
+                icon: const Icon(Icons.add, color: AppColors.primary),
+                onPressed: () async {
+                  final refresh = await context.push<bool>('/teacher/class/${widget.classId}/materials/0/edit');
+                  if (refresh == true) _loadData();
+                },
+                tooltip: 'Input Materi Baru',
               ),
           ],
         ),
@@ -444,13 +312,24 @@ class _ManageMaterialsScreenState extends ConsumerState<ManageMaterialsScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Silakan impor dari template admin untuk memulai.',
+                        'Silakan buat materi baru untuk memulai.',
                         style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
                       ),
                       const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _showTemplatesDialog,
-                        child: const Text('Pilih Template'),
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          final refresh = await context.push<bool>('/teacher/class/${widget.classId}/materials/0/edit');
+                          if (refresh == true) _loadData();
+                        },
+                        icon: const Icon(Icons.add),
+                        label: const Text('Input Materi Baru'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.textOnPrimary,
+                          minimumSize: const Size(0, 48),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: AppRadius.radiusMd),
+                        ),
                       ),
                     ],
                   ),
