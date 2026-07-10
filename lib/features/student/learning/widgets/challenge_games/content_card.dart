@@ -17,32 +17,6 @@ class ContentCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header chip
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm,
-              vertical: AppSpacing.xxs,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.primaryLight.withValues(alpha: 0.18),
-              borderRadius: AppRadius.radiusSm,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.menu_book, size: 14, color: AppColors.primary),
-                const SizedBox(width: 4),
-                Text(
-                  'Kartu Materi',
-                  style: AppTypography.labelSmall.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          AppSpacing.vGapMd,
           if (node.title != null) ...[
             Text(
               node.title!,
@@ -73,13 +47,8 @@ class ContentCard extends StatelessWidget {
             AppSpacing.vGapMd,
           ],
           if (node.body != null)
-            Container(
-              padding: AppSpacing.paddingMd,
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: AppRadius.radiusMd,
-                border: Border.all(color: AppColors.divider),
-              ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
               child: Text(
                 node.body!,
                 style: AppTypography.bodyMedium.copyWith(

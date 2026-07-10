@@ -836,17 +836,17 @@ int _parseGradeLevel(dynamic level) {
 String? _resolvePhotoUrl(String? url) {
   if (url == null || url.isEmpty) return null;
   if (url.startsWith('/')) {
-    return 'http://192.168.2.93:8000$url';
+    return 'http://192.168.1.15:8000$url';
   }
   // Replace localhost/127.0.0.1 variants (with or without port) to the WiFi IP
   var resolved = url
-      .replaceAll('localhost:8000', '192.168.2.93:8000')
-      .replaceAll('127.0.0.1:8000', '192.168.2.93:8000');
+      .replaceAll('localhost:8000', '192.168.1.15:8000')
+      .replaceAll('127.0.0.1:8000', '192.168.1.15:8000');
   // Handle case where APP_URL=http://localhost (no port) — asset() generates
   // URLs like http://localhost/storage/... which are unreachable from Android.
   // Use regex to replace 'localhost' only when NOT already followed by ':8000'.
   resolved = resolved
-      .replaceAll(RegExp(r'localhost(?!:\d)'), '192.168.2.93:8000')
-      .replaceAll(RegExp(r'127\.0\.0\.1(?!:\d)'), '192.168.2.93:8000');
+      .replaceAll(RegExp(r'localhost(?!:\d)'), '192.168.1.15:8000')
+      .replaceAll(RegExp(r'127\.0\.0\.1(?!:\d)'), '192.168.1.15:8000');
   return resolved;
 }

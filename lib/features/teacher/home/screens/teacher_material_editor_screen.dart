@@ -499,19 +499,6 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
     final payloadController = TextEditingController(
       text: node?.payload != null ? const JsonEncoder.withIndent('  ').convert(node!.payload) : '',
     );
-
-    final allTemplateNodes = <Map<String, dynamic>>[];
-    for (var temp in _templates) {
-      final nPayload = temp['nodes_payload'];
-      if (nPayload is List) {
-        for (var n in nPayload) {
-          if (n is Map) {
-            allTemplateNodes.add(Map<String, dynamic>.from(n));
-          }
-        }
-      }
-    }
-
     showDialog(
       context: context,
       builder: (dialogContext) {
@@ -520,55 +507,21 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
           builder: (builderContext, setDialogState) {
             return AlertDialog(
               title: Text(isEdit ? 'Ubah Node Aktivitas' : 'Tambah Node Baru'),
+              insetPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
               content: isSaving
                   ? const SizedBox(
                       height: 150,
                       child: Center(child: CircularProgressIndicator()),
                     )
                   : ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 550),
+                      constraints: const BoxConstraints(maxWidth: 650),
                       child: SingleChildScrollView(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (!isEdit && allTemplateNodes.isNotEmpty) ...[
-                              DropdownButtonFormField<Map<String, dynamic>>(
-                                decoration: const InputDecoration(
-                                  labelText: 'Pilih dari Node Template (Opsional)',
-                                  hintText: 'Pilih langkah yang sudah ada...',
-                                ),
-                                isExpanded: true,
-                                items: allTemplateNodes.map((n) {
-                                  final nTitle = n['title']?.toString() ?? '';
-                                  final type = n['node_type'] ?? 'content';
-                                  final typeStr = type == 'challenge' ? 'Game: ${n['game_type']}' : (type == 'social_task' ? 'Aksi Sosial' : 'Konten');
-                                  final shortTitle = nTitle.length > 35 ? '${nTitle.substring(0, 35)}...' : nTitle;
-                                  return DropdownMenuItem<Map<String, dynamic>>(
-                                    value: n,
-                                    child: Text('[$typeStr] $shortTitle'),
-                                  );
-                                }).toList(),
-                                onChanged: (val) {
-                                  if (val != null) {
-                                    setDialogState(() {
-                                      titleController.text = val['title']?.toString() ?? '';
-                                      bodyController.text = val['description']?.toString() ?? val['body']?.toString() ?? '';
-                                      nodeType = val['node_type']?.toString() ?? 'content';
-                                      gameType = val['game_type']?.toString();
-                                      final pl = val['payload'];
-                                      if (pl != null) {
-                                        payloadController.text = const JsonEncoder.withIndent('  ').convert(pl);
-                                      } else {
-                                        payloadController.text = '';
-                                      }
-                                    });
-                                  }
-                                },
-                              ),
-                              const SizedBox(height: 12),
-                            ],
                             DropdownButtonFormField<String>(
                               value: nodeType,
+                              isExpanded: true,
                               decoration: const InputDecoration(labelText: 'Tipe Node'),
                               items: const [
                                 DropdownMenuItem(value: 'content', child: Text('Konten (E-Book/Penjelasan)')),
@@ -587,11 +540,6 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
                                         payloadController.text = _getDefaultPayload('multiple_choice');
                                       }
                                     }
-                                    Future.delayed(Duration.zero, () {
-                                      if (builderContext.mounted) {
-                                        _openVisualGameEditor(builderContext, gameType!, payloadController, setDialogState);
-                                      }
-                                    });
                                   }
                                 });
                               },
@@ -611,6 +559,7 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
                               const SizedBox(height: 12),
                               DropdownButtonFormField<String>(
                                 value: gameType,
+                                isExpanded: true,
                                 decoration: const InputDecoration(labelText: 'Jenis Game'),
                                 items: const [
                                   DropdownMenuItem(value: 'sorting', child: Text('Sorting Game')),
@@ -626,11 +575,6 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
                                       if (isTypeChanged) {
                                         payloadController.text = _getDefaultPayload(val);
                                       }
-                                      Future.delayed(Duration.zero, () {
-                                        if (builderContext.mounted) {
-                                          _openVisualGameEditor(builderContext, val, payloadController, setDialogState);
-                                        }
-                                      });
                                     }
                                   });
                                 },
@@ -650,21 +594,6 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
                                 ),
                               ),
                             ],
-                            const SizedBox(height: 12),
-                            ExpansionTile(
-                              title: const Text('Lanjutan: Edit JSON Langsung (Optional)', style: TextStyle(fontSize: 12)),
-                              children: [
-                                TextField(
-                                  controller: payloadController,
-                                  maxLines: 5,
-                                  style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-                                  decoration: const InputDecoration(
-                                    labelText: 'Payload Data (JSON Format)',
-                                    hintText: '{\n  "items": [...]\n}',
-                                  ),
-                                ),
-                              ],
-                            ),
                           ],
                         ),
                       ),
@@ -732,7 +661,7 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
                             setDialogState(() => isSaving = false);
                             if (builderContext.mounted) {
                               ScaffoldMessenger.of(builderContext).showSnackBar(
-                                SnackBar(content: Text('Gagal menyimpan node: $e'), backgroundColor: AppColors.danger),
+                                  SnackBar(content: Text('Gagal menyimpan node: $e'), backgroundColor: AppColors.danger),
                               );
                             }
                           }

@@ -1,14 +1,51 @@
 # PROGRESS.md
 
-Read this before starting any session (see `GEMINI.md`). If this file didn't exist, it was just created from the template.
-
 ## Status Saat Ini
 
-**Seluruh Fase Redesain PULSE & Gamifikasi (Fase 1 sampai Fase 6) beserta detail pengelolaan materi per-kelas (Fase 2b) telah selesai dikerjakan penuh.** Seluruh fungsionalitas utama (Pre-Test, Papan Aktivitas/Learning Board, Post-Test, Tantangan Sosial, Panel Review Guru, Landing Page Siswa Pasca-Login, serta Modul Pengelolaan & Duplikasi Materi per Kelas di Flutter Web/Mobile untuk Guru) telah diimplementasikan, dimigrasi, dideploy seeder template-nya di database lokal WSL, dan diverifikasi lulus unit test 100%.
+**Seluruh Fase Redesain PULSE & Gamifikasi beserta detail pengelolaan materi per-kelas telah selesai dikerjakan penuh dan disempurnakan.** Pembatasan akses materi agar bersifat privat per kelas (bukan global per jenjang) telah diimplementasikan pada frontend dan backend. Seluruh fungsionalitas utama telah diuji dan diverifikasi lulus unit test 100%.
 
 ## Session Log
 
 (Entri terbaru di paling atas. Satu entri per sesi kerja — tambahkan, jangan menimpa entri lama.)
+
+### 2026-07-10 (sesi-5) — Perbaikan Tampilan Konten & Alur Tambah Mini-Game Papan Aktivitas
+
+**Yang diselesaikan:**
+- **Perbaikan Tampilan Konten (Student)**: Menghapus pembungkus Card (container border & background) serta badge "Kartu Materi" pada `content_card.dart` agar konten penjelasan di papan aktivitas siswa tampil secara flat dan bersih sebagai teks artikel (cardless).
+- **Perbaikan Alur Pemilihan Mini-Game (Teacher)**: Menghapus pemicu asinkron popup otomatis visual editor (`_openVisualGameEditor`) pada callback `onChanged` dari Tipe Node dan Jenis Game di dialog `_showNodeForm`. Guru kini dapat memilih jenis game terlebih dahulu dengan tenang, kemudian menekan tombol "Edit Konten & Soal Game (Visual)" secara manual jika sudah siap mengisi konten game.
+- **List Node Tetap Memakai Card (Teacher)**: Mempertahankan/mengembalikan penggunaan widget `Card` pada item langkah belajar di tab "Papan Aktivitas" editor guru agar tetap terstruktur rapi dengan bayangan kontras.
+- **Pengujian & Verifikasi**: Menjalankan unit test `learning_board_test.dart` dan berhasil lolos 100% (5/5 tests passed).
+
+**Next:** Siap untuk penyesuaian fungsional atau visual lainnya sesuai instruksi user.
+
+### 2026-07-10 (sesi-4) — Penyesuaian Dialog Tambah/Edit Node Papan Aktivitas
+
+**Yang diselesaikan:**
+- **Pelebaran Layout Dialog**: Menambahkan `insetPadding` horizontal 16.0 pada `AlertDialog` dan meningkatkan `maxWidth` di `ConstrainedBox` menjadi `650` untuk membuat tampilan dialog lebih lebar dan responsif pada perangkat seluler.
+- **Pembersihan Form**: Menghapus dropdown template ("Pilih dari Node Template (Opsional)") dan panel input JSON langsung ("Lanjutan: Edit JSON Langsung (Optional)") sesuai permintaan agar tampilan dialog lebih bersih, ringkas, dan fokus pada input visual.
+- **Pencegahan Overflow**: Menambahkan properti `isExpanded: true` pada `DropdownButtonFormField` untuk Tipe Node dan Jenis Game guna memastikan teks item yang panjang terpotong/terbungkus rapi tanpa memicu error layout overflow.
+
+### 2026-07-10 (sesi-3) — Perbaikan Integrasi Data PULSE Siswa di Detail Kelas Guru
+
+**Yang diselesaikan:**
+- **Perbaikan Sinkronisasi Skor PULSE**: Mengubah resource API `StudentResource.php` dan `ClassResource.php` di backend Laravel agar mengambil rata-rata nilai dimensi PULSE dari tabel baru `student_pulse_scores` (alur Papan Aktivitas & Game) serta memberikan fallback ke `pulse_responses` untuk materi PDF lama. Hal ini menyelesaikan bug di mana nilai pengerjaan siswa tampak kosong/0.0 di detail kelas guru.
+- **Pengujian & Verifikasi**: Menjalankan pengujian otomatis backend, seluruh 60 unit/feature test lolos sukses 100%.
+
+### 2026-07-10 (sesi-2) — Sinkronisasi IP Local WiFi
+
+**Yang diselesaikan:**
+- **Pembaruan Konfigurasi IP**: Mengubah IP address server lokal dari `192.168.2.93` ke `192.168.1.15` pada `api_constants.dart` dan logic resolusi URL di `data_models.dart`.
+- **Pengujian & Verifikasi**: Berhasil memverifikasi unit test `learning_board_test.dart`.
+
+### 2026-07-10 — Penyaringan & Proteksi Materi Pembelajaran Spesifik per Kelas
+
+**Yang diselesaikan:**
+- **Penyaringan Sisi Client**: Memperbarui provider `materialsProvider` di Flutter agar memanggil API `getClassMaterials(classId)` siswa, menggantikan pemanggilan berbasis jenjang `getMaterials(gradeCategory, gradeLevel)`.
+- **Penyaringan Sisi Server**: Mengubah metode `index` pada `LearningMaterialController.php` di Laravel backend untuk membatasi materi yang dikembalikan bagi siswa hanya dari kelas yang mereka ikuti.
+- **Proteksi Hak Akses (Show Route)**: Memodifikasi metode `show` di `LearningMaterialController.php` untuk mengembalikan respons `403 Forbidden` jika siswa mencoba mengakses materi dari kelas lain yang tidak diikutinya (mendukung fallback jika `class_id` null untuk data pengujian).
+- **Verifikasi**: Seluruh 60 unit test Laravel backend dan unit test Flutter lolos sukses 100%.
+
+**Next:** Siap untuk integrasi E2E lanjutan atau penambahan fitur baru sesuai permintaan user.
 
 ### 2026-07-09 (malam-7) — Perbaikan Error SQL games_status enum in_progress
 

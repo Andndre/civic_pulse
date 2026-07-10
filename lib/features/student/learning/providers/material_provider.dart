@@ -25,12 +25,9 @@ final materialsProvider = FutureProvider<List<LearningMaterial>>((ref) async {
   // Use first enrolled class's grade info
   final enrolledClass = studentClasses.isNotEmpty ? studentClasses.first : null;
 
-  // If enrolled in a class, filter by grade; otherwise show all materials
+  // If enrolled in a class, filter by class materials
   if (enrolledClass != null) {
-    return service.getMaterials(
-      gradeCategory: enrolledClass.gradeCategory,
-      gradeLevel: enrolledClass.gradeLevel,
-    );
+    return service.getClassMaterials(enrolledClass.id);
   }
 
   // If not enrolled in a class, return empty list
