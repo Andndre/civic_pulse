@@ -737,7 +737,7 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
   }
 
   Future<void> _deleteNote(int noteId, int studentId) async {
-    await ref.read(teacherServiceProvider).deleteAnecdotalNote(noteId);
+    await ref.read(teacherServiceProvider).deleteAnecdotalNote(studentId, noteId);
     ref.invalidate(anecdotalNotesProvider(studentId));
   }
 

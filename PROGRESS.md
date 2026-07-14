@@ -8,6 +8,48 @@
 
 (Entri terbaru di paling atas. Satu entri per sesi kerja — tambahkan, jangan menimpa entri lama.)
 
+### 2026-07-10 (sesi-13) — Perbaikan Perhitungan Statistik Kelas (Materi Selesai & Rata-rata PULSE)
+
+**Yang diselesaikan:**
+- **Pembersihan Data Yatim (Orphan Data)**: Menghapus data pengerjaan siswa (`student_pulse_scores`) yang tersisa dari materi-materi yang dihapus sebelum fitur cascading delete (sesi-12) diterapkan.
+- **Pembaruan Query API Statistik Kelas**: Memperbarui query di `ClassResource.php` agar perhitungan rata-rata PULSE (`boardScores` & `responses`) dan materi selesai (`completedMaterialsBoard` & `completedMaterialsLegacy`) melakukan join ke `learning_materials` dan memfilter berdasarkan `class_id` yang sesuai serta memastikan materi aktif (`deleted_at` bernilai NULL). Ini memperbaiki bug tampilan di mana total materi selesai bernilai `3/1` (300% progres kelas) dan rata-rata PULSE terdistorsi oleh data materi terhapus.
+- **Pengujian & Verifikasi**: Menjalankan seluruh 61 unit test backend Laravel dan semuanya lulus sukses 100%.
+
+**Next:** Siap untuk penyesuaian fungsional atau visual lainnya sesuai instruksi user.
+
+### 2026-07-10 (sesi-12) — Penghapusan Cascading Data Siswa saat Materi Dihapus
+
+**Yang diselesaikan:**
+- **Penghapusan Cascading di Backend**: Memperbarui method `destroy` pada `LearningMaterialController.php` agar menghapus log aktivitas siswa (`activity_logs` - soft delete/force delete) dan skor PULSE objektif (`student_pulse_scores`) secara cascading ketika guru menghapus materi pembelajaran. Hal ini mencegah data yatim (orphan data) siswa tetap tersimpan di database setelah materinya dihapus.
+- **Unit Testing & Verifikasi**: Menambahkan unit test baru `test_delete_material_cascades_student_data` di `StudentFeaturesTest.php` untuk memvalidasi alur penghapusan cascading secara menyeluruh. Menjalankan seluruh 61 unit test di backend Laravel dan semuanya lulus sukses 100%.
+
+**Next:** Siap untuk penyesuaian fungsional atau visual lainnya sesuai instruksi user.
+
+### 2026-07-10 (sesi-11) — Penyesuaian Dinamis Jumlah Materi Kelas
+
+**Yang diselesaikan:**
+- **Penghapusan Batasan Statis (3) Materi Kelas**: Mengubah API resource backend (`ClassResource.php`) agar menyertakan hitungan dinamis `'total_materials'` dari database.
+- **Pembaruan Parser Model Client**: Memperbarui parser data model di Flutter (`data_models.dart` -> `TeacherClass.fromJson`) agar membaca jumlah total materi secara dinamis dari response server, alih-alih menggunakan nilai statis/hardcoded `3`. Hal ini memulihkan tampilan target selesai dari `0/3` menjadi `0/X` (sesuai jumlah materi asli di kelas).
+- **Pengujian & Verifikasi**: Menjalankan seluruh 60 unit test di backend Laravel dan semuanya lulus sukses 100%.
+
+**Next:** Siap untuk penyesuaian fungsional atau visual lainnya sesuai instruksi user.
+
+### 2026-07-10 (sesi-10) — Penyesuaian Layout Menu Utama Beranda Siswa
+
+**Yang diselesaikan:**
+- **Pemisahan Teks Label & Kartu Ikon**: Memindahkan teks label menu utama di beranda siswa (`student_home_screen.dart`) ke luar container kartu putih (diletakkan di bawah ikon card secara vertikal).
+- **Penyesuaian Aspek Rasio Grid**: Mengubah `childAspectRatio` GridView menu dari `0.82` menjadi `0.7` guna memberikan ruang vertikal yang cukup bagi label menu 2-baris di bawah kartu ikon, mencegah layout overflow di perangkat mobile.
+
+**Next:** Siap untuk penyesuaian fungsional atau visual lainnya sesuai instruksi user.
+
+### 2026-07-10 (sesi-9) — Sinkronisasi IP Local Wi-Fi (192.168.2.93)
+
+**Yang diselesaikan:**
+- **Pembaruan Konfigurasi IP**: Mengubah IP address server lokal dari `192.168.1.15` ke `192.168.2.93` pada `api_constants.dart` dan logic resolusi URL di `data_models.dart`.
+- **Pengujian & Verifikasi**: Menjalankan unit test `learning_board_test.dart` dan semuanya lulus sukses 100% (5/5).
+
+**Next:** Siap untuk penyesuaian fungsional atau visual lainnya sesuai instruksi user.
+
 ### 2026-07-10 (sesi-8) — Redesain Beranda & Navigasi Bawah Siswa
 
 **Yang diselesaikan:**

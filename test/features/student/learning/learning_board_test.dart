@@ -285,7 +285,7 @@ class MockTeacherService implements TeacherServiceInterface {
   }
 
   @override
-  Future<void> deleteAnecdotalNote(int noteId) async {}
+  Future<void> deleteAnecdotalNote(int studentId, int noteId) async {}
 
   @override
   Future<String> createClass({

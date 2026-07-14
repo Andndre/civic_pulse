@@ -141,7 +141,7 @@ abstract class TeacherServiceInterface {
     required String content,
     required String dimension,
   });
-  Future<void> deleteAnecdotalNote(int noteId);
+  Future<void> deleteAnecdotalNote(int studentId, int noteId);
   Future<String> createClass({
     required String name,
     required String gradeCategory,

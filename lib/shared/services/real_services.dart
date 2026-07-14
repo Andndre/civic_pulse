@@ -19,12 +19,9 @@ class RealMaterialService implements MaterialServiceInterface {
     int? gradeLevel,
   }) async {
     try {
-      final Map<String, dynamic> queryParams = {};
-      if (gradeCategory != null) {
-        queryParams['grade_category'] = gradeCategory;
-      }
+      final Map<String, dynamic> queryParams = {'per_page': 100};
       if (gradeLevel != null) {
-        queryParams['grade_level'] = gradeLevel;
+        queryParams['filter[grade]'] = gradeLevel;
       }
 
       final response = await _client.get(
@@ -677,6 +674,7 @@ class RealActivityService implements ActivityServiceInterface {
         ApiConstants.activities,
         queryParameters: {
           'filter[student_id]': studentId,
+          'per_page': 100,
         },
       );
       final data = response.data;
@@ -873,7 +871,10 @@ class RealAnalyticsService implements AnalyticsServiceInterface {
   @override
   Future<List<StudentProgress>> getProgress(int studentId) async {
     try {
-      final response = await _client.get(ApiConstants.materials);
+      final response = await _client.get(
+        ApiConstants.materials,
+        queryParameters: {'per_page': 100},
+      );
       final data = response.data;
       final List<dynamic> list;
       if (data is Map && data.containsKey('data')) {
@@ -903,7 +904,7 @@ class RealTeacherService implements TeacherServiceInterface {
     try {
       final response = await _client.get(
         ApiConstants.classes,
-        queryParameters: {'filter[homeroom_teacher_id]': teacherId},
+        queryParameters: {'filter[homeroom_teacher_id]': teacherId, 'per_page': 100},
       );
       final data = response.data;
       final List<dynamic> list;
@@ -940,62 +941,22 @@ class RealTeacherService implements TeacherServiceInterface {
   @override
   Future<List<ClassStudent>> getClassStudents(int classId) async {
     try {
-      final String path = '/dashboard/teacher/classes/$classId/recapitulation';
-      try {
-        final response = await _client.get(path);
-        final data = response.data;
-        final List<dynamic> list;
-        if (data is Map && data.containsKey('data')) {
-          final resData = data['data'];
-          if (resData is List) {
-            list = resData;
-          } else if (resData is Map && resData.containsKey('students')) {
-            list = resData['students'] as List<dynamic>;
-          } else {
-            list = [];
-          }
-        } else if (data is List) {
-          list = data;
-        } else {
-          list = [];
-        }
-        return list
-            .map((s) => ClassStudent.fromJson(s as Map<String, dynamic>))
-            .toList();
-      } catch (_) {
-        try {
-          final response = await _client.get('${ApiConstants.classes}/$classId/students');
-          final data = response.data;
-          final List<dynamic> list;
-          if (data is Map && data.containsKey('data')) {
-            list = data['data'] as List<dynamic>;
-          } else if (data is List) {
-            list = data;
-          } else {
-            list = [];
-          }
-          return list
-              .map((s) => ClassStudent.fromJson(s as Map<String, dynamic>))
-              .toList();
-        } catch (_) {
-          final response = await _client.get(
-            ApiConstants.students,
-            queryParameters: {'filter[class_id]': classId},
-          );
-          final data = response.data;
-          final List<dynamic> list;
-          if (data is Map && data.containsKey('data')) {
-            list = data['data'] as List<dynamic>;
-          } else if (data is List) {
-            list = data;
-          } else {
-            list = [];
-          }
-          return list
-              .map((s) => ClassStudent.fromJson(s as Map<String, dynamic>))
-              .toList();
-        }
+      final response = await _client.get(
+        ApiConstants.students,
+        queryParameters: {'filter[class_id]': classId, 'per_page': 100},
+      );
+      final data = response.data;
+      final List<dynamic> list;
+      if (data is Map && data.containsKey('data')) {
+        list = data['data'] as List<dynamic>;
+      } else if (data is List) {
+        list = data;
+      } else {
+        list = [];
       }
+      return list
+          .map((s) => ClassStudent.fromJson(s as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
@@ -1004,33 +965,22 @@ class RealTeacherService implements TeacherServiceInterface {
   @override
   Future<List<AnecdotalNote>> getAnecdotalNotes(int studentId) async {
     try {
-      final String path = '${ApiConstants.students}/$studentId/anecdotal-notes';
-      try {
-        final response = await _client.get(path);
-        final data = response.data;
-        final List<dynamic> list;
-        if (data is Map && data.containsKey('data')) {
-          list = data['data'] as List<dynamic>;
-        } else if (data is List) {
-          list = data;
-        } else {
-          list = [];
-        }
-        return list
-            .map((n) => AnecdotalNote.fromJson(n as Map<String, dynamic>, studentId))
-            .toList();
-      } catch (_) {
-        final response = await _client.get('${ApiConstants.students}/$studentId');
-        final data = response.data;
-        final studentData = (data is Map && data.containsKey('data')) ? data['data'] : data;
-        if (studentData is Map && studentData.containsKey('anecdotal_notes')) {
-          final List<dynamic> notesList = studentData['anecdotal_notes'] as List<dynamic>;
-          return notesList
-              .map((n) => AnecdotalNote.fromJson(n as Map<String, dynamic>, studentId))
-              .toList();
-        }
-        return [];
+      final response = await _client.get(
+        '${ApiConstants.students}/$studentId/anecdotal-notes',
+        queryParameters: {'per_page': 100},
+      );
+      final data = response.data;
+      final List<dynamic> list;
+      if (data is Map && data.containsKey('data')) {
+        list = data['data'] as List<dynamic>;
+      } else if (data is List) {
+        list = data;
+      } else {
+        list = [];
       }
+      return list
+          .map((n) => AnecdotalNote.fromJson(n as Map<String, dynamic>, studentId))
+          .toList();
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
@@ -1060,9 +1010,9 @@ class RealTeacherService implements TeacherServiceInterface {
   }
 
   @override
-  Future<void> deleteAnecdotalNote(int noteId) async {
+  Future<void> deleteAnecdotalNote(int studentId, int noteId) async {
     try {
-      await _client.delete('/anecdotal-notes/$noteId');
+      await _client.delete('${ApiConstants.students}/$studentId/anecdotal-notes/$noteId');
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
