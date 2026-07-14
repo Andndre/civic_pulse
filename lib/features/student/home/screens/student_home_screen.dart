@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../shared/services/services.dart';
@@ -184,43 +185,37 @@ class StudentHomeScreen extends ConsumerWidget {
                               _buildMenuCard(
                                 context: context,
                                 title: 'E-Learning',
-                                icon: Icons.menu_book_rounded,
-                                color: const Color(0xFF2196F3),
+                                iconAsset: 'assets/icons/menu_elearning.svg',
                                 onTap: () => context.go('/student/learning'),
                               ),
                               _buildMenuCard(
                                 context: context,
                                 title: 'Asesmen & Refleksi',
-                                icon: Icons.assignment_turned_in_rounded,
-                                color: const Color(0xFF4CAF50),
+                                iconAsset: 'assets/icons/menu_assessment.svg',
                                 onTap: () => context.go('/student/learning'),
                               ),
                               _buildMenuCard(
                                 context: context,
                                 title: 'Ringkasan Asesmen',
-                                icon: Icons.pie_chart_rounded,
-                                color: const Color(0xFFFF9800),
+                                iconAsset: 'assets/icons/menu_score_summary.svg',
                                 onTap: () => context.go('/student/scores'),
                               ),
                               _buildMenuCard(
                                 context: context,
                                 title: 'Aktivitas Kewargaan',
-                                icon: Icons.people_alt_rounded,
-                                color: const Color(0xFF9C27B0),
+                                iconAsset: 'assets/icons/menu_civic_activity.svg',
                                 onTap: () => context.go('/student/activities'),
                               ),
                               _buildMenuCard(
                                 context: context,
                                 title: 'Feedback',
-                                icon: Icons.feedback_rounded,
-                                color: const Color(0xFF00BCD4),
+                                iconAsset: 'assets/icons/menu_feedback.svg',
                                 onTap: () => context.go('/student/scores'),
                               ),
                               _buildMenuCard(
                                 context: context,
                                 title: 'Tanya AI',
-                                icon: Icons.smart_toy_rounded,
-                                color: const Color(0xFF607D8B),
+                                iconAsset: 'assets/icons/menu_ai.svg',
                                 isLocked: true,
                                 onTap: () => _showLockedAIInfo(context),
                               ),
@@ -255,8 +250,7 @@ class StudentHomeScreen extends ConsumerWidget {
   Widget _buildMenuCard({
     required BuildContext context,
     required String title,
-    required IconData icon,
-    required Color color,
+    required String iconAsset,
     required VoidCallback onTap,
     bool isLocked = false,
   }) {
@@ -283,18 +277,10 @@ class StudentHomeScreen extends ConsumerWidget {
               child: Stack(
                 children: [
                   Center(
-                    child: Container(
-                      width: 58,
-                      height: 58,
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.08),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        icon,
-                        size: 30,
-                        color: color,
-                      ),
+                    child: SizedBox(
+                      width: 60,
+                      height: 60,
+                      child: SvgPicture.asset(iconAsset),
                     ),
                   ),
                   if (isLocked)
