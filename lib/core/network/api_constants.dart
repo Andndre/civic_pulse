@@ -10,7 +10,7 @@ class ApiConstants {
       return 'http://localhost:8000/api/v1';
     }
     return Platform.isAndroid
-        ? 'http://192.168.2.93:8000/api/v1'
+        ? 'http://192.168.1.15:8000/api/v1'
         : 'http://localhost:8000/api/v1';
   }
 

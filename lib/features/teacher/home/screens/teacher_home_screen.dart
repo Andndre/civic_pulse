@@ -22,114 +22,45 @@ class TeacherHomeScreen extends ConsumerWidget {
         if (didPop) return;
         await SystemNavigator.pop();
       },
-      child: Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text(
-          'Civic Pulse',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+      child: GradientShellScaffold(
+        title: user?.name ?? 'Guru',
+        subtitle: 'Selamat datang,',
+        variant: ShellVariant.teacher,
+        trailing: AvatarWidget(
+          imageUrl: user?.avatarUrl,
+          name: user?.name,
+          size: 48,
+        ),
+        headerExtra: Text(
+          'Mari pantau karakter & perkembangan akademis siswa.',
+          style: AppTypography.bodySmall.copyWith(
+            color: Colors.white.withValues(alpha: 0.8),
           ),
         ),
-        backgroundColor: AppColors.primary,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            onPressed: () {
-              ref.invalidate(teacherClassesProvider);
-              ref.invalidate(teacherStatsProvider);
-              ref.invalidate(pendingSocialChallengesProvider);
-            },
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(teacherClassesProvider);
           ref.invalidate(teacherStatsProvider);
           ref.invalidate(pendingSocialChallengesProvider);
         },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildWelcomeHeader(user?.name, user?.avatarUrl),
-              _buildStatsDashboard(statsAsync),
-              _buildPendingChallengesBanner(context, ref),
-              _buildSectionHeader(context, ref, classesAsync),
-              _buildClassesContent(context, ref, classesAsync),
-            ],
-          ),
+        bodyPadding: const EdgeInsets.symmetric(vertical: 12),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () => _showCreateClassDialog(context, ref),
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          icon: const Icon(Icons.add),
+          label: const Text('Buat Kelas'),
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showCreateClassDialog(context, ref),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('Buat Kelas'),
-      ),
-    ),
-  );
-}
-
-  Widget _buildWelcomeHeader(String? name, String? avatarUrl) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.only(
-        left: AppSpacing.lg,
-        right: AppSpacing.lg,
-        bottom: AppSpacing.xl,
-        top: AppSpacing.sm,
-      ),
-      decoration: const BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(24),
-          bottomRight: Radius.circular(24),
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildStatsDashboard(statsAsync),
+            _buildPendingChallengesBanner(context, ref),
+            _buildSectionHeader(context, ref, classesAsync),
+            _buildClassesContent(context, ref, classesAsync),
+            // Ruang untuk FAB agar item terakhir tidak tertutup
+            const SizedBox(height: 72),
+          ],
         ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Selamat Datang,',
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                AppSpacing.vGapXs,
-                Text(
-                  name ?? 'Guru',
-                  style: AppTypography.headlineLarge.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                AppSpacing.vGapXs,
-                Text(
-                  'Mari pantau karakter & perkembangan akademis siswa.',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: Colors.white.withValues(alpha: 0.8),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          AppSpacing.hGapMd,
-          AvatarWidget(
-            imageUrl: avatarUrl,
-            name: name,
-            size: 56,
-          ),
-        ],
       ),
     );
   }

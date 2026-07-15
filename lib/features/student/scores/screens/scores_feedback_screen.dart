@@ -13,47 +13,43 @@ class ScoresFeedbackScreen extends ConsumerWidget {
     final pulseScoresAsync = ref.watch(pulseScoresProvider);
     final progressAsync = ref.watch(studentProgressProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Skor & Umpan Balik'),
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: AppSpacing.screenPadding,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // PULSE Radar Chart
-            pulseScoresAsync.when(
-              data: (scores) => _buildPulseSection(scores),
-              loading: () => _buildLoadingCard('Memuat skor PULSE...'),
-              error: (e, _) => _buildErrorCard('Gagal memuat skor PULSE'),
-            ),
-            AppSpacing.vGapLg,
+    return GradientShellScaffold(
+      title: 'Skor & Umpan Balik',
+      subtitle: 'Perkembangan PULSE-mu',
+      onRefresh: () async {
+        ref.invalidate(pulseScoresProvider);
+        ref.invalidate(studentProgressProvider);
+      },
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // PULSE Radar Chart
+          pulseScoresAsync.when(
+            data: (scores) => _buildPulseSection(scores),
+            loading: () => _buildLoadingCard('Memuat skor PULSE...'),
+            error: (e, _) => _buildErrorCard('Gagal memuat skor PULSE'),
+          ),
+          AppSpacing.vGapLg,
 
-            // Material Progress
-            Text(
-              'Progress Materi',
-              style: AppTypography.titleLarge.copyWith(
-                color: AppColors.textPrimary,
-              ),
+          // Material Progress
+          Text(
+            'Progress Materi',
+            style: AppTypography.titleLarge.copyWith(
+              color: AppColors.textPrimary,
             ),
-            AppSpacing.vGapMd,
-            progressAsync.when(
-              data: (progress) => _buildProgressList(context, progress),
-              loading: () => _buildLoadingCard('Memuat progress...'),
-              error: (e, _) => _buildErrorCard('Gagal memuat progress'),
-            ),
-            AppSpacing.vGapLg,
+          ),
+          AppSpacing.vGapMd,
+          progressAsync.when(
+            data: (progress) => _buildProgressList(context, progress),
+            loading: () => _buildLoadingCard('Memuat progress...'),
+            error: (e, _) => _buildErrorCard('Gagal memuat progress'),
+          ),
+          AppSpacing.vGapLg,
 
-            // Recommendations
-            _buildRecommendationCard(pulseScoresAsync),
-            AppSpacing.vGapXl,
-          ],
-        ),
+          // Recommendations
+          _buildRecommendationCard(pulseScoresAsync),
+          AppSpacing.vGapXl,
+        ],
       ),
     );
   }

@@ -7,3 +7,4 @@ export 'avatar_widget.dart';
 export 'empty_state.dart';
 export 'progress_card.dart';
 export 'safe_image_asset.dart';
+export 'gradient_shell_scaffold.dart';

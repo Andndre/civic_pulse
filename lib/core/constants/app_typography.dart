@@ -94,6 +94,14 @@ class AppTypography {
         height: 1.45,
       );
 
+  /// Angka pencapaian besar: skor, streak, level (DESIGN.md §4).
+  /// Khusus angka — jangan dipakai untuk heading teks biasa.
+  static TextStyle get statNumber => GoogleFonts.poppins(
+        fontSize: 36,
+        fontWeight: FontWeight.w700,
+        height: 1.1,
+      );
+
   static TextTheme get textTheme => TextTheme(
         displayLarge: displayLarge,
         displayMedium: displayMedium,

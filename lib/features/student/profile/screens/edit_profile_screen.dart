@@ -192,18 +192,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Edit Profil'),
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0,
-      ),
+    return GradientShellScaffold(
+      title: 'Edit Profil',
+      showBackButton: true,
       body: Form(
         key: _formKey,
-        child: ListView(
-          padding: AppSpacing.screenPadding,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Section 1: Informasi Pribadi
             _buildSectionHeader('Informasi Pribadi'),

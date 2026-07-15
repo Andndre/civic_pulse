@@ -19,48 +19,32 @@ class _SocialChallengesReviewScreenState
   Widget build(BuildContext context) {
     final pendingAsync = ref.watch(pendingSocialChallengesProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text(
-          'Tinjau Tantangan Sosial',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/teacher/home'),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(pendingSocialChallengesProvider),
-          ),
-        ],
-      ),
+    return GradientShellScaffold(
+      title: 'Tinjau Tantangan Sosial',
+      subtitle: 'Antrean review',
+      variant: ShellVariant.teacher,
+      showBackButton: true,
+      onBack: () => context.go('/teacher/home'),
+      onRefresh: () async => ref.invalidate(pendingSocialChallengesProvider),
       body: pendingAsync.when(
         data: (challenges) {
           if (challenges.isEmpty) {
             return _buildEmptyState();
           }
-          return RefreshIndicator(
-            onRefresh: () async => ref.invalidate(pendingSocialChallengesProvider),
-            child: ListView.builder(
-              padding: AppSpacing.screenPadding,
-              itemCount: challenges.length,
-              itemBuilder: (context, index) {
-                final challenge = challenges[index];
-                return Padding(
+          return Column(
+            children: [
+              for (final challenge in challenges)
+                Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.md),
                   child: _PendingChallengeCard(challenge: challenge),
-                );
-              },
-            ),
+                ),
+            ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Padding(
+          padding: EdgeInsets.symmetric(vertical: 48),
+          child: Center(child: CircularProgressIndicator()),
+        ),
         error: (e, _) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

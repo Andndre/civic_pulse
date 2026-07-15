@@ -169,52 +169,45 @@ class _ManageMaterialsScreenState extends ConsumerState<ManageMaterialsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(_classDetail != null ? 'Kelola Materi - ${_classDetail!.name}' : 'Kelola Materi Kelas'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
-      ),
+    return GradientShellScaffold(
+      title: _classDetail != null
+          ? 'Kelola Materi - ${_classDetail!.name}'
+          : 'Kelola Materi Kelas',
+      subtitle: 'Papan aktivitas & kuis',
+      variant: ShellVariant.teacher,
+      showBackButton: true,
+      onBack: () => context.pop(),
+      onRefresh: _loadData,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Padding(
+              padding: EdgeInsets.symmetric(vertical: 48),
+              child: Center(child: CircularProgressIndicator()),
+            )
           : _errorMessage != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Error: $_errorMessage',
-                        style: const TextStyle(color: AppColors.danger),
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadData,
-                        child: const Text('Coba Lagi'),
-                      ),
-                    ],
-                  ),
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Error: $_errorMessage',
+                      style: const TextStyle(color: AppColors.danger),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _loadData,
+                      child: const Text('Coba Lagi'),
+                    ),
+                  ],
                 )
               : LayoutBuilder(
                   builder: (context, constraints) {
                     final isWide = constraints.maxWidth > 800;
-                    return SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isWide ? AppSpacing.xl : AppSpacing.md,
-                        vertical: AppSpacing.md,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildHeaderCard(isWide),
-                          const SizedBox(height: 24),
-                          _buildMaterialsSection(isWide),
-                        ],
-                      ),
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildHeaderCard(isWide),
+                        const SizedBox(height: 24),
+                        _buildMaterialsSection(isWide),
+                      ],
                     );
                   },
                 ),

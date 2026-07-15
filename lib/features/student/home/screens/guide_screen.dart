@@ -6,17 +6,11 @@ class GuideScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Panduan Aplikasi'),
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: AppSpacing.screenPadding,
-        child: Column(
+    return GradientShellScaffold(
+      title: 'Panduan Aplikasi',
+      subtitle: 'Cara pakai CivicPulse',
+      showBackButton: true,
+      body: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildIntroductionCard(),
@@ -73,7 +67,6 @@ class GuideScreen extends StatelessWidget {
             AppSpacing.vGapXl,
           ],
         ),
-      ),
     );
   }
 

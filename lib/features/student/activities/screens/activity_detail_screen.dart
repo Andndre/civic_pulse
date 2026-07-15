@@ -15,28 +15,28 @@ class ActivityDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final activityAsync = ref.watch(activityProvider(activityId));
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Detail Aktivitas'),
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
-        actions: activityAsync.value != null ? [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            onPressed: () => context.push('/student/activities/$activityId/edit'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: AppColors.danger),
-            onPressed: () => _confirmDelete(context, ref),
-          ),
-        ] : null,
-      ),
+    return GradientShellScaffold(
+      title: 'Detail Aktivitas',
+      showBackButton: true,
+      onBack: () => context.pop(),
+      trailing: activityAsync.value != null
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, color: Colors.white),
+                  tooltip: 'Edit aktivitas',
+                  onPressed: () =>
+                      context.push('/student/activities/$activityId/edit'),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.white),
+                  tooltip: 'Hapus aktivitas',
+                  onPressed: () => _confirmDelete(context, ref),
+                ),
+              ],
+            )
+          : null,
       body: activityAsync.when(
         data: (activity) {
           if (activity == null) {
@@ -48,23 +48,22 @@ class ActivityDetailScreen extends ConsumerWidget {
           }
           return _buildContent(context, activity);
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
+        loading: () => const Padding(
+          padding: EdgeInsets.symmetric(vertical: 48),
+          child: Center(child: CircularProgressIndicator()),
         ),
-        error: (error, _) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
-              AppSpacing.vGapMd,
-              Text('Gagal memuat detail aktivitas: $error'),
-              AppSpacing.vGapMd,
-              AppButton(
-                label: 'Coba Lagi',
-                onPressed: () => ref.invalidate(activityProvider(activityId)),
-              ),
-            ],
-          ),
+        error: (error, _) => Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
+            AppSpacing.vGapMd,
+            Text('Gagal memuat detail aktivitas: $error'),
+            AppSpacing.vGapMd,
+            AppButton(
+              label: 'Coba Lagi',
+              onPressed: () => ref.invalidate(activityProvider(activityId)),
+            ),
+          ],
         ),
       ),
     );
@@ -76,9 +75,7 @@ class ActivityDetailScreen extends ConsumerWidget {
     final categoryColor = _getCategoryColor(activity.category);
     final categoryIcon = _getCategoryIcon(activity.category);
 
-    return SingleChildScrollView(
-      padding: AppSpacing.screenPadding,
-      child: Column(
+    return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header Card (Title & Category)
@@ -289,8 +286,7 @@ class ActivityDetailScreen extends ConsumerWidget {
             ),
           AppSpacing.vGapLg,
         ],
-      ),
-    );
+      );
   }
 
   Widget _buildInfoRow({

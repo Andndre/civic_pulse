@@ -8,6 +8,25 @@
 
 (Entri terbaru di paling atas. Satu entri per sesi kerja — tambahkan, jangan menimpa entri lama.)
 
+### 2026-07-15 (sesi-15) — Design System v2: GradientShellScaffold di Seluruh Layar
+
+**Yang diselesaikan:**
+- **Token desain baru (DESIGN.md tahap 2)**: `AppColors.mood*` (gradient sunrise/growth/focus, warna celebrate), warna resmi per-dimensi PULSE (`pulseParticipation` dkk.), dan `AppTypography.statNumber` untuk angka pencapaian.
+- **`GradientShellScaffold`** (`core/widgets`): scaffold reusable header-gradient + lembar putih melengkung, varian `student` (biru cerah) dan `teacher` (biru tenang, DESIGN.md §3.4), mendukung back button, trailing actions, headerExtra, FAB, dan pull-to-refresh.
+- **Restyle seluruh layar**: semua tab utama siswa (home, galeri belajar, aktivitas, skor, profil) dan guru (home, profil), plus layar detail/form (detail/tambah/edit aktivitas, edit profil siswa & guru, panduan, info pengembang, kelola materi, tinjau tantangan sosial, profil siswa guru). Detail Kelas (TabBar) memakai AppBar warna varian teacher.
+- **Home siswa**: progress ring di kartu E-Learning & Asesmen, chip level PULSE ("Warga Muda/Aktif/Teladan") di header, press feedback (scale + haptic) di kartu menu. Fitur streak dibatalkan atas permintaan user.
+- **Verifikasi**: `flutter analyze` 0 error (22 info bawaan), `learning_board_test` lulus 5/5. 4 kegagalan di `auth_widgets_test` terbukti pre-existing (hasil identik di worktree HEAD bersih) — bukan regresi.
+
+**Next:** Opsional — restyle `learning_path_screen` & `teacher_material_editor_screen` (layar besar, butuh kehati-hatian), perbaiki 4 test auth yang timeout, lencana pencapaian di profil siswa (DESIGN.md tahap 6).
+
+### 2026-07-15 — Sinkronisasi IP Local Wi-Fi (192.168.1.15)
+
+**Yang diselesaikan:**
+- **Pembaruan Konfigurasi IP**: Mengubah IP address server lokal dari `192.168.2.93` ke `192.168.1.15` pada `api_constants.dart` dan `data_models.dart` agar sesuai dengan IP Wi-Fi saat ini.
+- **Pengujian & Verifikasi**: Menjalankan unit test `learning_board_test.dart` dan berhasil lulus 100% (5/5).
+
+**Next:** Siap untuk penyesuaian fungsional atau visual lainnya sesuai instruksi user.
+
 ### 2026-07-10 (sesi-13) — Perbaikan Perhitungan Statistik Kelas (Materi Selesai & Rata-rata PULSE)
 
 **Yang diselesaikan:**

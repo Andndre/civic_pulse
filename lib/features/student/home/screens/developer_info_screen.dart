@@ -6,28 +6,20 @@ class DeveloperInfoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Informasi Pengembang'),
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: AppSpacing.screenPadding,
-        child: Column(
-          children: [
-            _buildAppLogoSection(),
-            AppSpacing.vGapLg,
-            _buildDeveloperCard(),
-            AppSpacing.vGapLg,
-            _buildResearchCard(),
-            AppSpacing.vGapLg,
-            _buildVersionInfo(),
-            AppSpacing.vGapXl,
-          ],
-        ),
+    return GradientShellScaffold(
+      title: 'Informasi Pengembang',
+      showBackButton: true,
+      body: Column(
+        children: [
+          _buildAppLogoSection(),
+          AppSpacing.vGapLg,
+          _buildDeveloperCard(),
+          AppSpacing.vGapLg,
+          _buildResearchCard(),
+          AppSpacing.vGapLg,
+          _buildVersionInfo(),
+          AppSpacing.vGapXl,
+        ],
       ),
     );
   }

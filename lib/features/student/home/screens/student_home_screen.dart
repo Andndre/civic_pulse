@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +18,21 @@ class StudentHomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final classesAsync = ref.watch(studentClassesProvider);
+
+    // Progress ring data (DESIGN.md §7.4) — turunan dari materi yang sudah ada
+    final materials =
+        ref.watch(materialsProvider).asData?.value ?? const <LearningMaterial>[];
+    double? boardProgress;
+    double? asesmenProgress;
+    if (materials.isNotEmpty) {
+      boardProgress = materials
+              .where((m) => m.boardStatus == 'completed')
+              .length /
+          materials.length;
+      asesmenProgress =
+          materials.where((m) => m.postTestScore != null).length /
+              materials.length;
+    }
 
     return PopScope(
       canPop: false,
@@ -43,6 +60,7 @@ class StudentHomeScreen extends ConsumerWidget {
               onRefresh: () async {
                 ref.invalidate(studentClassesProvider);
                 ref.invalidate(materialsProvider);
+                ref.invalidate(pulseScoresProvider);
               },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -103,42 +121,38 @@ class StudentHomeScreen extends ConsumerWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          // Class Info Badge inside Header
-                          classesAsync.when(
-                            data: (classes) {
-                              if (classes.isEmpty) return const SizedBox.shrink();
-                              final activeClass = classes.first;
-                              return Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.school_rounded,
-                                        color: Colors.white,
-                                        size: 14,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        'Kelas ${activeClass.name}',
-                                        style: AppTypography.labelSmall.copyWith(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                          // Class & Level badges inside Header
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 6,
+                              children: [
+                                classesAsync.when(
+                                  data: (classes) {
+                                    if (classes.isEmpty) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    return _buildHeaderBadge(
+                                      icon: Icons.school_rounded,
+                                      label: 'Kelas ${classes.first.name}',
+                                    );
+                                  },
+                                  loading: () => const SizedBox.shrink(),
+                                  error: (e, _) => const SizedBox.shrink(),
                                 ),
-                              );
-                            },
-                            loading: () => const SizedBox.shrink(),
-                            error: (e, _) => const SizedBox.shrink(),
+                                if (ref
+                                        .watch(pulseScoresProvider)
+                                        .asData
+                                        ?.value
+                                    case final pulse?)
+                                  _buildHeaderBadge(
+                                    icon: Icons.star_rounded,
+                                    iconColor: AppColors.celebrate,
+                                    label: _levelLabel(pulse.overall),
+                                  ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -182,38 +196,36 @@ class StudentHomeScreen extends ConsumerWidget {
                             crossAxisSpacing: 16,
                             childAspectRatio: 0.7,
                             children: [
-                              _buildMenuCard(
-                                context: context,
+                              _MenuCard(
                                 title: 'E-Learning',
                                 iconAsset: 'assets/icons/menu_elearning.svg',
+                                progress: boardProgress,
+                                progressColor: AppColors.pulseParticipation,
                                 onTap: () => context.go('/student/learning'),
                               ),
-                              _buildMenuCard(
-                                context: context,
+                              _MenuCard(
                                 title: 'Asesmen & Refleksi',
                                 iconAsset: 'assets/icons/menu_assessment.svg',
+                                progress: asesmenProgress,
+                                progressColor: AppColors.pulseUnderstanding,
                                 onTap: () => context.go('/student/learning'),
                               ),
-                              _buildMenuCard(
-                                context: context,
+                              _MenuCard(
                                 title: 'Ringkasan Asesmen',
                                 iconAsset: 'assets/icons/menu_score_summary.svg',
                                 onTap: () => context.go('/student/scores'),
                               ),
-                              _buildMenuCard(
-                                context: context,
+                              _MenuCard(
                                 title: 'Aktivitas Kewargaan',
                                 iconAsset: 'assets/icons/menu_civic_activity.svg',
                                 onTap: () => context.go('/student/activities'),
                               ),
-                              _buildMenuCard(
-                                context: context,
+                              _MenuCard(
                                 title: 'Feedback',
                                 iconAsset: 'assets/icons/menu_feedback.svg',
                                 onTap: () => context.go('/student/scores'),
                               ),
-                              _buildMenuCard(
-                                context: context,
+                              _MenuCard(
                                 title: 'Tanya AI',
                                 iconAsset: 'assets/icons/menu_ai.svg',
                                 isLocked: true,
@@ -247,81 +259,35 @@ class StudentHomeScreen extends ConsumerWidget {
     }
   }
 
-  Widget _buildMenuCard({
-    required BuildContext context,
-    required String title,
-    required String iconAsset,
-    required VoidCallback onTap,
-    bool isLocked = false,
+  /// Label level dari overall PULSE score (DESIGN.md §7.2) —
+  /// reframe status merah dari "gagal" menjadi "level saat ini".
+  String _levelLabel(double overall) {
+    if (overall >= 3.5) return 'Warga Teladan';
+    if (overall >= 2.5) return 'Warga Aktif';
+    return 'Warga Muda';
+  }
+
+  Widget _buildHeaderBadge({
+    required IconData icon,
+    required String label,
+    Color iconColor = Colors.white,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFF0F2F5), width: 1),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Stack(
-                children: [
-                  Center(
-                    child: SizedBox(
-                      width: 60,
-                      height: 60,
-                      child: SvgPicture.asset(iconAsset),
-                    ),
-                  ),
-                  if (isLocked)
-                    Positioned(
-                      bottom: 8,
-                      right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFD54F),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1.5),
-                        ),
-                        child: const Icon(
-                          Icons.lock,
-                          size: 9,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 32,
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: Text(
-                title,
-                textAlign: TextAlign.center,
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 11,
-                  height: 1.2,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
+          Icon(icon, color: iconColor, size: 14),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: AppTypography.labelSmall.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -514,4 +480,184 @@ class StudentHomeScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Kartu menu utama dengan ikon sticker, press feedback (scale + haptic),
+/// dan progress ring opsional di sekeliling ikon (DESIGN.md §7.4).
+class _MenuCard extends StatefulWidget {
+  final String title;
+  final String iconAsset;
+  final VoidCallback onTap;
+  final bool isLocked;
+  final double? progress;
+  final Color progressColor;
+
+  const _MenuCard({
+    required this.title,
+    required this.iconAsset,
+    required this.onTap,
+    this.isLocked = false,
+    this.progress,
+    this.progressColor = AppColors.primary,
+  });
+
+  @override
+  State<_MenuCard> createState() => _MenuCardState();
+}
+
+class _MenuCardState extends State<_MenuCard> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = widget.progress?.clamp(0.0, 1.0);
+    final hasRing = progress != null;
+
+    return Semantics(
+      button: true,
+      label: widget.isLocked
+          ? '${widget.title}, terkunci'
+          : hasRing
+              ? '${widget.title}, progres ${(progress * 100).round()} persen'
+              : widget.title,
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTapCancel: () => setState(() => _pressed = false),
+        onTap: () {
+          HapticFeedback.selectionClick();
+          widget.onTap();
+        },
+        child: AnimatedScale(
+          scale: _pressed ? 0.96 : 1.0,
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOut,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border:
+                        Border.all(color: const Color(0xFFF0F2F5), width: 1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      Center(
+                        child: SizedBox(
+                          width: 70,
+                          height: 70,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              if (hasRing)
+                                Positioned.fill(
+                                  child: CustomPaint(
+                                    painter: _ProgressRingPainter(
+                                      progress: progress,
+                                      color: widget.progressColor,
+                                    ),
+                                  ),
+                                ),
+                              SvgPicture.asset(
+                                widget.iconAsset,
+                                width: hasRing ? 54 : 60,
+                                height: hasRing ? 54 : 60,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (widget.isLocked)
+                        Positioned(
+                          bottom: 8,
+                          right: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFD54F),
+                              shape: BoxShape.circle,
+                              border:
+                                  Border.all(color: Colors.white, width: 1.5),
+                            ),
+                            child: const Icon(
+                              Icons.lock,
+                              size: 9,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 32,
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Text(
+                    widget.title,
+                    textAlign: TextAlign.center,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11,
+                      height: 1.2,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Ring progres tipis di sekeliling ikon sticker — track pudar + arc berwarna,
+/// mulai dari atas (jam 12), ujung membulat.
+class _ProgressRingPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+
+  const _ProgressRingPainter({required this.progress, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const stroke = 3.5;
+    final rect = (Offset.zero & size).deflate(stroke / 2);
+
+    final track = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke
+      ..color = color.withValues(alpha: 0.15);
+    canvas.drawArc(rect, 0, 2 * math.pi, false, track);
+
+    if (progress > 0) {
+      final arc = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke
+        ..strokeCap = StrokeCap.round
+        ..color = color;
+      canvas.drawArc(rect, -math.pi / 2, 2 * math.pi * progress, false, arc);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ProgressRingPainter oldDelegate) =>
+      oldDelegate.progress != progress || oldDelegate.color != color;
 }

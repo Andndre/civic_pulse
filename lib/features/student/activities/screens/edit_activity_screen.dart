@@ -260,14 +260,9 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   Widget build(BuildContext context) {
     final activityAsync = ref.watch(activityProvider(widget.activityId));
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Edit Aktivitas'),
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0,
-      ),
+    return GradientShellScaffold(
+      title: 'Edit Aktivitas',
+      showBackButton: true,
       body: activityAsync.when(
         data: (activity) {
           if (activity == null) {
@@ -277,13 +272,13 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
               description: 'Detail aktivitas tidak dapat ditemukan atau telah dihapus.',
             );
           }
-          
+
           _initializeData(activity);
 
           return Form(
             key: _formKey,
-            child: ListView(
-              padding: AppSpacing.screenPadding,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Title field
                 AppTextField(
@@ -443,7 +438,10 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Padding(
+          padding: EdgeInsets.symmetric(vertical: 48),
+          child: Center(child: CircularProgressIndicator()),
+        ),
         error: (error, _) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

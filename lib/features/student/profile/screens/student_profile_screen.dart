@@ -16,93 +16,100 @@ class StudentProfileScreen extends ConsumerWidget {
     final user = authState.user;
     final pulseScoresAsync = ref.watch(pulseScoresProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Profil'),
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: AppSpacing.screenPadding,
-        child: Column(
-          children: [
-            // Profile header
-            _buildProfileHeader(context, user),
-            AppSpacing.vGapLg,
+    return GradientShellScaffold(
+      title: 'Profil',
+      subtitle: 'Akunmu',
+      headerExtra: _buildProfileHeader(context, user),
+      body: Column(
+        children: [
+          // Profile details card
+          _buildProfileDetailsCard(user),
+          AppSpacing.vGapLg,
 
-            // Profile details card
-            _buildProfileDetailsCard(user),
-            AppSpacing.vGapLg,
+          // PULSE Summary
+          _buildPulseSummaryCard(pulseScoresAsync),
+          AppSpacing.vGapLg,
 
-            // PULSE Summary
-            _buildPulseSummaryCard(pulseScoresAsync),
-            AppSpacing.vGapLg,
+          // Settings sections
+          _buildSettingsSection(context, ref),
+          AppSpacing.vGapLg,
 
-            // Settings sections
-            _buildSettingsSection(context, ref),
-            AppSpacing.vGapLg,
-
-            // Logout button
-            _buildLogoutButton(context, ref),
-            AppSpacing.vGapXl,
-          ],
-        ),
+          // Logout button
+          _buildLogoutButton(context, ref),
+          AppSpacing.vGapXl,
+        ],
       ),
     );
   }
 
   Widget _buildProfileHeader(BuildContext context, User? user) {
-    return AppCard(
-      child: Column(
-        children: [
-          // Avatar
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: user?.avatarUrl != null
-                ? ClipOval(
-                    child: Image.network(
-                      user!.avatarUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => _buildInitialsAvatar(user.name),
-                    ),
-                  )
-                : _buildInitialsAvatar(user?.name ?? 'S'),
+    return Row(
+      children: [
+        Container(
+          width: 72,
+          height: 72,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.2),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2),
           ),
-          AppSpacing.vGapMd,
-          Text(
-            user?.name ?? 'Student',
-            style: AppTypography.titleLarge.copyWith(
-              color: AppColors.textPrimary,
-            ),
+          child: user?.avatarUrl != null
+              ? ClipOval(
+                  child: Image.network(
+                    user!.avatarUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => _buildInitialsAvatar(user.name),
+                  ),
+                )
+              : _buildInitialsAvatar(user?.name ?? 'S'),
+        ),
+        AppSpacing.hGapMd,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                user?.name ?? 'Student',
+                style: AppTypography.titleLarge.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(
+                user?.email ?? 'student@email.com',
+                style: AppTypography.bodySmall.copyWith(
+                  color: Colors.white.withValues(alpha: 0.8),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 6),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'Siswa',
+                  style: AppTypography.labelSmall.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
-          AppSpacing.vGapXs,
-          Text(
-            user?.email ?? 'student@email.com',
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-          AppSpacing.vGapXs,
-          StatusBadge(
-            label: 'Siswa',
-            status: AppStatus.info,
-          ),
-          AppSpacing.vGapMd,
-          AppButton(
-            label: 'Edit Profil',
-            variant: AppButtonVariant.outline,
-            size: AppButtonSize.small,
-            onPressed: () => context.push('/student/profile/edit'),
-          ),
-        ],
-      ),
+        ),
+        IconButton(
+          onPressed: () => context.push('/student/profile/edit'),
+          icon: const Icon(Icons.edit_rounded, color: Colors.white),
+          tooltip: 'Edit Profil',
+        ),
+      ],
     );
   }
 
@@ -114,7 +121,7 @@ class StudentProfileScreen extends ConsumerWidget {
       child: Text(
         initials,
         style: AppTypography.headlineMedium.copyWith(
-          color: AppColors.primary,
+          color: Colors.white,
           fontWeight: FontWeight.bold,
         ),
       ),

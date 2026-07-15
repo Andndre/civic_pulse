@@ -34,6 +34,19 @@ class AppColors {
   static const Color info = Color(0xFF2196F3);
   static const Color infoLight = Color(0x332196F3);
 
+  // Mood accents (DESIGN.md §3.2) — hanya untuk hero/banner besar,
+  // maksimal 1 gradient per layar, tidak untuk teks/ikon kecil
+  static const List<Color> moodSunrise = [Color(0xFFFF9A56), Color(0xFFFF6B8B)];
+  static const List<Color> moodGrowth = [Color(0xFF43E97B), Color(0xFF38F9D7)];
+  static const List<Color> moodFocus = [Color(0xFF667EEA), Color(0xFF764BA2)];
+  static const Color celebrate = Color(0xFFFFD166);
+
+  // Warna tetap per-dimensi PULSE (DESIGN.md §3.3) — berlaku di semua chart & badge
+  static const Color pulseParticipation = Color(0xFF2196F3);
+  static const Color pulseUnderstanding = Color(0xFF4CAF50);
+  static const Color pulseLearning = Color(0xFFFF9800);
+  static const Color pulseSocialEngagement = Color(0xFF9C27B0);
+
   // Chart Colors
   static const Color chartBlue = Color(0xFF2196F3);
   static const Color chartGreen = Color(0xFF4CAF50);

@@ -14,91 +14,101 @@ class TeacherProfileScreen extends ConsumerWidget {
     final user = authState.user;
     final statsAsync = ref.watch(teacherStatsProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Profil'),
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: AppSpacing.screenPadding,
-        child: Column(
-          children: [
-            // Profile header
-            _buildProfileHeader(context, user),
-            AppSpacing.vGapLg,
+    return GradientShellScaffold(
+      title: 'Profil',
+      subtitle: 'Akun Anda',
+      variant: ShellVariant.teacher,
+      headerExtra: _buildProfileHeader(context, user),
+      body: Column(
+        children: [
+          // Stats summary
+          _buildStatsSummary(statsAsync),
+          AppSpacing.vGapLg,
 
-            // Stats summary
-            _buildStatsSummary(statsAsync),
-            AppSpacing.vGapLg,
+          // Profile details card
+          _buildProfileDetailsCard(user),
+          AppSpacing.vGapLg,
 
-            // Profile details card
-            _buildProfileDetailsCard(user),
-            AppSpacing.vGapLg,
+          // Settings sections
+          _buildSettingsSection(context, ref),
+          AppSpacing.vGapLg,
 
-            // Settings sections
-            _buildSettingsSection(context, ref),
-            AppSpacing.vGapLg,
-
-            // Logout button
-            _buildLogoutButton(context, ref),
-            AppSpacing.vGapXl,
-          ],
-        ),
+          // Logout button
+          _buildLogoutButton(context, ref),
+          AppSpacing.vGapXl,
+        ],
       ),
     );
   }
 
   Widget _buildProfileHeader(BuildContext context, dynamic user) {
-    return AppCard(
-      child: Column(
-        children: [
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                _getInitials(user?.name ?? 'G'),
-                style: AppTypography.headlineMedium.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.bold,
-                ),
+    return Row(
+      children: [
+        Container(
+          width: 72,
+          height: 72,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.2),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2),
+          ),
+          child: Center(
+            child: Text(
+              _getInitials(user?.name ?? 'G'),
+              style: AppTypography.headlineMedium.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
-          AppSpacing.vGapMd,
-          Text(
-            user?.name ?? 'Guru',
-            style: AppTypography.titleLarge.copyWith(
-              color: AppColors.textPrimary,
-            ),
+        ),
+        AppSpacing.hGapMd,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                user?.name ?? 'Guru',
+                style: AppTypography.titleLarge.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(
+                user?.email ?? 'guru@email.com',
+                style: AppTypography.bodySmall.copyWith(
+                  color: Colors.white.withValues(alpha: 0.8),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 6),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'Guru',
+                  style: AppTypography.labelSmall.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
-          AppSpacing.vGapXs,
-          Text(
-            user?.email ?? 'guru@email.com',
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-          AppSpacing.vGapXs,
-          StatusBadge(label: 'Guru', status: AppStatus.info),
-          AppSpacing.vGapMd,
-          AppButton(
-            label: 'Edit Profil',
-            variant: AppButtonVariant.outline,
-            size: AppButtonSize.small,
-            onPressed: () {
-              context.push('/teacher/profile/edit');
-            },
-          ),
-        ],
-      ),
+        ),
+        IconButton(
+          onPressed: () => context.push('/teacher/profile/edit'),
+          icon: const Icon(Icons.edit_rounded, color: Colors.white),
+          tooltip: 'Edit Profil',
+        ),
+      ],
     );
   }
 

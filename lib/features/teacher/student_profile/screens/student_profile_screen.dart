@@ -31,26 +31,22 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
     final activitiesAsync = ref.watch(studentActivitiesProvider(studentIdInt));
     final pulseAsync = ref.watch(studentPulseScoresProvider(studentIdInt));
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Profil Siswa'),
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/teacher/class/${widget.classId}'),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              ref.invalidate(studentPulseScoresProvider(studentIdInt));
-              ref.invalidate(classStudentsProvider(classIdInt));
-            },
-          ),
-        ],
+    return GradientShellScaffold(
+      title: 'Profil Siswa',
+      subtitle: 'Pantau perkembangan',
+      variant: ShellVariant.teacher,
+      showBackButton: true,
+      onBack: () => context.go('/teacher/class/${widget.classId}'),
+      onRefresh: () async {
+        ref.invalidate(studentPulseScoresProvider(studentIdInt));
+        ref.invalidate(classStudentsProvider(classIdInt));
+      },
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddNoteDialog(context, studentIdInt),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        tooltip: 'Tambah catatan anekdot',
+        child: const Icon(Icons.add),
       ),
       body: studentsAsync.when(
         data: (students) {
@@ -60,14 +56,11 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
           }
           return _buildContent(student, notesAsync, studentIdInt, activitiesAsync, pulseAsync);
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Padding(
+          padding: EdgeInsets.symmetric(vertical: 48),
+          child: Center(child: CircularProgressIndicator()),
+        ),
         error: (e, _) => Center(child: Text('Error: $e')),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddNoteDialog(context, studentIdInt),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        child: const Icon(Icons.add),
       ),
     );
   }
@@ -79,9 +72,7 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
     AsyncValue<List<ActivityLog>> activitiesAsync,
     AsyncValue<Map<String, dynamic>> pulseAsync,
   ) {
-    return SingleChildScrollView(
-      padding: AppSpacing.screenPadding,
-      child: Column(
+    return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Profile header
@@ -122,10 +113,10 @@ class _TeacherStudentProfileScreenState extends ConsumerState<TeacherStudentProf
           ),
           AppSpacing.vGapMd,
           _buildAnecdotalNotes(notesAsync, studentId),
-          AppSpacing.vGapXl,
+          // Ruang untuk FAB agar konten terakhir tidak tertutup
+          const SizedBox(height: 88),
         ],
-      ),
-    );
+      );
   }
 
   Widget _buildProfileHeader(ClassStudent student) {

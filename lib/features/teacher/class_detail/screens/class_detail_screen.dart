@@ -45,8 +45,9 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen>
           loading: () => const Text('Memuat...'),
           error: (_, _) => const Text('Kelas'),
         ),
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
+        // Selaras dengan varian teacher GradientShellScaffold (DESIGN.md §3.4)
+        backgroundColor: const Color(0xFF1565C0),
+        foregroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -58,6 +59,7 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen>
             onPressed: () => _shareClassCode(context, classAsync),
           ),
           PopupMenuButton<String>(
+            iconColor: Colors.white,
             onSelected: (value) => _handleMenuAction(context, value, classIdInt),
             itemBuilder: (context) => [
               const PopupMenuItem(value: 'materials', child: Text('Kelola Materi')),
@@ -68,9 +70,9 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen>
         ],
         bottom: TabBar(
           controller: _tabController,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textSecondary,
-          indicatorColor: AppColors.primary,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          indicatorColor: Colors.white,
           tabs: const [
             Tab(text: 'Ringkasan'),
             Tab(text: 'Siswa'),

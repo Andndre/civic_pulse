@@ -183,18 +183,14 @@ class _EditTeacherProfileScreenState extends ConsumerState<EditTeacherProfileScr
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Edit Profil Guru'),
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0,
-      ),
+    return GradientShellScaffold(
+      title: 'Edit Profil Guru',
+      variant: ShellVariant.teacher,
+      showBackButton: true,
       body: Form(
         key: _formKey,
-        child: ListView(
-          padding: AppSpacing.screenPadding,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildSectionHeader('Informasi Pribadi'),
             AppSpacing.vGapSm,

@@ -16,122 +16,97 @@ class LearningGalleryScreen extends ConsumerWidget {
     final classService = ref.watch(classServiceProvider);
     final user = ref.watch(currentUserProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Galeri Belajar'),
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0,
-      ),
-      body: FutureBuilder(
-        future: user != null ? classService.getStudentClasses(user.id) : Future.value([]),
-        builder: (context, classSnapshot) {
-          final enrolledClass = classSnapshot.data?.isNotEmpty == true
-              ? classSnapshot.data!.first
-              : null;
+    return FutureBuilder(
+      future: user != null
+          ? classService.getStudentClasses(user.id)
+          : Future.value([]),
+      builder: (context, classSnapshot) {
+        final enrolledClass = classSnapshot.data?.isNotEmpty == true
+            ? classSnapshot.data!.first
+            : null;
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Class info banner
-              if (enrolledClass != null)
-                Container(
-                  width: double.infinity,
-                  padding: AppSpacing.screenPadding.copyWith(
-                    top: AppSpacing.md,
-                    bottom: AppSpacing.md,
+        return GradientShellScaffold(
+          title: 'Galeri Belajar',
+          subtitle: 'Jelajahi materimu',
+          onRefresh: () async => ref.invalidate(materialsProvider),
+          headerExtra: enrolledClass == null
+              ? null
+              : Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  color: AppColors.primary.withValues(alpha: 0.1),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.school, color: AppColors.primary),
-                      AppSpacing.hGapMd,
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              enrolledClass.name,
-                              style: AppTypography.titleMedium.copyWith(
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            Text(
-                              '${enrolledClass.gradeCategory} Kelas ${enrolledClass.gradeLevel}',
-                              style: AppTypography.labelSmall.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
+                      const Icon(Icons.school_rounded,
+                          color: Colors.white, size: 16),
+                      AppSpacing.hGapSm,
+                      Text(
+                        '${enrolledClass.name} · ${enrolledClass.gradeCategory} Kelas ${enrolledClass.gradeLevel}',
+                        style: AppTypography.labelMedium.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
                 ),
+          body: materialsAsync.when(
+            data: (materials) {
+              if (materials.isEmpty) {
+                return EmptyState(
+                  icon: Icons.menu_book_outlined,
+                  title: 'Tidak Ada Materi',
+                  description: enrolledClass != null
+                      ? 'Materi untuk kelasmu belum tersedia'
+                      : 'Kamu belum masuk ke kelas manapun. Hubungi guru untuk bergabung.',
+                  actionLabel: enrolledClass != null ? null : 'Login Ulang',
+                  onAction:
+                      enrolledClass != null ? null : () => context.go('/login'),
+                );
+              }
 
-              // Materials grid
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: () async {
-                    ref.invalidate(materialsProvider);
-                  },
-                  child: materialsAsync.when(
-                    data: (materials) {
-                      if (materials.isEmpty) {
-                        return EmptyState(
-                          icon: Icons.menu_book_outlined,
-                          title: 'Tidak Ada Materi',
-                          description: enrolledClass != null
-                              ? 'Materi untuk kelasmu belum tersedia'
-                              : 'Kamu belum masuk ke kelas manapun. Hubungi guru untuk bergabung.',
-                          actionLabel: enrolledClass != null ? null : 'Login Ulang',
-                          onAction: enrolledClass != null
-                              ? null
-                              : () => context.go('/login'),
-                        );
-                      }
-
-                      return ListView.separated(
-                        padding: AppSpacing.screenPadding,
-                        itemCount: materials.length,
-                        separatorBuilder: (context, index) => AppSpacing.vGapMd,
-                        itemBuilder: (context, index) {
-                          final material = materials[index];
-                          return MaterialCard(
-                            id: material.id,
-                            title: material.title,
-                            description: material.description,
-                            thumbnailUrl: material.thumbnailUrl,
-                            estimatedDuration: material.estimatedDuration,
-                            gradeCategory: material.gradeCategory,
-                            gradeLevel: material.gradeLevel,
-                            status: material.status,
-                            onTap: () => context.go('/student/learning/${material.id}'),
-                          );
-                        },
-                      );
-                    },
-                    loading: () => ListView.separated(
-                      padding: AppSpacing.screenPadding,
-                      itemCount: 4,
-                      separatorBuilder: (context, index) => AppSpacing.vGapMd,
-                      itemBuilder: (context, index) => const ShimmerCard(),
+              return Column(
+                children: [
+                  for (var i = 0; i < materials.length; i++) ...[
+                    if (i > 0) AppSpacing.vGapMd,
+                    MaterialCard(
+                      id: materials[i].id,
+                      title: materials[i].title,
+                      description: materials[i].description,
+                      thumbnailUrl: materials[i].thumbnailUrl,
+                      estimatedDuration: materials[i].estimatedDuration,
+                      gradeCategory: materials[i].gradeCategory,
+                      gradeLevel: materials[i].gradeLevel,
+                      status: materials[i].status,
+                      onTap: () =>
+                          context.go('/student/learning/${materials[i].id}'),
                     ),
-                    error: (error, _) => EmptyState(
-                      icon: Icons.error_outline,
-                      title: 'Gagal Memuat',
-                      description: error.toString(),
-                      actionLabel: 'Coba Lagi',
-                      onAction: () => ref.invalidate(materialsProvider),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+                  ],
+                ],
+              );
+            },
+            loading: () => Column(
+              children: [
+                for (var i = 0; i < 4; i++) ...[
+                  if (i > 0) AppSpacing.vGapMd,
+                  const ShimmerCard(),
+                ],
+              ],
+            ),
+            error: (error, _) => EmptyState(
+              icon: Icons.error_outline,
+              title: 'Gagal Memuat',
+              description: error.toString(),
+              actionLabel: 'Coba Lagi',
+              onAction: () => ref.invalidate(materialsProvider),
+            ),
+          ),
+        );
+      },
     );
   }
 }

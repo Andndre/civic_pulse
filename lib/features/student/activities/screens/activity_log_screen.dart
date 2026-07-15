@@ -27,48 +27,31 @@ class _ActivityLogScreenState extends ConsumerState<ActivityLogScreen> {
   Widget build(BuildContext context) {
     final activitiesAsync = ref.watch(activityListProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Log Aktivitas'),
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () => _showFilterBottomSheet(context),
-          ),
-        ],
+    return GradientShellScaffold(
+      title: 'Aktivitas Kewargaan',
+      subtitle: 'Portofolio kegiatanmu',
+      onRefresh: () async => ref.invalidate(activityListProvider),
+      trailing: IconButton(
+        icon: const Icon(Icons.filter_list, color: Colors.white),
+        tooltip: 'Filter aktivitas',
+        onPressed: () => _showFilterBottomSheet(context),
       ),
-      body: activitiesAsync.when(
-        data: (activities) {
-          final filteredActivities = _selectedCategory == null
-              ? activities
-              : activities.where((a) => a.category == _selectedCategory).toList();
-
-          if (filteredActivities.isEmpty) {
-            return _buildEmptyState();
-          }
-
-          return _buildActivityList(filteredActivities);
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
-              AppSpacing.vGapMd,
-              Text('Gagal memuat aktivitas: $error'),
-              AppSpacing.vGapMd,
-              AppButton(
-                label: 'Coba Lagi',
-                variant: AppButtonVariant.primary,
-                onPressed: () => ref.invalidate(activityListProvider),
+      headerExtra: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (final cat in _categories) ...[
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _buildFilterChip(
+                  label: cat['label'] as String,
+                  selected: _selectedCategory == cat['value'],
+                  onTap: () => setState(
+                      () => _selectedCategory = cat['value'] as String?),
+                ),
               ),
             ],
-          ),
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -77,6 +60,63 @@ class _ActivityLogScreenState extends ConsumerState<ActivityLogScreen> {
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('Tambah Aktivitas'),
+      ),
+      body: activitiesAsync.when(
+        data: (activities) {
+          final filteredActivities = _selectedCategory == null
+              ? activities
+              : activities
+                  .where((a) => a.category == _selectedCategory)
+                  .toList();
+
+          if (filteredActivities.isEmpty) {
+            return _buildEmptyState();
+          }
+
+          return _buildActivityList(filteredActivities);
+        },
+        loading: () => const Padding(
+          padding: EdgeInsets.symmetric(vertical: 48),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        error: (error, _) => Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
+            AppSpacing.vGapMd,
+            Text('Gagal memuat aktivitas: $error'),
+            AppSpacing.vGapMd,
+            AppButton(
+              label: 'Coba Lagi',
+              variant: AppButtonVariant.primary,
+              onPressed: () => ref.invalidate(activityListProvider),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? Colors.white : Colors.white.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: AppTypography.labelMedium.copyWith(
+            color: selected ? AppColors.primaryDark : Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }
@@ -92,16 +132,16 @@ class _ActivityLogScreenState extends ConsumerState<ActivityLogScreen> {
   }
 
   Widget _buildActivityList(List<ActivityLog> activities) {
-    return ListView.builder(
-      padding: AppSpacing.screenPadding,
-      itemCount: activities.length,
-      itemBuilder: (context, index) {
-        final activity = activities[index];
-        return _ActivityCard(
-          activity: activity,
-          onTap: () => context.push('/student/activities/${activity.id}'),
-        );
-      },
+    return Column(
+      children: [
+        for (final activity in activities)
+          _ActivityCard(
+            activity: activity,
+            onTap: () => context.push('/student/activities/${activity.id}'),
+          ),
+        // Ruang untuk FAB agar item terakhir tidak tertutup
+        const SizedBox(height: 72),
+      ],
     );
   }
 

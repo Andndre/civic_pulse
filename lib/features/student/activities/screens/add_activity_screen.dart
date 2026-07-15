@@ -239,18 +239,14 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Tambah Aktivitas'),
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0,
-      ),
+    return GradientShellScaffold(
+      title: 'Tambah Aktivitas',
+      subtitle: 'Catat kegiatan positifmu',
+      showBackButton: true,
       body: Form(
         key: _formKey,
-        child: ListView(
-          padding: AppSpacing.screenPadding,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Title field
             AppTextField(
