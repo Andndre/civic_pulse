@@ -79,11 +79,13 @@ class GuideScreen extends StatelessWidget {
             children: [
               Icon(Icons.stars, color: AppColors.primary, size: 28),
               AppSpacing.hGapSm,
-              Text(
-                'Selamat Datang di CivicPulse!',
-                style: AppTypography.titleMedium.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  'Selamat Datang di CivicPulse!',
+                  style: AppTypography.titleMedium.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -172,11 +174,13 @@ class GuideScreen extends StatelessWidget {
             children: [
               Icon(Icons.analytics_outlined, color: AppColors.primary, size: 24),
               AppSpacing.hGapSm,
-              Text(
-                'Mengenal Metrik PULSE',
-                style: AppTypography.titleMedium.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  'Mengenal Metrik PULSE',
+                  style: AppTypography.titleMedium.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],

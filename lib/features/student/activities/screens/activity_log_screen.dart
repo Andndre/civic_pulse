@@ -54,13 +54,6 @@ class _ActivityLogScreenState extends ConsumerState<ActivityLogScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/student/activities/add'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('Tambah Aktivitas'),
-      ),
       body: activitiesAsync.when(
         data: (activities) {
           final filteredActivities = _selectedCategory == null
@@ -122,12 +115,11 @@ class _ActivityLogScreenState extends ConsumerState<ActivityLogScreen> {
   }
 
   Widget _buildEmptyState() {
-    return EmptyState(
+    return const EmptyState(
       icon: Icons.assignment_outlined,
       title: 'Belum Ada Aktivitas',
-      description: 'Catat aktivitas positifmu untuk membangun portofolio PULSE.',
-      actionLabel: 'Tambah Aktivitas Pertama',
-      onAction: () => context.push('/student/activities/add'),
+      description:
+          'Aktivitas kewargaanmu akan muncul di sini setelah kamu menyelesaikan tantangan sosial pada materi pembelajaran.',
     );
   }
 
@@ -139,8 +131,6 @@ class _ActivityLogScreenState extends ConsumerState<ActivityLogScreen> {
             activity: activity,
             onTap: () => context.push('/student/activities/${activity.id}'),
           ),
-        // Ruang untuk FAB agar item terakhir tidak tertutup
-        const SizedBox(height: 72),
       ],
     );
   }

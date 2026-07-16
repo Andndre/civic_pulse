@@ -8,6 +8,28 @@
 
 (Entri terbaru di paling atas. Satu entri per sesi kerja — tambahkan, jangan menimpa entri lama.)
 
+### 2026-07-16 (sesi-18) — Perapian Menu, Layout Fleksibel & Perbaikan Overflow
+
+**Yang diselesaikan:**
+- **Layout fleksibel (tanpa ukuran tetap)**: Game True/False, tampilan hasil kuis, sukses tantangan sosial, dan fallback e-book kini memakai pola `LayoutBuilder + SingleChildScrollView + ConstrainedBox(minHeight)` sehingga konten memusat saat muat & bisa di-scroll saat penuh. Progres materi per-siswa dibuat `autoDispose` agar tidak bocor antar akun (siswa baru join tak lagi melihat materi "selesai").
+- **Spasi opsi pre/post-test**: Opsi jawaban objektif di editor materi guru kini punya jarak antar-baris (tidak lagi menempel).
+- **Tab "Informasi Utama" dkk. bisa di-scroll**: `TabBar` editor materi jadi `isScrollable` sehingga label panjang tampil penuh.
+- **Perbaikan overflow**: Item Game Sortir Kategori kini membungkus teks (kartu selebar layar, bukan pil satu baris) dan judul kartu Panduan ("Selamat Datang di CivicPulse!") dibungkus `Expanded`.
+- **Perapian menu siswa**: Bottom nav "Informasi Pengembang" dihapus; kartu "Feedback" dihapus; tombol "Tambah Aktivitas" (FAB + empty-state) dihapus dari Aktivitas Kewargaan.
+- **Bedakan E-Learning vs Asesmen**: E-Learning tetap ke Galeri Belajar (ring progres biru); "Asesmen & Refleksi" diarahkan ke layar Skor dengan tile ikon oranye, dan kartu "Ringkasan Asesmen" yang redundan dilebur ke dalamnya.
+
+**Verifikasi:** `flutter analyze` bersih (22 info bawaan, 0 error/warning) & `challenge_games_test.dart` 5/5 lulus.
+
+**Next:** Menunggu instruksi visual/fungsional berikutnya.
+
+### 2026-07-16 (sesi-17) — Sinkronisasi IP Local Wi-Fi (192.168.2.93)
+
+**Yang diselesaikan:**
+- **Pembaruan Konfigurasi IP**: Mengubah IP address server lokal dari `192.168.1.15` ke `192.168.2.93` pada `api_constants.dart` dan `data_models.dart` agar sesuai dengan IP Wi-Fi host Windows saat ini (`192.168.2.93`).
+- **Pengujian & Verifikasi**: Menjalankan unit test `learning_board_test.dart` (5/5) dan `challenge_games_test.dart` (5/5) serta berhasil lulus 100%. `flutter analyze` berjalan dengan hasil bersih dari error/warning baru (hanya 22 info bawaan).
+
+**Next:** Siap untuk penyesuaian fungsional atau visual lainnya sesuai instruksi user.
+
 ### 2026-07-16 (sesi-16) — Rombak Tampilan 4 Game Tantangan (Design System v2)
 
 **Yang diselesaikan:**

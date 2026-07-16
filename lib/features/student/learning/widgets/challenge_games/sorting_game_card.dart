@@ -155,23 +155,35 @@ class _SortingGameCardState extends State<SortingGameCard> {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _unsortedItems.map((item) {
-                      final id = item['id'] as String;
-                      final label = item['label'] as String? ?? '';
-                      return Draggable<String>(
-                        data: id,
-                        feedback: Transform.rotate(
-                          angle: -0.05,
-                          child: _DraggableChip(label: label, isDragging: true),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final item in _unsortedItems)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Builder(
+                            builder: (context) {
+                              final id = item['id'] as String;
+                              final label = item['label'] as String? ?? '';
+                              return Draggable<String>(
+                                data: id,
+                                feedback: SizedBox(
+                                  width: MediaQuery.of(context).size.width * 0.78,
+                                  child: Transform.rotate(
+                                    angle: -0.02,
+                                    child: _DraggableChip(
+                                        label: label, isDragging: true),
+                                  ),
+                                ),
+                                childWhenDragging: _DraggableChip(
+                                    label: label, isDragging: false, faded: true),
+                                child:
+                                    _DraggableChip(label: label, isDragging: false),
+                              );
+                            },
+                          ),
                         ),
-                        childWhenDragging:
-                            _DraggableChip(label: label, isDragging: false, faded: true),
-                        child: _DraggableChip(label: label, isDragging: false),
-                      );
-                    }).toList(),
+                    ],
                   ),
                 ],
               ),
@@ -297,23 +309,24 @@ class _SortingGameCardState extends State<SortingGameCard> {
                     ),
                   )
                 else
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: catItems.map((item) {
-                      final id = item['id'].toString();
-                      final label = item['label'] as String? ?? '';
-                      final isCorrect = _submitted && item['category'] == cat;
-                      return _SortedChip(
-                        label: label,
-                        color: catColor,
-                        submitted: _submitted,
-                        isCorrect: isCorrect,
-                        onRemove: _submitted
-                            ? null
-                            : () => setState(() => _sorted.remove(id)),
-                      );
-                    }).toList(),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final item in catItems)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: _SortedChip(
+                            label: item['label'] as String? ?? '',
+                            color: catColor,
+                            submitted: _submitted,
+                            isCorrect: _submitted && item['category'] == cat,
+                            onRemove: _submitted
+                                ? null
+                                : () => setState(
+                                    () => _sorted.remove(item['id'].toString())),
+                          ),
+                        ),
+                    ],
                   ),
               ],
             ),
@@ -389,23 +402,26 @@ class _DraggableChip extends StatelessWidget {
                     ],
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(
               Icons.drag_indicator_rounded,
               size: 15,
               color: isDragging ? Colors.white70 : AppColors.textHint,
             ),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: AppTypography.labelSmall.copyWith(
-                color: isDragging
-                    ? Colors.white
-                    : faded
-                        ? AppColors.textSecondary
-                        : AppColors.textPrimary,
-                fontWeight: isDragging ? FontWeight.w600 : FontWeight.w500,
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                softWrap: true,
+                style: AppTypography.labelSmall.copyWith(
+                  color: isDragging
+                      ? Colors.white
+                      : faded
+                          ? AppColors.textSecondary
+                          : AppColors.textPrimary,
+                  fontWeight: isDragging ? FontWeight.w600 : FontWeight.w500,
+                ),
               ),
             ),
           ],
@@ -444,7 +460,7 @@ class _SortedChip extends StatelessWidget {
           border: Border.all(color: chipColor.withValues(alpha: 0.6), width: 1.5),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(
               submitted
@@ -453,12 +469,15 @@ class _SortedChip extends StatelessWidget {
               size: 15,
               color: submitted ? chipColor : AppColors.textHint,
             ),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: AppTypography.labelSmall.copyWith(
-                color: submitted ? gameDarken(chipColor, 0.10) : AppColors.textPrimary,
-                fontWeight: FontWeight.w600,
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                softWrap: true,
+                style: AppTypography.labelSmall.copyWith(
+                  color: submitted ? gameDarken(chipColor, 0.10) : AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],

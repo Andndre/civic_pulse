@@ -23,15 +23,11 @@ class StudentHomeScreen extends ConsumerWidget {
     final materials =
         ref.watch(materialsProvider).asData?.value ?? const <LearningMaterial>[];
     double? boardProgress;
-    double? asesmenProgress;
     if (materials.isNotEmpty) {
       boardProgress = materials
               .where((m) => m.boardStatus == 'completed')
               .length /
           materials.length;
-      asesmenProgress =
-          materials.where((m) => m.postTestScore != null).length /
-              materials.length;
     }
 
     return PopScope(
@@ -196,6 +192,8 @@ class StudentHomeScreen extends ConsumerWidget {
                             crossAxisSpacing: 16,
                             childAspectRatio: 0.7,
                             children: [
+                              // E-Learning: pusat materi & tantangan — ditandai
+                              // ring progres biru (progres papan/konten).
                               _MenuCard(
                                 title: 'E-Learning',
                                 iconAsset: 'assets/icons/menu_elearning.svg',
@@ -203,27 +201,19 @@ class StudentHomeScreen extends ConsumerWidget {
                                 progressColor: AppColors.pulseParticipation,
                                 onTap: () => context.go('/student/learning'),
                               ),
+                              // Asesmen & Refleksi: rekap nilai & umpan balik —
+                              // tampil beda dari E-Learning lewat tile ikon
+                              // oranye (bukan ring) dan tujuan ke layar skor.
                               _MenuCard(
                                 title: 'Asesmen & Refleksi',
-                                iconAsset: 'assets/icons/menu_assessment.svg',
-                                progress: asesmenProgress,
-                                progressColor: AppColors.pulseUnderstanding,
-                                onTap: () => context.go('/student/learning'),
-                              ),
-                              _MenuCard(
-                                title: 'Ringkasan Asesmen',
                                 iconAsset: 'assets/icons/menu_score_summary.svg',
+                                iconBg: AppColors.pulseLearning,
                                 onTap: () => context.go('/student/scores'),
                               ),
                               _MenuCard(
                                 title: 'Aktivitas Kewargaan',
                                 iconAsset: 'assets/icons/menu_civic_activity.svg',
                                 onTap: () => context.go('/student/activities'),
-                              ),
-                              _MenuCard(
-                                title: 'Feedback',
-                                iconAsset: 'assets/icons/menu_feedback.svg',
-                                onTap: () => context.go('/student/scores'),
                               ),
                               _MenuCard(
                                 title: 'Tanya AI',
@@ -491,6 +481,7 @@ class _MenuCard extends StatefulWidget {
   final bool isLocked;
   final double? progress;
   final Color progressColor;
+  final Color? iconBg;
 
   const _MenuCard({
     required this.title,
@@ -499,6 +490,7 @@ class _MenuCard extends StatefulWidget {
     this.isLocked = false,
     this.progress,
     this.progressColor = AppColors.primary,
+    this.iconBg,
   });
 
   @override
@@ -569,10 +561,28 @@ class _MenuCardState extends State<_MenuCard> {
                                     ),
                                   ),
                                 ),
+                              if (widget.iconBg != null)
+                                Container(
+                                  width: 58,
+                                  height: 58,
+                                  decoration: BoxDecoration(
+                                    color: widget.iconBg!
+                                        .withValues(alpha: 0.14),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
                               SvgPicture.asset(
                                 widget.iconAsset,
-                                width: hasRing ? 54 : 60,
-                                height: hasRing ? 54 : 60,
+                                width: hasRing
+                                    ? 54
+                                    : widget.iconBg != null
+                                        ? 40
+                                        : 60,
+                                height: hasRing
+                                    ? 54
+                                    : widget.iconBg != null
+                                        ? 40
+                                        : 60,
                               ),
                             ],
                           ),

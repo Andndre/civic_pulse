@@ -40,8 +40,11 @@ final allMaterialsProvider = FutureProvider<List<LearningMaterial>>((ref) async 
   return service.getMaterials();
 });
 
-// Single material provider
-final materialProvider = FutureProvider.family<LearningMaterial?, int>((ref, id) async {
+// Single material provider.
+// autoDispose: membawa progres per-siswa (learning_path_status, skor). Tanpa
+// autoDispose, cache-nya bertahan setelah ganti akun sehingga siswa baru bisa
+// melihat status "selesai" milik siswa sebelumnya. Dibuang saat layar ditutup.
+final materialProvider = FutureProvider.autoDispose.family<LearningMaterial?, int>((ref, id) async {
   final service = ref.watch(materialServiceProvider);
   return service.getMaterial(id);
 });
@@ -58,8 +61,10 @@ final pulseStatementsProvider = FutureProvider.family<List<PulseStatement>, int>
   return service.getPulseStatements(materialId);
 });
 
-// Learning Board provider (Fase 3)
-final learningBoardProvider = FutureProvider.family<List<LearningNode>, int>((ref, materialId) async {
+// Learning Board provider (Fase 3).
+// autoDispose: membawa progres node per-siswa. Sama seperti [materialProvider],
+// cache harus dibuang agar tidak bocor antar akun siswa.
+final learningBoardProvider = FutureProvider.autoDispose.family<List<LearningNode>, int>((ref, materialId) async {
   final service = ref.watch(materialServiceProvider);
   return service.getLearningBoard(materialId);
 });

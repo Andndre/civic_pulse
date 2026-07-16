@@ -164,7 +164,7 @@ class _TrueFalseSwipeCardState extends State<TrueFalseSwipeCard>
 
     final isFinished = _allAnswered;
 
-    return Padding(
+    return SingleChildScrollView(
       padding: AppSpacing.screenPadding,
       child: Column(
         children: [
@@ -222,9 +222,9 @@ class _TrueFalseSwipeCardState extends State<TrueFalseSwipeCard>
           ),
           const SizedBox(height: 20),
           if (!isFinished)
-            Expanded(child: _buildSwipeArea(statements))
+            _buildSwipeArea(statements)
           else
-            Expanded(child: _buildSummary(statements)),
+            _buildSummary(statements),
         ],
       ),
     );
@@ -238,14 +238,17 @@ class _TrueFalseSwipeCardState extends State<TrueFalseSwipeCard>
 
     return Column(
       children: [
-        Expanded(
-          child: GestureDetector(
-            onPanUpdate: _onPanUpdate,
-            onPanEnd: _onPanEnd,
-            child: Transform.translate(
-              offset: Offset(_dragX, 0),
-              child: Transform.rotate(
-                angle: angle,
+        // Drag horizontal saja, agar scroll vertikal halaman tetap jalan.
+        // Kartu tumbuh mengikuti panjang teks (fleksibel, tanpa tinggi tetap).
+        GestureDetector(
+          onHorizontalDragUpdate: _onPanUpdate,
+          onHorizontalDragEnd: _onPanEnd,
+          child: Transform.translate(
+            offset: Offset(_dragX, 0),
+            child: Transform.rotate(
+              angle: angle,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 220),
                 child: _StatementCard(
                   key: ValueKey(_currentIndex),
                   statement: statements[_currentIndex]['text'] as String? ?? '',
@@ -416,6 +419,7 @@ class _StatementCard extends StatelessWidget {
         ],
       ),
       child: Stack(
+        alignment: Alignment.center,
         children: [
           // Stempel BENAR (swipe kanan)
           Positioned(

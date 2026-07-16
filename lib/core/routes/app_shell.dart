@@ -33,12 +33,6 @@ const studentNavItems = [
     route: '/student/guide',
   ),
   NavItem(
-    label: 'Informasi Pengembang',
-    icon: Icons.info_outline,
-    activeIcon: Icons.info,
-    route: '/student/developer-info',
-  ),
-  NavItem(
     label: 'Pengaturan',
     icon: Icons.settings_outlined,
     activeIcon: Icons.settings,

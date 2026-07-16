@@ -876,43 +876,39 @@ class _SocialTaskCardState extends ConsumerState<_SocialTaskCard> {
   }
 
   Widget _buildSuccessView() {
-    return Padding(
-      padding: AppSpacing.screenPadding,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: AppColors.successLight.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.check_circle, size: 48, color: AppColors.success),
+    return _CenteredScrollView(
+      children: [
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: AppColors.successLight.withValues(alpha: 0.15),
+            shape: BoxShape.circle,
           ),
-          AppSpacing.vGapLg,
-          Text(
-            'Tantangan Sosial Dikirim!',
-            style: AppTypography.headlineSmall.copyWith(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.bold,
-            ),
+          child: const Icon(Icons.check_circle, size: 48, color: AppColors.success),
+        ),
+        AppSpacing.vGapLg,
+        Text(
+          'Tantangan Sosial Dikirim!',
+          style: AppTypography.headlineSmall.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
           ),
-          AppSpacing.vGapSm,
-          Text(
-            'Bukti kamu sedang menunggu review guru.\nKamu bisa lanjut ke Post-Test sekarang.',
-            style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
-            textAlign: TextAlign.center,
-          ),
-          AppSpacing.vGapXl,
-          AppButton(
-            label: 'Lanjut ke Post-Test',
-            variant: AppButtonVariant.primary,
-            onPressed: widget.onComplete,
-            fullWidth: true,
-          ),
-        ],
-      ),
+        ),
+        AppSpacing.vGapSm,
+        Text(
+          'Bukti kamu sedang menunggu review guru.\nKamu bisa lanjut ke Post-Test sekarang.',
+          style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
+          textAlign: TextAlign.center,
+        ),
+        AppSpacing.vGapXl,
+        AppButton(
+          label: 'Lanjut ke Post-Test',
+          variant: AppButtonVariant.primary,
+          onPressed: widget.onComplete,
+          fullWidth: true,
+        ),
+      ],
     );
   }
 
@@ -1164,11 +1160,8 @@ class _EBookStepState extends State<_EBookStep> {
   }
 
   Widget _buildWebFallbackView() {
-    return Padding(
-      padding: AppSpacing.screenPadding,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+    return _CenteredScrollView(
+      children: [
           Container(
             width: 80,
             height: 80,
@@ -1235,71 +1228,66 @@ class _EBookStepState extends State<_EBookStep> {
             ),
           ],
         ],
-      ),
     );
   }
 
   Widget _buildNoFileView() {
-    return Padding(
-      padding: AppSpacing.screenPadding,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+    return _CenteredScrollView(
+      children: [
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: AppColors.primaryLight.withValues(alpha: 0.2),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.menu_book,
+            size: 40,
+            color: AppColors.primary,
+          ),
+        ),
+        AppSpacing.vGapLg,
+        Text(
+          widget.material.title,
+          style: AppTypography.headlineMedium.copyWith(
+            color: AppColors.textPrimary,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        if (widget.material.description != null) ...[
+          AppSpacing.vGapMd,
           Container(
-            width: 80,
-            height: 80,
+            padding: AppSpacing.paddingMd,
             decoration: BoxDecoration(
-              color: AppColors.primaryLight.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
+              color: AppColors.surfaceVariant,
+              borderRadius: AppRadius.radiusMd,
             ),
-            child: const Icon(
-              Icons.menu_book,
-              size: 40,
-              color: AppColors.primary,
-            ),
-          ),
-          AppSpacing.vGapLg,
-          Text(
-            widget.material.title,
-            style: AppTypography.headlineMedium.copyWith(
-              color: AppColors.textPrimary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          if (widget.material.description != null) ...[
-            AppSpacing.vGapMd,
-            Container(
-              padding: AppSpacing.paddingMd,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
-                borderRadius: AppRadius.radiusMd,
-              ),
-              child: Text(
-                widget.material.description!,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ] else ...[
-            AppSpacing.vGapSm,
-            Text(
-              'Bacalah materi dengan seksama sebelum melanjutkan ke post-test',
+            child: Text(
+              widget.material.description!,
               style: AppTypography.bodyMedium.copyWith(
                 color: AppColors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
-          ],
-          AppSpacing.vGapXl,
-          AppButton(
-            label: 'Selesai Membaca',
-            onPressed: widget.onComplete,
-            fullWidth: false,
+          ),
+        ] else ...[
+          AppSpacing.vGapSm,
+          Text(
+            'Bacalah materi dengan seksama sebelum melanjutkan ke post-test',
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
-      ),
+        AppSpacing.vGapXl,
+        AppButton(
+          label: 'Selesai Membaca',
+          onPressed: widget.onComplete,
+          fullWidth: false,
+        ),
+      ],
     );
   }
 
@@ -1400,44 +1388,40 @@ class _StepPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: AppSpacing.screenPadding,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: AppColors.primaryLight.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, size: 40, color: AppColors.primary),
+    return _CenteredScrollView(
+      children: [
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: AppColors.primaryLight.withValues(alpha: 0.2),
+            shape: BoxShape.circle,
           ),
-          AppSpacing.vGapLg,
-          Text(
-            title,
-            style: AppTypography.headlineMedium.copyWith(
-              color: AppColors.textPrimary,
-            ),
-            textAlign: TextAlign.center,
+          child: Icon(icon, size: 40, color: AppColors.primary),
+        ),
+        AppSpacing.vGapLg,
+        Text(
+          title,
+          style: AppTypography.headlineMedium.copyWith(
+            color: AppColors.textPrimary,
           ),
-          AppSpacing.vGapMd,
-          Text(
-            subtitle,
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
-            ),
-            textAlign: TextAlign.center,
+          textAlign: TextAlign.center,
+        ),
+        AppSpacing.vGapMd,
+        Text(
+          subtitle,
+          style: AppTypography.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
           ),
-          AppSpacing.vGapXl,
-          AppButton(
-            label: buttonLabel,
-            onPressed: onButtonPressed,
-            fullWidth: false,
-          ),
-        ],
-      ),
+          textAlign: TextAlign.center,
+        ),
+        AppSpacing.vGapXl,
+        AppButton(
+          label: buttonLabel,
+          onPressed: onButtonPressed,
+          fullWidth: false,
+        ),
+      ],
     );
   }
 }
@@ -1679,74 +1663,97 @@ class _QuizViewState extends ConsumerState<_QuizView> {
   }
 
   Widget _buildResultView() {
-    return Padding(
-      padding: AppSpacing.screenPadding,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+    return _CenteredScrollView(
+      children: [
+        Container(
+          width: 100,
+          height: 100,
+          decoration: BoxDecoration(
+            color: _score >= 70
+                ? AppColors.successLight
+                : AppColors.warningLight,
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              '$_score%',
+              style: AppTypography.headlineMedium.copyWith(
+                color: _score >= 70 ? AppColors.success : AppColors.warning,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+        AppSpacing.vGapLg,
+        Text(
+          _score >= 70 ? 'Bagus!' : 'Tetap Semangat!',
+          style: AppTypography.headlineMedium.copyWith(
+            color: AppColors.textPrimary,
+          ),
+        ),
+        AppSpacing.vGapSm,
+        Text(
+          'Skor ${widget.title}: $_score%',
+          style: AppTypography.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        if (widget.showScoreComparison) ...[
+          AppSpacing.vGapMd,
           Container(
-            width: 100,
-            height: 100,
+            padding: AppSpacing.paddingMd,
             decoration: BoxDecoration(
-              color: _score >= 70
-                  ? AppColors.successLight
-                  : AppColors.warningLight,
-              shape: BoxShape.circle,
+              color: AppColors.surfaceVariant,
+              borderRadius: AppRadius.radiusMd,
             ),
-            child: Center(
-              child: Text(
-                '$_score%',
-                style: AppTypography.headlineMedium.copyWith(
-                  color: _score >= 70 ? AppColors.success : AppColors.warning,
-                  fontWeight: FontWeight.bold,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _ScoreChip(
+                  label: 'Pre',
+                  score: '${_comparison?['pre_score'] ?? 75}%',
+                  color: AppColors.info,
                 ),
-              ),
+                AppSpacing.hGapMd,
+                _ScoreChip(
+                  label: 'Post',
+                  score: '${_comparison?['post_score'] ?? _score}%',
+                  color: AppColors.success,
+                ),
+              ],
             ),
           ),
-          AppSpacing.vGapLg,
-          Text(
-            _score >= 70 ? 'Bagus!' : 'Tetap Semangat!',
-            style: AppTypography.headlineMedium.copyWith(
-              color: AppColors.textPrimary,
-            ),
-          ),
-          AppSpacing.vGapSm,
-          Text(
-            'Skor ${widget.title}: $_score%',
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-          if (widget.showScoreComparison) ...[
-            AppSpacing.vGapMd,
-            Container(
-              padding: AppSpacing.paddingMd,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
-                borderRadius: AppRadius.radiusMd,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _ScoreChip(
-                    label: 'Pre',
-                    score: '${_comparison?['pre_score'] ?? 75}%',
-                    color: AppColors.info,
-                  ),
-                  AppSpacing.hGapMd,
-                  _ScoreChip(
-                    label: 'Post',
-                    score: '${_comparison?['post_score'] ?? _score}%',
-                    color: AppColors.success,
-                  ),
-                ],
-              ),
-            ),
-          ],
-          AppSpacing.vGapXl,
-          AppButton(label: 'Lanjutkan', onPressed: widget.onComplete),
         ],
-      ),
+        AppSpacing.vGapXl,
+        AppButton(label: 'Lanjutkan', onPressed: widget.onComplete),
+      ],
+    );
+  }
+}
+
+/// Konten yang tetap ter-center saat muat, tapi bisa di-scroll saat kepenuhan.
+/// Dipakai untuk layar-layar hasil/placeholder di dalam papan aktivitas agar
+/// tidak pernah overflow di layar kecil (fleksibel tanpa tinggi tetap).
+class _CenteredScrollView extends StatelessWidget {
+  final List<Widget> children;
+
+  const _CenteredScrollView({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          padding: AppSpacing.screenPadding,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: children,
+            ),
+          ),
+        );
+      },
     );
   }
 }

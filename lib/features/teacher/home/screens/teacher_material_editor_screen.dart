@@ -276,18 +276,21 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
                               keyboardType: TextInputType.multiline,
                               decoration: const InputDecoration(labelText: 'Opsi A'),
                             ),
+                            const SizedBox(height: 12),
                             TextField(
                               controller: optBController,
                               maxLines: null,
                               keyboardType: TextInputType.multiline,
                               decoration: const InputDecoration(labelText: 'Opsi B'),
                             ),
+                            const SizedBox(height: 12),
                             TextField(
                               controller: optCController,
                               maxLines: null,
                               keyboardType: TextInputType.multiline,
                               decoration: const InputDecoration(labelText: 'Opsi C'),
                             ),
+                            const SizedBox(height: 12),
                             TextField(
                               controller: optDController,
                               maxLines: null,
@@ -807,6 +810,8 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
                   children: [
                     TabBar(
                       controller: _tabController,
+                      isScrollable: true,
+                      tabAlignment: TabAlignment.start,
                       labelColor: AppColors.primary,
                       unselectedLabelColor: AppColors.textSecondary,
                       indicatorColor: AppColors.primary,
@@ -984,18 +989,42 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Wrap(
-                        spacing: 12,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: qs[i].options.entries.map((entry) {
                           final label = entry.key;
                           final text = entry.value;
                           final isCorrect = qs[i].correctAnswer.toUpperCase() == label;
-                          return Text(
-                            '$label. $text',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: isCorrect ? FontWeight.bold : FontWeight.normal,
-                              color: isCorrect ? AppColors.success : AppColors.textSecondary,
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 6.0),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  isCorrect
+                                      ? Icons.check_circle
+                                      : Icons.radio_button_unchecked,
+                                  size: 14,
+                                  color: isCorrect
+                                      ? AppColors.success
+                                      : AppColors.textHint,
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    '$label. $text',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: isCorrect
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                      color: isCorrect
+                                          ? AppColors.success
+                                          : AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           );
                         }).toList(),
