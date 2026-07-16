@@ -8,6 +8,16 @@
 
 (Entri terbaru di paling atas. Satu entri per sesi kerja — tambahkan, jangan menimpa entri lama.)
 
+### 2026-07-16 (sesi-19) — Kartu Menu Terkunci Baru & Fix Simpan Node Game Visual
+
+**Yang diselesaikan:**
+- **2 kartu menu terkunci (fitur mendatang)**: Menambahkan "Papan Peringkat" (ikon piala, tile emas) dan "Forum Diskusi" (ikon chat, tile cyan) di beranda siswa — keduanya `isLocked` dengan dialog "…Terkunci". Dua ikon sticker SVG baru dibuat mengikuti gaya ikon menu lain.
+- **Fix bug simpan game via editor visual**: Node game baru yang dibuat lewat tombol "Edit Konten & Soal Game (Visual)" gagal disimpan (error merah 404). Penyebabnya node sementara ber-`id: 0` dianggap sebagai edit, sehingga aplikasi memanggil `PATCH /learning-nodes/0` alih-alih `POST`. Diperbaiki dengan `isEdit = node != null && node.id != 0`. Berdampak ke semua jenis game (sorting/matching/dll), bukan hanya sorting.
+
+**Verifikasi:** `flutter analyze` bersih (22 info bawaan, 0 error/warning).
+
+**Next:** Menunggu instruksi berikutnya.
+
 ### 2026-07-16 (sesi-18) — Perapian Menu, Layout Fleksibel & Perbaikan Overflow
 
 **Yang diselesaikan:**

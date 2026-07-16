@@ -539,7 +539,9 @@ class _TeacherMaterialEditorScreenState extends ConsumerState<TeacherMaterialEdi
   }
 
   void _showNodeForm([LearningNode? node]) {
-    final isEdit = node != null;
+    // id == 0 menandai node sementara (baru dibuat lewat editor game visual),
+    // bukan node tersimpan — jadi harus tetap dibuat (POST), bukan di-update.
+    final isEdit = node != null && node.id != 0;
     final titleController = TextEditingController(text: node?.title ?? '');
     final bodyController = TextEditingController(text: node?.body ?? '');
     String nodeType = node?.nodeType ?? 'content';
