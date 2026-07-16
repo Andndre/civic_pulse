@@ -221,6 +221,27 @@ class StudentHomeScreen extends ConsumerWidget {
                                 isLocked: true,
                                 onTap: () => _showLockedAIInfo(context),
                               ),
+                              // Fitur mendatang — masih terkunci.
+                              _MenuCard(
+                                title: 'Papan Peringkat',
+                                iconAsset: 'assets/icons/menu_leaderboard.svg',
+                                isLocked: true,
+                                onTap: () => _showComingSoonInfo(
+                                  context,
+                                  'Papan Peringkat',
+                                  'Papan Peringkat akan menampilkan peringkat siswa berdasarkan skor PULSE. Fitur ini sedang disiapkan dan akan hadir pada pembaruan berikutnya.',
+                                ),
+                              ),
+                              _MenuCard(
+                                title: 'Forum Diskusi',
+                                iconAsset: 'assets/icons/menu_forum.svg',
+                                isLocked: true,
+                                onTap: () => _showComingSoonInfo(
+                                  context,
+                                  'Forum Diskusi',
+                                  'Forum Diskusi akan menjadi ruang tanya-jawab antara siswa dan guru. Fitur ini sedang disiapkan dan akan hadir pada pembaruan berikutnya.',
+                                ),
+                              ),
                             ],
                           ),
                         ],
@@ -351,6 +372,33 @@ class StudentHomeScreen extends ConsumerWidget {
         content: const Text(
           'Fitur Tanya AI saat ini belum tersedia atau sedang dinonaktifkan oleh Guru Anda.',
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Mengerti'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showComingSoonInfo(
+      BuildContext context, String title, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            const Icon(Icons.lock_clock, color: Colors.amber),
+            const SizedBox(width: 8),
+            Expanded(child: Text('$title Terkunci')),
+          ],
+        ),
+        content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
