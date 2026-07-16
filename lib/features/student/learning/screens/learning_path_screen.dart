@@ -9,6 +9,7 @@ import '../../../../core/network/network.dart';
 import '../../../../shared/services/services.dart';
 import '../providers/material_provider.dart';
 import '../widgets/challenge_games/content_card.dart';
+import '../widgets/challenge_games/game_widgets.dart';
 import '../widgets/challenge_games/matching_game_card.dart';
 import '../widgets/challenge_games/multiple_choice_card.dart';
 import '../widgets/challenge_games/sorting_game_card.dart';
@@ -645,15 +646,7 @@ class _LearningBoardStepState extends ConsumerState<_LearningBoardStep> {
             ],
           ),
           const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: AppRadius.radiusSm,
-            child: LinearProgressIndicator(
-              value: percent,
-              backgroundColor: AppColors.surfaceVariant,
-              valueColor: const AlwaysStoppedAnimation(AppColors.primary),
-              minHeight: 6,
-            ),
-          ),
+          GameProgressBar(value: percent, color: AppColors.primary),
         ],
       ),
     );

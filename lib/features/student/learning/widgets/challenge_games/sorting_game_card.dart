@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/constants/constants.dart';
 import '../../../../../shared/services/services.dart';
+import 'game_widgets.dart';
 
 /// Kartu Sortir Kategori — game_type: 'sorting'
 /// Payload format:
@@ -12,7 +13,7 @@ import '../../../../../shared/services/services.dart';
 ///   ]
 /// }
 ///
-/// UI: item diseret ke keranjang kategori (DragTarget)
+/// UI: item diseret ke keranjang kategori berwarna (DragTarget)
 class SortingGameCard extends StatefulWidget {
   final LearningNode node;
   final void Function(Map<String, dynamic> answer) onComplete;
@@ -24,6 +25,19 @@ class SortingGameCard extends StatefulWidget {
 }
 
 class _SortingGameCardState extends State<SortingGameCard> {
+  static const Color _accent = AppColors.pulseUnderstanding;
+
+  // Warna keranjang bergilir; dua pertama dipertahankan hijau/merah
+  // karena kategori sortir umumnya berpasangan positif/negatif.
+  static const List<Color> _bucketColors = [
+    AppColors.success,
+    AppColors.danger,
+    AppColors.pulseParticipation,
+    AppColors.pulseSocialEngagement,
+    AppColors.pulseLearning,
+    AppColors.chartCyan,
+  ];
+
   // item id → category chosen by user
   final Map<String, String> _sorted = {};
   bool _submitted = false;
@@ -55,6 +69,9 @@ class _SortingGameCardState extends State<SortingGameCard> {
   List<Map<String, dynamic>> _itemsInCategory(String category) =>
       _items.where((item) => _sorted[item['id'].toString()] == category).toList();
 
+  Color _colorForCategory(String category) =>
+      _bucketColors[_categories.indexOf(category) % _bucketColors.length];
+
   void _submit() {
     int correct = 0;
     for (final item in _items) {
@@ -76,7 +93,11 @@ class _SortingGameCardState extends State<SortingGameCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildChip(),
+          const GameBadge(
+            icon: Icons.category_rounded,
+            label: 'Sortir Kategori',
+            color: _accent,
+          ),
           AppSpacing.vGapMd,
           if (widget.node.title != null)
             Text(
@@ -88,138 +109,77 @@ class _SortingGameCardState extends State<SortingGameCard> {
             ),
           AppSpacing.vGapSm,
           Text(
-            widget.node.body ?? 'Seret setiap item ke kategori yang tepat.',
+            widget.node.body ?? 'Seret setiap item ke keranjang kategori yang tepat.',
             style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
           ),
           AppSpacing.vGapLg,
           // Unsorted items pool
           if (_unsortedItems.isNotEmpty) ...[
-            Text(
-              'Item untuk disortir:',
-              style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary),
-            ),
-            AppSpacing.vGapSm,
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _unsortedItems.map((item) {
-                final id = item['id'] as String;
-                final label = item['label'] as String? ?? '';
-                return Draggable<String>(
-                  data: id,
-                  feedback: _DraggableChip(label: label, isDragging: true),
-                  childWhenDragging: _DraggableChip(label: label, isDragging: false, faded: true),
-                  child: _DraggableChip(label: label, isDragging: false),
-                );
-              }).toList(),
-            ),
-            AppSpacing.vGapLg,
-          ],
-          // Category buckets
-          ...categories.map((cat) {
-            final catItems = _itemsInCategory(cat);
-            final catColor = categories.indexOf(cat) == 0 ? AppColors.success : AppColors.danger;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceVariant.withValues(alpha: 0.6),
+                borderRadius: AppRadius.radiusLg,
+                border: Border.all(color: AppColors.divider),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.inbox, size: 16, color: catColor),
+                      const Icon(Icons.pan_tool_alt_rounded,
+                          size: 14, color: AppColors.textSecondary),
                       const SizedBox(width: 6),
                       Text(
-                        cat,
-                        style: AppTypography.labelMedium.copyWith(
-                          color: catColor,
-                          fontWeight: FontWeight.bold,
+                        'Seret item ke keranjang di bawah',
+                        style: AppTypography.labelSmall
+                            .copyWith(color: AppColors.textSecondary),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: _accent.withValues(alpha: 0.12),
+                          borderRadius: AppRadius.radiusFull,
+                        ),
+                        child: Text(
+                          '${_sorted.length}/${_items.length}',
+                          style: AppTypography.labelSmall.copyWith(
+                            color: gameDarken(_accent, 0.10),
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  DragTarget<String>(
-                    onAcceptWithDetails: (details) {
-                      if (!_submitted) {
-                        setState(() => _sorted[details.data] = cat);
-                      }
-                    },
-                    builder: (context, candidateData, rejectedData) {
-                      final isHover = candidateData.isNotEmpty;
-                      return AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        constraints: const BoxConstraints(minHeight: 60),
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: isHover
-                              ? catColor.withValues(alpha: 0.15)
-                              : catColor.withValues(alpha: 0.04),
-                          borderRadius: AppRadius.radiusMd,
-                          border: Border.all(
-                            color: isHover ? catColor : catColor.withValues(alpha: 0.3),
-                            width: isHover ? 2 : 1,
-                            style: catItems.isEmpty && !isHover
-                                ? BorderStyle.solid
-                                : BorderStyle.solid,
-                          ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _unsortedItems.map((item) {
+                      final id = item['id'] as String;
+                      final label = item['label'] as String? ?? '';
+                      return Draggable<String>(
+                        data: id,
+                        feedback: Transform.rotate(
+                          angle: -0.05,
+                          child: _DraggableChip(label: label, isDragging: true),
                         ),
-                        child: catItems.isEmpty
-                            ? Center(
-                                child: Text(
-                                  'Taruh item "$cat" di sini',
-                                  style: AppTypography.labelSmall.copyWith(
-                                    color: catColor.withValues(alpha: 0.5),
-                                  ),
-                                ),
-                              )
-                            : Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: catItems.map((item) {
-                                  final id = item['id'].toString();
-                                  final label = item['label'] as String? ?? '';
-                                  final isCorrect = _submitted && item['category'] == cat;
-                                  return GestureDetector(
-                                    onTap: _submitted
-                                        ? null
-                                        : () => setState(() => _sorted.remove(id)),
-                                    child: Chip(
-                                      label: Text(
-                                        label,
-                                        style: AppTypography.labelSmall.copyWith(
-                                          color: _submitted
-                                              ? (isCorrect ? AppColors.success : AppColors.danger)
-                                              : AppColors.textPrimary,
-                                        ),
-                                      ),
-                                      backgroundColor: _submitted
-                                          ? (isCorrect
-                                              ? AppColors.successLight.withValues(alpha: 0.15)
-                                              : AppColors.danger.withValues(alpha: 0.1))
-                                          : AppColors.surface,
-                                      side: BorderSide(
-                                        color: _submitted
-                                            ? (isCorrect ? AppColors.success : AppColors.danger)
-                                            : AppColors.divider,
-                                      ),
-                                      avatar: _submitted
-                                          ? Icon(
-                                              isCorrect ? Icons.check_circle : Icons.cancel,
-                                              size: 16,
-                                              color: isCorrect ? AppColors.success : AppColors.danger,
-                                            )
-                                          : const Icon(Icons.close, size: 14, color: AppColors.textSecondary),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
+                        childWhenDragging:
+                            _DraggableChip(label: label, isDragging: false, faded: true),
+                        child: _DraggableChip(label: label, isDragging: false),
                       );
-                    },
+                    }).toList(),
                   ),
                 ],
               ),
-            );
-          }),
+            ),
+            AppSpacing.vGapLg,
+          ],
+          // Category buckets
+          ...categories.map((cat) => _buildBucket(cat)),
           const SizedBox(height: 8),
           if (_submitted) _buildFeedback(),
           if (!_submitted)
@@ -234,23 +194,131 @@ class _SortingGameCardState extends State<SortingGameCard> {
     );
   }
 
-  Widget _buildChip() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xxs),
-      decoration: BoxDecoration(
-        color: AppColors.success.withValues(alpha: 0.1),
-        borderRadius: AppRadius.radiusSm,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.category_outlined, size: 14, color: AppColors.success),
-          const SizedBox(width: 4),
-          Text(
-            'Sortir Kategori',
-            style: AppTypography.labelSmall.copyWith(color: AppColors.success, fontWeight: FontWeight.w600),
-          ),
-        ],
+  Widget _buildBucket(String cat) {
+    final catItems = _itemsInCategory(cat);
+    final catColor = _colorForCategory(cat);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: DragTarget<String>(
+        onAcceptWithDetails: (details) {
+          if (!_submitted) {
+            setState(() => _sorted[details.data] = cat);
+          }
+        },
+        builder: (context, candidateData, rejectedData) {
+          final isHover = candidateData.isNotEmpty;
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            constraints: const BoxConstraints(minHeight: 96),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isHover
+                  ? catColor.withValues(alpha: 0.14)
+                  : catColor.withValues(alpha: 0.05),
+              borderRadius: AppRadius.radiusLg,
+              border: Border.all(
+                color: isHover ? catColor : catColor.withValues(alpha: 0.30),
+                width: isHover ? 2 : 1.5,
+              ),
+              boxShadow: isHover
+                  ? [
+                      BoxShadow(
+                        color: catColor.withValues(alpha: 0.20),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [catColor, gameDarken(catColor)],
+                        ),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.inbox_rounded,
+                          size: 15, color: Colors.white),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        cat,
+                        style: AppTypography.labelMedium.copyWith(
+                          color: gameDarken(catColor, 0.10),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: catColor.withValues(alpha: 0.12),
+                        borderRadius: AppRadius.radiusFull,
+                      ),
+                      child: Text(
+                        '${catItems.length} item',
+                        style: AppTypography.labelSmall.copyWith(
+                          color: gameDarken(catColor, 0.10),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                if (catItems.isEmpty)
+                  SizedBox(
+                    width: double.infinity,
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.file_download_outlined,
+                          size: 18,
+                          color: catColor.withValues(alpha: 0.45),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          isHover ? 'Lepaskan di sini!' : 'Taruh item "$cat" di sini',
+                          style: AppTypography.labelSmall.copyWith(
+                            color: catColor.withValues(alpha: 0.55),
+                            fontWeight: isHover ? FontWeight.w700 : FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: catItems.map((item) {
+                      final id = item['id'].toString();
+                      final label = item['label'] as String? ?? '';
+                      final isCorrect = _submitted && item['category'] == cat;
+                      return _SortedChip(
+                        label: label,
+                        color: catColor,
+                        submitted: _submitted,
+                        isCorrect: isCorrect,
+                        onRemove: _submitted
+                            ? null
+                            : () => setState(() => _sorted.remove(id)),
+                      );
+                    }).toList(),
+                  ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -260,36 +328,12 @@ class _SortingGameCardState extends State<SortingGameCard> {
     final allCorrect = _correctCount == total;
     return Column(
       children: [
-        Container(
-          width: double.infinity,
-          padding: AppSpacing.paddingMd,
-          decoration: BoxDecoration(
-            color: allCorrect
-                ? AppColors.successLight.withValues(alpha: 0.12)
-                : AppColors.warning.withValues(alpha: 0.1),
-            borderRadius: AppRadius.radiusMd,
-            border: Border.all(color: allCorrect ? AppColors.success : AppColors.warning),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                allCorrect ? Icons.check_circle : Icons.info_outline,
-                color: allCorrect ? AppColors.success : AppColors.warning,
-              ),
-              AppSpacing.hGapSm,
-              Expanded(
-                child: Text(
-                  allCorrect
-                      ? 'Sempurna! Semua item di kategori yang benar!'
-                      : '$_correctCount dari $total item di kategori yang tepat. Cek yang salah di atas.',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: allCorrect ? AppColors.success : AppColors.warning,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
+        GameFeedbackBanner(
+          color: allCorrect ? AppColors.success : AppColors.warning,
+          icon: allCorrect ? Icons.celebration_rounded : Icons.lightbulb_rounded,
+          message: allCorrect
+              ? 'Sempurna! Semua item di kategori yang benar!'
+              : '$_correctCount dari $total item di kategori yang tepat. Cek yang salah di atas.',
         ),
         const SizedBox(height: 16),
         AppButton(
@@ -315,26 +359,109 @@ class _DraggableChip extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         decoration: BoxDecoration(
           color: isDragging
-              ? AppColors.primary
+              ? AppColors.pulseUnderstanding
               : faded
                   ? AppColors.surfaceVariant.withValues(alpha: 0.5)
                   : AppColors.surface,
-          borderRadius: AppRadius.radiusSm,
+          borderRadius: AppRadius.radiusFull,
           border: Border.all(
-            color: isDragging ? AppColors.primary : AppColors.divider,
+            color: isDragging ? AppColors.pulseUnderstanding : AppColors.divider,
           ),
           boxShadow: isDragging
-              ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))]
-              : null,
+              ? [
+                  BoxShadow(
+                    color: AppColors.pulseUnderstanding.withValues(alpha: 0.35),
+                    blurRadius: 12,
+                    offset: const Offset(0, 5),
+                  ),
+                ]
+              : faded
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
         ),
-        child: Text(
-          label,
-          style: AppTypography.labelSmall.copyWith(
-            color: isDragging ? AppColors.textOnPrimary : faded ? AppColors.textSecondary : AppColors.textPrimary,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.drag_indicator_rounded,
+              size: 15,
+              color: isDragging ? Colors.white70 : AppColors.textHint,
+            ),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: AppTypography.labelSmall.copyWith(
+                color: isDragging
+                    ? Colors.white
+                    : faded
+                        ? AppColors.textSecondary
+                        : AppColors.textPrimary,
+                fontWeight: isDragging ? FontWeight.w600 : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SortedChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  final bool submitted;
+  final bool isCorrect;
+  final VoidCallback? onRemove;
+
+  const _SortedChip({
+    required this.label,
+    required this.color,
+    required this.submitted,
+    required this.isCorrect,
+    this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Color chipColor =
+        submitted ? (isCorrect ? AppColors.success : AppColors.danger) : color;
+    return GamePressable(
+      onTap: onRemove,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: AppRadius.radiusFull,
+          border: Border.all(color: chipColor.withValues(alpha: 0.6), width: 1.5),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              submitted
+                  ? (isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded)
+                  : Icons.close_rounded,
+              size: 15,
+              color: submitted ? chipColor : AppColors.textHint,
+            ),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: AppTypography.labelSmall.copyWith(
+                color: submitted ? gameDarken(chipColor, 0.10) : AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -8,6 +8,19 @@
 
 (Entri terbaru di paling atas. Satu entri per sesi kerja — tambahkan, jangan menimpa entri lama.)
 
+### 2026-07-16 (sesi-16) — Rombak Tampilan 4 Game Tantangan (Design System v2)
+
+**Yang diselesaikan:**
+- **Komponen visual bersama** (`challenge_games/game_widgets.dart`): `GameBadge` (pill gradient jenis game), `GamePressable` (efek tekan scale 0.96 + haptic), `GameFeedbackBanner` (banner hasil dengan animasi pop), `GameProgressBar` (bar progres gradient membulat), `GameQuestionCard` (kartu soal bergaya hero).
+- **Identitas warna PULSE per game**: Pilihan Ganda = biru, Benar/Salah = oranye, Cocokkan = ungu, Sortir = hijau.
+- **Benar/Salah**: gesture swipe sungguhan (kartu mengikuti jari, rotasi, stempel BENAR/SALAH, slide-out / snap-back via `AnimationController`), tombol bulat gradient ✓/✗, ringkasan skor dengan animasi elastis + ikon piala.
+- **Cocokkan Pasangan**: tiap pasangan mendapat warna + nomor sendiri di kedua kolom; item kanan yang sudah dipakai otomatis dilepas saat dipasangkan ulang (perbaikan bug dua-kiri-satu-kanan).
+- **Sortir Kategori**: keranjang berwarna dengan header ikon gradient + badge jumlah item, highlight "Lepaskan di sini!" saat hover drag, chip dengan ikon pegangan dan rotasi saat diseret.
+- **Pilihan Ganda**: badge huruf bulat yang berubah jadi ikon status, bayangan berwarna pada opsi terpilih.
+- **Verifikasi**: test widget baru `challenge_games_test.dart` (5 skenario, termasuk swipe & drag-and-drop) lulus 5/5; `flutter analyze` tetap 22 info bawaan tanpa error baru. Format payload jawaban ke backend tidak berubah.
+
+**Next:** Opsional — restyle `learning_path_screen` & `teacher_material_editor_screen`, perbaiki 4 test auth yang timeout, lencana pencapaian di profil siswa (DESIGN.md tahap 6).
+
 ### 2026-07-15 (sesi-15) — Design System v2: GradientShellScaffold di Seluruh Layar
 
 **Yang diselesaikan:**
